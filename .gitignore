@@ -1,3 +1,6 @@
+# Nix build output dir
+result
+
 # Prerequisites
 *.d
 
