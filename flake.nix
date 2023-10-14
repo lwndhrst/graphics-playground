@@ -7,9 +7,15 @@
 
   outputs = { self, nixpkgs }:
     let 
+      forAllSystems = function:
+        nixpkgs.lib.genAttrs [
+          "x86_64-linux"
+        ] (system: function nixpkgs.legacyPackages.${system});
+
       vk-renderer =
-        { llvmPackages_16 
-        , ...
+        { lib
+        , llvmPackages_16 
+        , compiler-flags ? []
         }:
 
         llvmPackages_16.stdenv.mkDerivation {
@@ -18,10 +24,11 @@
 
           src = ./src;
 
-          buildInputs = [ ];
+          buildInputs = [
+          ];
 
           buildPhase = ''
-            clang++ main.cpp -o vk-renderer
+            clang++ main.cpp -o vk-renderer ${lib.concatStringsSep " " compiler-flags}
           '';
 
           installPhase = ''
@@ -31,6 +38,21 @@
         };
 
     in {
-      packages."x86_64-linux".default = nixpkgs.legacyPackages."x86_64-linux".callPackage vk-renderer {};
+      packages = forAllSystems (pkgs: {
+        default = pkgs.callPackage vk-renderer {};
+        release = pkgs.callPackage vk-renderer {
+          compiler-flags = [ "-O3" ];
+        };
+      });
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+          ];
+
+          LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
+          ];
+        };
+      });
     };
 }
