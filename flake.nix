@@ -6,29 +6,31 @@
   };
 
   outputs = { self, nixpkgs }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
+    let 
+      vk-renderer =
+        { llvmPackages_16 
+        , ...
+        }:
+
+        llvmPackages_16.stdenv.mkDerivation {
+          pname = "vk-renderer";
+          version = "2023-10-14";
+
+          src = ./src;
+
+          buildInputs = [ ];
+
+          buildPhase = ''
+            clang++ main.cpp -o vk-renderer
+          '';
+
+          installPhase = ''
+            mkdir -p $out
+            cp vk-renderer $out
+          '';
+        };
 
     in {
-      packages.${system}.default = pkgs.llvmPackages_16.stdenv.mkDerivation {
-        name = "vk-renderer";
-        version = "2023-10-14";
-
-        src = "${self}";
-
-        buildInputs = with pkgs; [
-          
-        ];
-
-        buildPhase = ''
-          clang++ src/main.cpp -o vk-renderer
-        '';
-
-        installPhase = ''
-          mkdir -p $out
-          cp vk-renderer $out
-        '';
-      };
+      packages."x86_64-linux".default = nixpkgs.legacyPackages."x86_64-linux".callPackage vk-renderer {};
     };
 }
