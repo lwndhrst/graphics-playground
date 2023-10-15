@@ -7,7 +7,7 @@
 
   outputs = { self, nixpkgs }:
     let 
-      forAllSystems = function:
+      forEachSystem = function:
         nixpkgs.lib.genAttrs [
           "x86_64-linux"
         ] (system: function nixpkgs.legacyPackages.${system});
@@ -24,8 +24,7 @@
 
           src = ./src;
 
-          buildInputs = [
-          ];
+          buildInputs = [];
 
           buildPhase = ''
             clang++ main.cpp -o vk-renderer ${lib.concatStringsSep " " compiler-flags}
@@ -38,20 +37,18 @@
         };
 
     in {
-      packages = forAllSystems (pkgs: {
+      packages = forEachSystem (pkgs: {
         default = pkgs.callPackage vk-renderer {};
         release = pkgs.callPackage vk-renderer {
           compiler-flags = [ "-O3" ];
         };
       });
 
-      devShells = forAllSystems (pkgs: {
+      devShells = forEachSystem (pkgs: {
         default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-          ];
+          buildInputs = [];
 
-          LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
-          ];
+          LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [];
         };
       });
     };
