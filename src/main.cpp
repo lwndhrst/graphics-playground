@@ -19,7 +19,7 @@ int main() {
   s = DefaultScreen(display);
 
   window =
-      XCreateSimpleWindow(display, RootWindow(display, s), 10, 10, 200, 200, 1,
+      XCreateSimpleWindow(display, RootWindow(display, s), 10, 10, 100, 100, 1,
                           BlackPixel(display, s), WhitePixel(display, s));
 
   XSelectInput(display, window, ExposureMask | KeyPressMask);
