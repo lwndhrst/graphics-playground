@@ -15,24 +15,24 @@
       vk-renderer =
         { lib
         , llvmPackages_16 
-        , compiler-flags ? []
+        , compilerFlags ? []
         }:
 
         llvmPackages_16.stdenv.mkDerivation {
           pname = "vk-renderer";
           version = "2023-10-14";
 
-          src = ./src;
+          src = ./.;
 
           buildInputs = [];
 
           buildPhase = ''
-            clang++ main.cpp -o vk-renderer ${lib.concatStringsSep " " compiler-flags}
+            clang++ src/main.cpp -o vk-renderer ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''
-            mkdir -p $out
-            cp vk-renderer $out
+            mkdir -p $out/bin
+            cp vk-renderer $out/bin
           '';
         };
 
@@ -40,7 +40,20 @@
       packages = forEachSystem (pkgs: {
         default = pkgs.callPackage vk-renderer {};
         release = pkgs.callPackage vk-renderer {
-          compiler-flags = [ "-O3" ];
+          compilerFlags = [ "-O3" ];
+        };
+      });
+
+      app = forEachSystem (pkgs: {
+        default = {
+          type = "app";
+          program = "${pkgs.callPackage vk-renderer {}}/bin/vk-renderer";
+        };
+        release = {
+          type = "app";
+          program = "${pkgs.callPackage vk-renderer {
+            compilerFlags = [ "-O3" ];
+          }}/bin/vk-renderer";
         };
       });
 
