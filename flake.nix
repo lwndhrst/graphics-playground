@@ -13,9 +13,13 @@
         ] (system: function nixpkgs.legacyPackages.${system});
 
       vk-renderer =
-        { lib
+        { compilerFlags ? []
+        , glslang
+        , lib
         , llvmPackages_16 
-        , compilerFlags ? []
+        , vulkan-headers 
+        , vulkan-loader 
+        , xorg
         }:
 
         llvmPackages_16.stdenv.mkDerivation {
@@ -24,10 +28,15 @@
 
           src = ./.;
 
-          buildInputs = [];
+          buildInputs = [
+            glslang
+            vulkan-headers
+            vulkan-loader
+            xorg.libX11
+          ];
 
           buildPhase = ''
-            clang++ src/main.cpp -o vk-renderer ${lib.concatStringsSep " " compilerFlags}
+            clang++ src/main.cpp -o vk-renderer -lX11 ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''
@@ -59,7 +68,12 @@
 
       devShells = forEachSystem (pkgs: {
         default = pkgs.mkShell {
-          buildInputs = [];
+          packages = with pkgs; [
+            glslang
+            vulkan-headers
+            vulkan-loader
+            xorg.libX11
+          ];
 
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [];
         };
