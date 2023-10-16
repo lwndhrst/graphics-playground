@@ -36,7 +36,7 @@
           ];
 
           buildPhase = ''
-            clang++ src/main.cpp -o vk-renderer -lX11 ${lib.concatStringsSep " " compilerFlags}
+            clang++ src/*.cpp -o vk-renderer -lX11 ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''
