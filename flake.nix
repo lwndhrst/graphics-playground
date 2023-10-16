@@ -17,9 +17,9 @@
         , glslang
         , lib
         , llvmPackages_16 
+        , SDL2
         , vulkan-headers 
         , vulkan-loader 
-        , xorg
         }:
 
         llvmPackages_16.stdenv.mkDerivation {
@@ -30,13 +30,13 @@
 
           buildInputs = [
             glslang
+            SDL2
             vulkan-headers
             vulkan-loader
-            xorg.libX11
           ];
 
           buildPhase = ''
-            clang++ src/*.cpp -o vk-renderer -lX11 ${lib.concatStringsSep " " compilerFlags}
+            clang++ src/*.cpp -o vk-renderer -lSDL2 ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''
@@ -70,9 +70,9 @@
         default = pkgs.mkShell {
           packages = with pkgs; [
             glslang
+            SDL2
             vulkan-headers
             vulkan-loader
-            xorg.libX11
           ];
 
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [];
