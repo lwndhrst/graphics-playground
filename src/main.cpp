@@ -29,14 +29,12 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  bool running = true;
-  while (running) {
+  for (;;) {
     SDL_Event windowEvent;
     while (SDL_PollEvent(&windowEvent)) {
       switch (windowEvent.type) {
       case SDL_QUIT:
-        running = false;
-        goto cleanup;
+        goto shutdown;
 
       default:
         SDL_UpdateWindowSurface(window);
@@ -45,7 +43,7 @@ int main() {
     }
   }
 
-cleanup:
+shutdown:
   SDL_DestroyWindowSurface(window);
   SDL_DestroyWindow(window);
   SDL_Quit();
