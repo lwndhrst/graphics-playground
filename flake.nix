@@ -36,7 +36,10 @@
           ];
 
           buildPhase = ''
-            clang++ src/*.cpp -o vk-renderer -lSDL2 ${lib.concatStringsSep " " compilerFlags}
+            clang++ src/*.cpp -o vk-renderer \
+            -lSDL2 \
+            -lvulkan \
+            ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''

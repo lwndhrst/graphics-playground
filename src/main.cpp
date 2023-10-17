@@ -1,4 +1,7 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.h>
+
 #include <cstdio>
 #include <cstdlib>
 
@@ -12,9 +15,15 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  if (SDL_Vulkan_LoadLibrary(nullptr) < 0) {
+    fprintf(stderr, "Failed to load Vulkan\n");
+    return EXIT_FAILURE;
+  }
+
   SDL_Window *window = SDL_CreateWindow(
-      WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-      WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+      WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      WINDOW_WIDTH, WINDOW_HEIGHT,
+      SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
 
   if (!window) {
     fprintf(stderr, "Failed to create window\n");
@@ -28,8 +37,8 @@ int main() {
     return EXIT_FAILURE;
   }
 
+  SDL_Event windowEvent;
   for (;;) {
-    SDL_Event windowEvent;
     while (SDL_PollEvent(&windowEvent)) {
       switch (windowEvent.type) {
       case SDL_QUIT:
@@ -45,6 +54,7 @@ int main() {
 shutdown:
   SDL_DestroyWindowSurface(window);
   SDL_DestroyWindow(window);
+  SDL_Vulkan_UnloadLibrary();
   SDL_Quit();
 
   return EXIT_SUCCESS;
