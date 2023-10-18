@@ -10,13 +10,14 @@
       forEachSystem = function:
         nixpkgs.lib.genAttrs [
           "x86_64-linux"
-        ] (system: function nixpkgs.legacyPackages.${system});
+        ] (system: function nixpkgs.legacyPackages.${system} system);
 
       vk-renderer =
         { compilerFlags ? []
         , glslang
         , lib
         , llvmPackages_16 
+        , logLevel ? "INFO" # One of the following: DEBUG, INFO, WARN, ERROR, NONE
         , SDL2
         , vulkan-headers 
         , vulkan-loader 
@@ -37,9 +38,10 @@
 
           buildPhase = ''
             clang++ src/*.cpp -o vk-renderer \
-            -lSDL2 \
-            -lvulkan \
-            ${lib.concatStringsSep " " compilerFlags}
+              -DLOG_LEVEL=${logLevel} \
+              -lSDL2 \
+              -lvulkan \
+              ${lib.concatStringsSep " " compilerFlags}
           '';
 
           installPhase = ''
@@ -49,27 +51,33 @@
         };
 
     in {
-      packages = forEachSystem (pkgs: {
+      packages = forEachSystem (pkgs: system: {
         default = pkgs.callPackage vk-renderer {};
+        debug = pkgs.callPackage vk-renderer {
+          logLevel = "DEBUG";
+        };
         release = pkgs.callPackage vk-renderer {
-          compilerFlags = [ "-O3" ];
+          compilerFlags = [ "-O2" ];
+          logLevel = "NONE";
         };
       });
 
-      app = forEachSystem (pkgs: {
+      app = forEachSystem (pkgs: system: {
         default = {
           type = "app";
-          program = "${pkgs.callPackage vk-renderer {}}/bin/vk-renderer";
+          program = "${self.packages.${system}.default}/bin/vk-renderer";
+        };
+        debug = {
+          type = "app";
+          program = "${self.packages.${system}.debug}/bin/vk-renderer";
         };
         release = {
           type = "app";
-          program = "${pkgs.callPackage vk-renderer {
-            compilerFlags = [ "-O3" ];
-          }}/bin/vk-renderer";
+          program = "${self.packages.${system}.release}/bin/vk-renderer";
         };
       });
 
-      devShells = forEachSystem (pkgs: {
+      devShells = forEachSystem (pkgs: system: {
         default = pkgs.mkShell {
           packages = with pkgs; [
             glslang

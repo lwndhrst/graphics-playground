@@ -1,10 +1,8 @@
+#include "log.h"
 #include "renderer.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
-
-#include <cstdio>
-#include <cstdlib>
 
 #define WINDOW_TITLE "Graphics Playground"
 #define WINDOW_WIDTH 640
@@ -12,7 +10,7 @@
 
 int main(int argc, char **argv) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    fprintf(stderr, "Failed to initialize SDL2\n");
+    gp::log::error("Failed to initialize SDL2");
     return EXIT_FAILURE;
   }
 
@@ -22,13 +20,13 @@ int main(int argc, char **argv) {
       SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
 
   if (!window) {
-    fprintf(stderr, "Failed to create window\n");
+    gp::log::error("Failed to create window");
     return EXIT_FAILURE;
   }
 
   gp::Renderer renderer = gp::Renderer();
   if (!renderer.init(window)) {
-    fprintf(stderr, "Failed to initialize renderer\n");
+    gp::log::error("Failed to initialize renderer");
     return EXIT_FAILURE;
   }
 

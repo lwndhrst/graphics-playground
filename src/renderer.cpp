@@ -1,23 +1,22 @@
 #include "renderer.h"
+#include "log.h"
 
 #include <vulkan/vulkan.h>
-
-#include <cstdio>
 
 namespace gp {
 
 bool Renderer::init(SDL_Window *window) {
-  fprintf(stdout, "Called gp::Renderer::init()\n");
+  gp::log::debug("Called gp::Renderer::init()");
   return true;
 }
 
 void Renderer::draw() {
-  fprintf(stdout, "Called gp::Renderer::draw()\n");
+  gp::log::debug("Called gp::Renderer::draw()");
   return;
 }
 
 void Renderer::cleanup() {
-  fprintf(stdout, "Called gp::Renderer::cleanup()\n");
+  gp::log::debug("Called gp::Renderer::cleanup()");
   return;
 }
 
