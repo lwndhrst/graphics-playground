@@ -37,12 +37,12 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  SDL_Event windowEvent;
+  SDL_Event event;
   for (;;) {
-    while (SDL_PollEvent(&windowEvent)) {
-      switch (windowEvent.type) {
+    while (SDL_PollEvent(&event)) {
+      switch (event.type) {
       case SDL_QUIT:
-        goto shutdown;
+        goto cleanup;
 
       default:
         SDL_UpdateWindowSurface(window);
@@ -51,7 +51,7 @@ int main() {
     }
   }
 
-shutdown:
+cleanup:
   SDL_DestroyWindowSurface(window);
   SDL_DestroyWindow(window);
   SDL_Vulkan_UnloadLibrary();
