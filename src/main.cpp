@@ -1,6 +1,7 @@
+#include "renderer.h"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
-#include <vulkan/vulkan.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -9,14 +10,9 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
 
-int main() {
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+int main(int argc, char **argv) {
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "Failed to initialize SDL2\n");
-    return EXIT_FAILURE;
-  }
-
-  if (SDL_Vulkan_LoadLibrary(nullptr) < 0) {
-    fprintf(stderr, "Failed to load Vulkan\n");
     return EXIT_FAILURE;
   }
 
@@ -30,10 +26,9 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  SDL_Surface *surface = SDL_GetWindowSurface(window);
-
-  if (!surface) {
-    fprintf(stderr, "Failed to get window surface\n");
+  gp::Renderer renderer = gp::Renderer();
+  if (!renderer.init(window)) {
+    fprintf(stderr, "Failed to initialize renderer\n");
     return EXIT_FAILURE;
   }
 
@@ -45,16 +40,16 @@ int main() {
         goto cleanup;
 
       default:
-        SDL_UpdateWindowSurface(window);
         break;
       }
     }
+
+    renderer.draw();
   }
 
 cleanup:
-  SDL_DestroyWindowSurface(window);
+  renderer.cleanup();
   SDL_DestroyWindow(window);
-  SDL_Vulkan_UnloadLibrary();
   SDL_Quit();
 
   return EXIT_SUCCESS;
