@@ -13,23 +13,25 @@
         ] (system: function nixpkgs.legacyPackages.${system} system);
 
       vk-renderer =
-        { compilerFlags ? []
+        { binutils
         , glslang
         , lib
-        , llvmPackages_16 
-        , logLevel ? "INFO" # One of the following: DEBUG, INFO, WARN, ERROR, NONE
+        , llvmPackages_15 
         , SDL2
         , vulkan-headers 
         , vulkan-loader 
+        , clangFlags ? []
+        , logLevel ? "INFO" # one of the following: DEBUG, INFO, WARN, ERROR, NONE
         }:
 
-        llvmPackages_16.stdenv.mkDerivation {
+        llvmPackages_15.stdenv.mkDerivation {
           pname = "vk-renderer";
           version = "2023-10-14";
 
           src = ./.;
 
           buildInputs = [
+            binutils
             glslang
             SDL2
             vulkan-headers
@@ -37,11 +39,12 @@
           ];
 
           buildPhase = ''
-            clang++ src/*.cpp -o vk-renderer \
-              -DLOG_LEVEL=${logLevel} \
-              -lSDL2 \
-              -lvulkan \
-              ${lib.concatStringsSep " " compilerFlags}
+            clang++ src/*.cpp -o vk-renderer ${lib.concatStringsSep " " [
+              "-DLOG_LEVEL=${logLevel}"
+              "-fuse-ld=gold"
+              "-lSDL2"
+              "-lvulkan"
+            ]} ${lib.concatStringsSep " " clangFlags}
           '';
 
           installPhase = ''
@@ -57,8 +60,11 @@
           logLevel = "DEBUG";
         };
         release = pkgs.callPackage vk-renderer {
-          compilerFlags = [ "-O2" ];
           logLevel = "NONE";
+          clangFlags = [ 
+            "-O3"
+            "-flto"
+          ];
         };
       });
 
