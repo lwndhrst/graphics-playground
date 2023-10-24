@@ -23,7 +23,7 @@ bool Engine::init() {
       SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
 
   if (!window) {
-    log::error("Failed to create window");
+    log::error("Failed to create SDL2 window");
     return false;
   }
 

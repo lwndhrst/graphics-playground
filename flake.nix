@@ -20,6 +20,7 @@
         , SDL2
         , vulkan-headers 
         , vulkan-loader 
+        , vulkan-validation-layers
         , clangFlags ? []
         , logLevel ? "INFO" # one of the following: DEBUG, INFO, WARN, ERROR, NONE
         }:
@@ -36,6 +37,7 @@
             SDL2
             vulkan-headers
             vulkan-loader
+            vulkan-validation-layers
           ];
 
           buildPhase = ''
@@ -90,6 +92,7 @@
             SDL2
             vulkan-headers
             vulkan-loader
+            vulkan-validation-layers
           ];
 
           LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [];
