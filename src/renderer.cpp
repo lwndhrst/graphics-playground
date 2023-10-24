@@ -1,14 +1,22 @@
 #include "renderer.h"
 #include "core.h"
 #include "log.h"
-#include <SDL2/SDL_vulkan.h>
+#include <SDL2/SDL_video.h>
 
 namespace gp {
+
+#ifndef ENABLE_VALIDATION_LAYERS
+#define ENABLE_VALIDATION_LAYERS false
+#elif ENABLE_VALIDATION_LAYERS
+// TODO: custom callback for printing validation layer messages
+const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+#endif
 
 bool Renderer::init(SDL_Window *window) {
   this->window = window;
 
   print_available_extensions();
+  print_available_layers();
 
   if (create_instance() != VK_SUCCESS) {
     log::error("Failed to create Vulkan instance");
@@ -26,6 +34,7 @@ bool Renderer::init(SDL_Window *window) {
 void Renderer::draw() {}
 
 void Renderer::cleanup() {
+  vkDestroySurfaceKHR(instance, surface, nullptr);
   vkDestroyInstance(instance, nullptr);
 }
 
@@ -49,8 +58,14 @@ VkResult Renderer::create_instance() {
   create_info.pApplicationInfo = &app_info;
   create_info.enabledExtensionCount = ext_count;
   create_info.ppEnabledExtensionNames = ext_names;
+
+#if ENABLE_VALIDATION_LAYERS
+  create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char *);
+  create_info.ppEnabledLayerNames = validation_layers;
+#else
   create_info.enabledLayerCount = 0;
   create_info.ppEnabledLayerNames = nullptr;
+#endif
 
   return vkCreateInstance(&create_info, nullptr, &instance);
 }
@@ -69,6 +84,18 @@ static void print_available_extensions() {
   log::debug("Available Vulkan Extensions:");
   for (auto ext : ext_props)
     log::debug(ext.extensionName);
+}
+
+static void print_available_layers() {
+  u32 layer_count = 0;
+  vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+
+  VkLayerProperties layer_props[layer_count];
+  vkEnumerateInstanceLayerProperties(&layer_count, layer_props);
+
+  log::debug("Available Vulkan Layers:");
+  for (auto layer : layer_props)
+    log::debug(layer.layerName);
 }
 
 } // namespace gp

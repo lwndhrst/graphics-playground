@@ -22,5 +22,6 @@ public:
 };
 
 static void print_available_extensions();
+static void print_available_layers();
 
 } // namespace gp

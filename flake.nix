@@ -22,7 +22,7 @@
         , vulkan-loader 
         , vulkan-validation-layers
         , clangFlags ? []
-        , logLevel ? "INFO" # one of the following: DEBUG, INFO, WARN, ERROR, NONE
+        , logLevel ? "NONE" # one of the following: DEBUG, INFO, WARN, ERROR, NONE
         }:
 
         llvmPackages_15.stdenv.mkDerivation {
@@ -59,6 +59,9 @@
       packages = forEachSystem (pkgs: system: {
         debug = pkgs.callPackage vk-renderer {
           logLevel = "DEBUG";
+          clangFlags = [ 
+            "-DENABLE_VALIDATION_LAYERS=true"
+          ];
         };
         release = pkgs.callPackage vk-renderer {
           logLevel = "NONE";
