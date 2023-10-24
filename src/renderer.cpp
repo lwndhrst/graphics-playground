@@ -9,7 +9,7 @@ namespace gp {
 #define ENABLE_VALIDATION_LAYERS false
 #elif ENABLE_VALIDATION_LAYERS
 // TODO: custom callback for printing validation layer messages
-const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+static const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 #endif
 
 bool Renderer::init(SDL_Window *window) {
@@ -18,12 +18,12 @@ bool Renderer::init(SDL_Window *window) {
   print_available_extensions();
   print_available_layers();
 
-  if (create_instance() != VK_SUCCESS) {
+  if (!create_instance()) {
     log::error("Failed to create Vulkan instance");
     return false;
   }
 
-  if (create_surface() != SDL_TRUE) {
+  if (!create_surface()) {
     log::error("Failed to create Vulkan instance");
     return false;
   }
@@ -38,7 +38,7 @@ void Renderer::cleanup() {
   vkDestroyInstance(instance, nullptr);
 }
 
-VkResult Renderer::create_instance() {
+bool Renderer::create_instance() {
   VkApplicationInfo app_info{};
   app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   app_info.pApplicationName = "Graphics Playground";
@@ -67,11 +67,26 @@ VkResult Renderer::create_instance() {
   create_info.ppEnabledLayerNames = nullptr;
 #endif
 
-  return vkCreateInstance(&create_info, nullptr, &instance);
+  return vkCreateInstance(&create_info, nullptr, &instance) == VK_SUCCESS;
 }
 
-SDL_bool Renderer::create_surface() {
-  return SDL_Vulkan_CreateSurface(window, instance, &surface);
+bool Renderer::create_surface() {
+  return SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_TRUE;
+}
+
+bool Renderer::create_physical_device() {
+  u32 device_count = 0;
+  vkEnumeratePhysicalDevices(nullptr, &device_count, nullptr);
+
+  if (device_count == 0) {
+    log::error("Failed to find a GPU with Vulkan support");
+    return false;
+  }
+
+  VkPhysicalDevice devices[device_count];
+  vkEnumeratePhysicalDevices(nullptr, &device_count, devices);
+
+  return true;
 }
 
 static void print_available_extensions() {

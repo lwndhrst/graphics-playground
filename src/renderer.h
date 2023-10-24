@@ -12,8 +12,9 @@ private:
   VkInstance instance;
   VkSurfaceKHR surface;
 
-  VkResult create_instance();
-  SDL_bool create_surface();
+  bool create_instance();
+  bool create_surface();
+  bool create_physical_device();
 
 public:
   bool init(SDL_Window *window);
