@@ -33,8 +33,7 @@ VkResult Renderer::create_instance() {
   SDL_Vulkan_GetInstanceExtensions(window, &extension_count, nullptr);
 
   const char *extension_names[extension_count];
-  SDL_Vulkan_GetInstanceExtensions(window, &extension_count,
-                                   extension_names);
+  SDL_Vulkan_GetInstanceExtensions(window, &extension_count, extension_names);
 
   VkInstanceCreateInfo create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
