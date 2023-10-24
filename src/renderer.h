@@ -10,8 +10,10 @@ class Renderer {
 private:
   SDL_Window *window;
   VkInstance instance;
+  VkSurfaceKHR surface;
 
   VkResult create_instance();
+  SDL_bool create_surface();
 
 public:
   bool init(SDL_Window *window);

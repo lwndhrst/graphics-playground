@@ -1,6 +1,7 @@
 #include "renderer.h"
 #include "core.h"
 #include "log.h"
+#include <SDL2/SDL_vulkan.h>
 
 namespace gp {
 
@@ -10,6 +11,11 @@ bool Renderer::init(SDL_Window *window) {
   print_available_extensions();
 
   if (create_instance() != VK_SUCCESS) {
+    log::error("Failed to create Vulkan instance");
+    return false;
+  }
+
+  if (create_surface() != SDL_TRUE) {
     log::error("Failed to create Vulkan instance");
     return false;
   }
@@ -47,6 +53,10 @@ VkResult Renderer::create_instance() {
   create_info.ppEnabledLayerNames = nullptr;
 
   return vkCreateInstance(&create_info, nullptr, &instance);
+}
+
+SDL_bool Renderer::create_surface() {
+  return SDL_Vulkan_CreateSurface(window, instance, &surface);
 }
 
 static void print_available_extensions() {

@@ -1,4 +1,4 @@
-# Nix build output dir
+build/
 result
 
 # Prerequisites
