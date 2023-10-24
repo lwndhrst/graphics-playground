@@ -57,7 +57,6 @@
 
     in {
       packages = forEachSystem (pkgs: system: {
-        default = pkgs.callPackage vk-renderer {};
         debug = pkgs.callPackage vk-renderer {
           logLevel = "DEBUG";
         };
@@ -68,13 +67,10 @@
             "-flto"
           ];
         };
+        default = self.packages.${system}.debug;
       });
 
       app = forEachSystem (pkgs: system: {
-        default = {
-          type = "app";
-          program = "${self.packages.${system}.default}/bin/vk-renderer";
-        };
         debug = {
           type = "app";
           program = "${self.packages.${system}.debug}/bin/vk-renderer";
@@ -82,6 +78,10 @@
         release = {
           type = "app";
           program = "${self.packages.${system}.release}/bin/vk-renderer";
+        };
+        default = {
+          type = "app";
+          program = "${self.packages.${system}.default}/bin/vk-renderer";
         };
       });
 

@@ -19,4 +19,6 @@ public:
   void cleanup();
 };
 
+static void print_available_extensions();
+
 } // namespace gp
