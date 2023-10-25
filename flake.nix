@@ -25,7 +25,7 @@
         , logLevel ? "NONE" # one of the following: DEBUG, INFO, WARN, ERROR, NONE
         }:
 
-        llvmPackages_15.stdenv.mkDerivation {
+        llvmPackages_15.libcxxStdenv.mkDerivation {
           pname = "vk-renderer";
           version = "2023-10-14";
 
@@ -42,8 +42,10 @@
 
           buildPhase = ''
             clang++ src/*.cpp -o vk-renderer ${lib.concatStringsSep " " [
-              "-DLOG_LEVEL=${logLevel}"
+              "-std=c++20"
+              "-fexperimental-library"
               "-fuse-ld=gold"
+              "-DLOG_LEVEL=${logLevel}"
               "-lSDL2"
               "-lvulkan"
             ]} ${lib.concatStringsSep " " clangFlags}
@@ -91,6 +93,9 @@
       devShells = forEachSystem (pkgs: system: {
         default = pkgs.mkShell {
           packages = with pkgs; [
+            bear
+            llvmPackages_15.libcxx
+            glibc
             glslang
             SDL2
             vulkan-headers
@@ -98,7 +103,11 @@
             vulkan-validation-layers
           ];
 
-          LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [];
+          shellHook = with pkgs; ''
+            export CPATH=$CPATH:${llvmPackages_15.libcxx.dev}/include/c++/v1:${glibc.dev}/include
+            export CPLUS_INCLUDE_PATH=$CPATH
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${llvmPackages_15.libcxx}/lib:${llvmPackages_15.libcxxabi}/lib
+          '';
         };
       });
     };

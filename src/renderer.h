@@ -11,6 +11,7 @@ private:
   SDL_Window *window;
   VkInstance instance;
   VkSurfaceKHR surface;
+  VkPhysicalDevice physical_device;
 
   bool create_instance();
   bool create_surface();
@@ -21,8 +22,5 @@ public:
   void draw();
   void cleanup();
 };
-
-static void print_available_extensions();
-static void print_available_layers();
 
 } // namespace gp

@@ -1,7 +1,6 @@
 #include "renderer.h"
 #include "core.h"
 #include "log.h"
-#include <SDL2/SDL_video.h>
 
 namespace gp {
 
@@ -11,6 +10,10 @@ namespace gp {
 // TODO: custom callback for printing validation layer messages
 static const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 #endif
+
+static void print_available_extensions();
+static void print_available_layers();
+static bool check_device_suitability(VkPhysicalDevice &device);
 
 bool Renderer::init(SDL_Window *window) {
   this->window = window;
@@ -25,6 +28,11 @@ bool Renderer::init(SDL_Window *window) {
 
   if (!create_surface()) {
     log::error("Failed to create Vulkan instance");
+    return false;
+  }
+
+  if (!create_physical_device()) {
+    log::error("Failed to pick physical device");
     return false;
   }
 
@@ -75,8 +83,10 @@ bool Renderer::create_surface() {
 }
 
 bool Renderer::create_physical_device() {
+  physical_device = VK_NULL_HANDLE;
+
   u32 device_count = 0;
-  vkEnumeratePhysicalDevices(nullptr, &device_count, nullptr);
+  vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
 
   if (device_count == 0) {
     log::error("Failed to find a GPU with Vulkan support");
@@ -84,7 +94,20 @@ bool Renderer::create_physical_device() {
   }
 
   VkPhysicalDevice devices[device_count];
-  vkEnumeratePhysicalDevices(nullptr, &device_count, devices);
+  vkEnumeratePhysicalDevices(instance, &device_count, devices);
+
+  // TODO: probably want some logic to prefer discrete GPU if available
+  for (auto &device : devices) {
+    if (check_device_suitability(device)) {
+      physical_device = device;
+      break;
+    }
+  }
+
+  if (physical_device == VK_NULL_HANDLE) {
+    log::error("Failed to find a suitable GPU");
+    return false;
+  }
 
   return true;
 }
@@ -97,7 +120,7 @@ static void print_available_extensions() {
   vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, ext_props);
 
   log::debug("Available Vulkan Extensions:");
-  for (auto ext : ext_props)
+  for (auto &ext : ext_props)
     log::debug(ext.extensionName);
 }
 
@@ -109,8 +132,32 @@ static void print_available_layers() {
   vkEnumerateInstanceLayerProperties(&layer_count, layer_props);
 
   log::debug("Available Vulkan Layers:");
-  for (auto layer : layer_props)
+  for (auto &layer : layer_props)
     log::debug(layer.layerName);
 }
+
+static bool check_device_suitability(VkPhysicalDevice &device) {
+  VkPhysicalDeviceProperties device_props;
+  VkPhysicalDeviceFeatures device_feats;
+
+  vkGetPhysicalDeviceProperties(device, &device_props);
+  vkGetPhysicalDeviceFeatures(device, &device_feats);
+
+  log::debug(std::format("Found GPU: {}", device_props.deviceName));
+
+  switch (device_props.deviceType) {
+  case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+    log::debug("Type: Discrete");
+    return true;
+
+  case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+    log::debug("Type: Integrated");
+    return true;
+
+  default:
+    log::debug("Type: Unknown");
+    return false;
+  }
+};
 
 } // namespace gp

@@ -1,7 +1,6 @@
 #include "log.h"
 
 #include <cstdio>
-#include <cstring>
 
 #define ANSI_RED "\033[31m"
 #define ANSI_YELLOW "\033[33m"
@@ -25,22 +24,22 @@ static LogLevel level = LogLevel::LOG_LEVEL;
 
 void debug(std::string &&msg) {
   if (level > LogLevel::DEBUG) return;
-  fprintf(stdout, "DEBUG  %s\n", msg.c_str());
+  fprintf(stdout, "DEBUG   %s\n", msg.c_str());
 }
 
 void info(std::string &&msg) {
   if (level > LogLevel::INFO) return;
-  fprintf(stdout, "INFO   %s\n", msg.c_str());
+  fprintf(stdout, "INFO    %s\n", msg.c_str());
 }
 
 void warn(std::string &&msg) {
   if (level > LogLevel::WARN) return;
-  fprintf(stdout, "WARN   %s%s%s\n", ANSI_YELLOW, msg.c_str(), ANSI_RESET);
+  fprintf(stdout, "%sWARN    %s%s\n", ANSI_YELLOW, msg.c_str(), ANSI_RESET);
 }
 
 void error(std::string &&msg) {
   if (level > LogLevel::ERROR) return;
-  fprintf(stderr, "ERROR  %s%s%s\n", ANSI_RED, msg.c_str(), ANSI_RESET);
+  fprintf(stderr, "%sERROR   %s%s\n", ANSI_RED, msg.c_str(), ANSI_RESET);
 }
 
 } // namespace gp::log
