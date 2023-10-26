@@ -145,6 +145,7 @@ static bool check_device_suitability(VkPhysicalDevice &device) {
 
   log::debug(std::format("Found GPU: {}", device_props.deviceName));
 
+  // TODO: more advanced feature checks?
   switch (device_props.deviceType) {
   case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
     log::debug("Type: Discrete");
