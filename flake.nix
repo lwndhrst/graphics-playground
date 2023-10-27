@@ -89,22 +89,23 @@
       });
 
       devShells = forEachSystem (pkgs: system: {
-        default = pkgs.mkShell {
+        default = pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.libcxxStdenv; } {
           packages = with pkgs; [
-            glibc
+            # clangd, clang-format
+            clang-tools_15
+
+            # shader tools
             glslang
-            llvmPackages_15.libcxx
+
+            # dependencies
             SDL2
             vulkan-headers
             vulkan-loader
             vulkan-validation-layers
           ];
 
-          shellHook = with pkgs; ''
-            export CPATH=$CPATH:${llvmPackages_15.libcxx.dev}/include/c++/v1:${glibc.dev}/include
-            export CPLUS_INCLUDE_PATH=$CPATH
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${llvmPackages_15.libcxx}/lib:${llvmPackages_15.libcxxabi}/lib
-          '';
+          # need to help clangd to find shit...
+          CPLUS_INCLUDE_PATH = "${pkgs.llvmPackages_15.libcxx.dev}/include/c++/v1:${pkgs.glibc.dev}/include";
         };
       });
     };

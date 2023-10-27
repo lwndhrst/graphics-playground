@@ -11,6 +11,7 @@ struct RendererData {
 	VkInstance instance;
 	VkSurfaceKHR surface;
 	VkPhysicalDevice physical_device;
+	VkDevice device;
 };
 
 class Renderer {

@@ -9,7 +9,7 @@
 #define ANSI_RESET "\033[0m"
 
 #ifndef LOG_LEVEL
-#define LOG_LEVEL INFO
+#define LOG_LEVEL NONE
 #endif
 
 namespace gp::log {
@@ -22,30 +22,33 @@ enum LogLevel {
 	NONE,
 };
 
-static LogLevel log_level = LogLevel::LOG_LEVEL;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-compare"
 
 // clang-format off
 template <typename T> static void debug(T msg) {
-	if (log_level > LogLevel::DEBUG) return;
+	if (LogLevel::LOG_LEVEL > LogLevel::DEBUG) return;
 	fprintf(stdout, "DEBUG   %s\n", std::format("{}", msg).c_str());
 }
 
 // clang-format off
 template <typename T> static void info(T msg) {
-	if (log_level > LogLevel::INFO) return;
+	if (LogLevel::LOG_LEVEL > LogLevel::INFO) return;
 	fprintf(stdout, "INFO    %s\n", std::format("{}", msg).c_str());
 }
 
 // clang-format off
 template <typename T> static void warn(T msg) {
-	if (log_level > LogLevel::WARN) return;
+	if (LogLevel::LOG_LEVEL > LogLevel::WARN) return;
 	fprintf(stdout, "%sWARN    %s%s\n", ANSI_YELLOW, std::format("{}", msg).c_str(), ANSI_RESET);
 }
 
 // clang-format off
 template <typename T> static void error(T msg) {
-	if (log_level > LogLevel::ERROR) return;
+	if (LogLevel::LOG_LEVEL > LogLevel::ERROR) return;
 	fprintf(stderr, "%sERROR   %s%s\n", ANSI_RED, std::format("{}", msg).c_str(), ANSI_RESET);
 }
+
+#pragma clang diagnostic pop
 
 } // namespace gp::log
