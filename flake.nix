@@ -90,6 +90,8 @@
 
       devShells = forEachSystem (pkgs: system: {
         default = pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.libcxxStdenv; } {
+          name = "graphics-playground";
+
           packages = with pkgs; [
             # clangd, clang-format
             clang-tools_15
