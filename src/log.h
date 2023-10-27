@@ -7,7 +7,7 @@
 #define ANSI_YELLOW "\033[33m"
 #define ANSI_RESET "\033[0m"
 
-// pass LOG_LEVEL to clang++ using the -D flag
+// you can pass LOG_LEVEL to clang++ using the -D flag
 #ifndef LOG_LEVEL
 #define LOG_LEVEL NONE
 #endif
@@ -27,7 +27,8 @@ enum LogLevel {
 
 template <typename T>
 static void
-debug(T msg) {
+debug(T msg)
+{
     if (LogLevel::LOG_LEVEL > LogLevel::DEBUG)
         return;
 
@@ -36,7 +37,8 @@ debug(T msg) {
 
 template <typename T>
 static void
-info(T msg) {
+info(T msg)
+{
     if (LogLevel::LOG_LEVEL > LogLevel::INFO)
         return;
 
@@ -45,7 +47,8 @@ info(T msg) {
 
 template <typename T>
 static void
-warn(T msg) {
+warn(T msg)
+{
     if (LogLevel::LOG_LEVEL > LogLevel::WARN)
         return;
 
@@ -54,7 +57,8 @@ warn(T msg) {
 
 template <typename T>
 static void
-error(T msg) {
+error(T msg)
+{
     if (LogLevel::LOG_LEVEL > LogLevel::ERROR)
         return;
 

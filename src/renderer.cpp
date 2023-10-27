@@ -28,7 +28,8 @@ static bool check_device_suitability(VkPhysicalDevice &physical_device);
 static QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
 
 bool
-Renderer::init(SDL_Window *window) {
+Renderer::init(SDL_Window *window)
+{
     data.window = window;
 
     print_available_extensions();
@@ -58,17 +59,22 @@ Renderer::init(SDL_Window *window) {
 }
 
 void
-Renderer::draw() {}
+Renderer::draw()
+{
+}
 
 void
-Renderer::cleanup() {
+Renderer::cleanup()
+{
     vkDestroySurfaceKHR(data.instance, data.surface, nullptr);
     vkDestroyDevice(data.device, nullptr);
     vkDestroyInstance(data.instance, nullptr);
 }
 
 static bool
-create_instance(SDL_Window *window, VkInstance &instance) {
+create_instance(SDL_Window *window,
+                VkInstance &instance)
+{
     VkApplicationInfo app_info = {};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = "Graphics Playground";
@@ -101,12 +107,17 @@ create_instance(SDL_Window *window, VkInstance &instance) {
 }
 
 static bool
-create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface) {
+create_surface(SDL_Window *window,
+               VkInstance &instance,
+               VkSurfaceKHR &surface)
+{
     return SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_TRUE;
 }
 
 static bool
-select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device) {
+select_physical_device(VkInstance &instance,
+                       VkPhysicalDevice &physical_device)
+{
     physical_device = VK_NULL_HANDLE;
 
     u32 device_count = 0;
@@ -139,8 +150,8 @@ select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device) 
 static bool
 create_logical_device(VkPhysicalDevice &physical_device,
                       VkDevice &device,
-                      VkQueue &graphics_queue) {
-
+                      VkQueue &graphics_queue)
+{
     // the selected gpu should always support graphics queue, if we get here
     QueueFamilyIndices queue_family_indices = get_queue_family_indices(physical_device);
     f32 queue_priorities = 1.0f;
@@ -180,7 +191,8 @@ create_logical_device(VkPhysicalDevice &physical_device,
 }
 
 static void
-print_available_extensions() {
+print_available_extensions()
+{
     u32 ext_count = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, nullptr);
 
@@ -193,7 +205,8 @@ print_available_extensions() {
 }
 
 static void
-print_available_layers() {
+print_available_layers()
+{
     u32 layer_count = 0;
     vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
 
@@ -206,7 +219,8 @@ print_available_layers() {
 }
 
 static bool
-check_device_suitability(VkPhysicalDevice &physical_device) {
+check_device_suitability(VkPhysicalDevice &physical_device)
+{
     VkPhysicalDeviceProperties physical_device_props;
     VkPhysicalDeviceFeatures physical_device_feats;
 
@@ -232,7 +246,8 @@ check_device_suitability(VkPhysicalDevice &physical_device) {
 };
 
 static QueueFamilyIndices
-get_queue_family_indices(VkPhysicalDevice &physical_device) {
+get_queue_family_indices(VkPhysicalDevice &physical_device)
+{
     QueueFamilyIndices queue_family_indices = {};
 
     u32 queue_family_count = 0;
