@@ -104,7 +104,8 @@ create_instance(SDL_Window *window, VkInstance &instance) {
 }
 
 static bool
-create_surface(SDL_Window *window, VkInstance &instance,
+create_surface(SDL_Window *window,
+			   VkInstance &instance,
 			   VkSurfaceKHR &surface) {
 	return SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_TRUE;
 }
@@ -173,8 +174,9 @@ create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device) {
 	device_create_info.ppEnabledLayerNames = nullptr;
 #endif
 
-	return vkCreateDevice(physical_device, &device_create_info, nullptr,
-						  &device) == VK_SUCCESS;
+	return vkCreateDevice(
+			   physical_device, &device_create_info, nullptr, &device) ==
+		   VK_SUCCESS;
 }
 
 static void
@@ -234,8 +236,8 @@ get_queue_family_indices(VkPhysicalDevice &physical_device) {
 	QueueFamilyIndices queue_family_indices = {};
 
 	u32 queue_family_count = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device,
-											 &queue_family_count, nullptr);
+	vkGetPhysicalDeviceQueueFamilyProperties(
+		physical_device, &queue_family_count, nullptr);
 
 	VkQueueFamilyProperties queue_family_props[queue_family_count];
 	vkGetPhysicalDeviceQueueFamilyProperties(

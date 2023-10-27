@@ -3,3 +3,5 @@ UseTab: Always
 IndentWidth: 4
 TabWidth: 4
 AlwaysBreakAfterReturnType: TopLevelDefinitions
+BinPackArguments: false
+BinPackParameters: false
