@@ -7,14 +7,14 @@
 namespace gp {
 
 class Engine {
-  private:
-	SDL_Window *window;
-	Renderer renderer;
+private:
+    SDL_Window *window;
+    Renderer renderer;
 
-  public:
-	bool init();
-	void run();
-	void cleanup();
+public:
+    bool init();
+    void run();
+    void cleanup();
 };
 
 } // namespace gp

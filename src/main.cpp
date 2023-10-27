@@ -3,18 +3,18 @@
 
 int
 main(int argc, char **argv) {
-	using namespace gp;
+    using namespace gp;
 
-	Engine engine = Engine();
-	if (!engine.init()) {
-		log::error("Failed to start engine");
-		return EXIT_FAILURE;
-	}
+    Engine engine = Engine();
+    if (!engine.init()) {
+        log::error("Failed to start engine");
+        return EXIT_FAILURE;
+    }
 
-	// main loop
-	engine.run();
+    // main loop
+    engine.run();
 
-	engine.cleanup();
+    engine.cleanup();
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
