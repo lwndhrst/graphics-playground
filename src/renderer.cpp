@@ -18,9 +18,9 @@ struct QueueFamilyIndices {
 };
 
 static bool create_instance(SDL_Window *window, VkInstance &instance);
-static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
 static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device);
 static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, VkQueue &graphics_queue);
+static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
 
 static void print_available_extensions();
 static void print_available_layers();
@@ -103,15 +103,11 @@ create_instance(SDL_Window *window,
     instance_create_info.ppEnabledLayerNames = nullptr;
 #endif
 
-    return vkCreateInstance(&instance_create_info, nullptr, &instance) == VK_SUCCESS;
-}
+    VkResult result = vkCreateInstance(&instance_create_info,
+                                       nullptr,
+                                       &instance);
 
-static bool
-create_surface(SDL_Window *window,
-               VkInstance &instance,
-               VkSurfaceKHR &surface)
-{
-    return SDL_Vulkan_CreateSurface(window, instance, &surface) == SDL_TRUE;
+    return result == VK_SUCCESS;
 }
 
 static bool
@@ -179,7 +175,12 @@ create_logical_device(VkPhysicalDevice &physical_device,
     device_create_info.ppEnabledLayerNames = nullptr;
 #endif
 
-    if (vkCreateDevice(physical_device, &device_create_info, nullptr, &device) != VK_SUCCESS)
+    VkResult result = vkCreateDevice(physical_device,
+                                     &device_create_info,
+                                     nullptr,
+                                     &device);
+
+    if (result != VK_SUCCESS)
         return false;
 
     vkGetDeviceQueue(device,
@@ -188,6 +189,15 @@ create_logical_device(VkPhysicalDevice &physical_device,
                      &graphics_queue);
 
     return true;
+}
+
+static bool
+create_surface(SDL_Window *window,
+               VkInstance &instance,
+               VkSurfaceKHR &surface)
+{
+    SDL_bool result = SDL_Vulkan_CreateSurface(window, instance, &surface);
+    return result == SDL_TRUE;
 }
 
 static void
