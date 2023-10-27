@@ -11,7 +11,8 @@
 
 namespace gp {
 
-bool Engine::init() {
+bool
+Engine::init() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		log::error("Failed to initialize SDL2");
 		return false;
@@ -39,7 +40,8 @@ bool Engine::init() {
 	return true;
 }
 
-void Engine::run() {
+void
+Engine::run() {
 	SDL_Event event;
 	for (;;) {
 		while (SDL_PollEvent(&event)) {
@@ -56,7 +58,8 @@ void Engine::run() {
 	}
 }
 
-void Engine::cleanup() {
+void
+Engine::cleanup() {
 	this->renderer.cleanup();
 	SDL_DestroyWindow(this->window);
 	SDL_Quit();

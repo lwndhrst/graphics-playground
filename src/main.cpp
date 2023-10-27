@@ -1,7 +1,8 @@
 #include "engine.h"
 #include "log.h"
 
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
 	using namespace gp;
 
 	Engine engine = Engine();
