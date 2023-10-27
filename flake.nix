@@ -13,8 +13,7 @@
         ] (system: function nixpkgs.legacyPackages.${system} system);
 
       vk-renderer =
-        { binutils
-        , glslang
+        { glslang
         , lib
         , llvmPackages_15 
         , SDL2
@@ -32,7 +31,6 @@
           src = ./.;
 
           buildInputs = [
-            binutils
             glslang
             SDL2
             vulkan-headers
@@ -93,10 +91,9 @@
       devShells = forEachSystem (pkgs: system: {
         default = pkgs.mkShell {
           packages = with pkgs; [
-            bear
-            llvmPackages_15.libcxx
             glibc
             glslang
+            llvmPackages_15.libcxx
             SDL2
             vulkan-headers
             vulkan-loader

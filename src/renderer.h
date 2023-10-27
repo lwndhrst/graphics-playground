@@ -6,21 +6,21 @@
 
 namespace gp {
 
+struct RendererData {
+	SDL_Window *window;
+	VkInstance instance;
+	VkSurfaceKHR surface;
+	VkPhysicalDevice physical_device;
+};
+
 class Renderer {
-private:
-  SDL_Window *window;
-  VkInstance instance;
-  VkSurfaceKHR surface;
-  VkPhysicalDevice physical_device;
+  private:
+	RendererData data;
 
-  bool create_instance();
-  bool create_surface();
-  bool create_physical_device();
-
-public:
-  bool init(SDL_Window *window);
-  void draw();
-  void cleanup();
+  public:
+	bool init(SDL_Window *window);
+	void draw();
+	void cleanup();
 };
 
 } // namespace gp
