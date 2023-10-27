@@ -2,7 +2,6 @@
 #include "core.h"
 #include "log.h"
 #include <optional>
-#include <vulkan/vulkan_core.h>
 
 namespace gp {
 
@@ -21,12 +20,12 @@ struct QueueFamilyIndices {
 static bool create_instance(SDL_Window *window, VkInstance &instance);
 static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
 static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device);
-static QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
 static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device);
 
 static void print_available_extensions();
 static void print_available_layers();
-static bool check_device_suitability(VkPhysicalDevice &device);
+static bool check_device_suitability(VkPhysicalDevice &physical_device);
+static QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
 // clang-format on
 
 bool Renderer::init(SDL_Window *window) {
@@ -41,7 +40,7 @@ bool Renderer::init(SDL_Window *window) {
 	}
 
 	if (!select_physical_device(data.instance, data.physical_device)) {
-		log::error("Failed to pick physical device");
+		log::error("Failed to select physical device");
 		return false;
 	}
 

@@ -8,6 +8,7 @@
 #define ANSI_YELLOW "\033[33m"
 #define ANSI_RESET "\033[0m"
 
+// pass LOG_LEVEL to clang++ using the -D flag
 #ifndef LOG_LEVEL
 #define LOG_LEVEL NONE
 #endif
