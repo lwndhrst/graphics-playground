@@ -13,6 +13,7 @@ struct RendererData {
     VkPhysicalDevice physical_device;
     VkDevice device;
     VkQueue graphics_queue;
+    VkQueue present_queue;
 };
 
 class Renderer {

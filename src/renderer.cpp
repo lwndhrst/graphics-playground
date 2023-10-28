@@ -18,9 +18,9 @@ struct QueueFamilyIndices {
 };
 
 static bool create_instance(SDL_Window *window, VkInstance &instance);
-static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device);
-static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, VkQueue &graphics_queue);
 static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
+static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device);
+static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, VkQueue &graphics_queue, VkQueue &present_queue);
 
 static void print_available_extensions();
 static void print_available_layers();
@@ -40,18 +40,18 @@ Renderer::init(SDL_Window *window)
         return false;
     }
 
+    if (!create_surface(data.window, data.instance, data.surface)) {
+        log::error("Failed to create surface");
+        return false;
+    }
+
     if (!select_physical_device(data.instance, data.physical_device)) {
         log::error("Failed to select physical device");
         return false;
     }
 
-    if (!create_logical_device(data.physical_device, data.device, data.graphics_queue)) {
+    if (!create_logical_device(data.physical_device, data.device, data.graphics_queue, data.present_queue)) {
         log::error("Failed to create logical device");
-        return false;
-    }
-
-    if (!create_surface(data.window, data.instance, data.surface)) {
-        log::error("Failed to create Vulkan instance");
         return false;
     }
 
@@ -66,8 +66,8 @@ Renderer::draw()
 void
 Renderer::cleanup()
 {
-    vkDestroySurfaceKHR(data.instance, data.surface, nullptr);
     vkDestroyDevice(data.device, nullptr);
+    vkDestroySurfaceKHR(data.instance, data.surface, nullptr);
     vkDestroyInstance(data.instance, nullptr);
 }
 
@@ -146,7 +146,8 @@ select_physical_device(VkInstance &instance,
 static bool
 create_logical_device(VkPhysicalDevice &physical_device,
                       VkDevice &device,
-                      VkQueue &graphics_queue)
+                      VkQueue &graphics_queue,
+                      VkQueue &present_queue)
 {
     // the selected gpu should always support graphics queue, if we get here
     QueueFamilyIndices queue_family_indices = get_queue_family_indices(physical_device);
@@ -187,6 +188,9 @@ create_logical_device(VkPhysicalDevice &physical_device,
                      queue_family_indices.graphics.value(),
                      0,
                      &graphics_queue);
+
+    // TODO: assuming graphics and present queues are identical for now
+    present_queue = graphics_queue;
 
     return true;
 }
