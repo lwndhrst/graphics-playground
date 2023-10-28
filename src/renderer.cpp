@@ -10,8 +10,12 @@ namespace gp {
 #define ENABLE_VALIDATION_LAYERS false
 #elif ENABLE_VALIDATION_LAYERS
 // TODO: custom callback for printing validation layer messages
-static const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+static const char *enabled_layers[] = {"VK_LAYER_KHRONOS_validation"};
+static const u32 enabled_layer_count = sizeof(enabled_layers) / sizeof(char *);
 #endif
+
+static const char *enabled_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+static const u32 enabled_extension_count = sizeof(enabled_extensions) / sizeof(char *);
 
 struct QueueFamilyIndices {
     std::optional<u32> graphics;
@@ -26,6 +30,7 @@ static void print_available_extensions();
 static void print_available_layers();
 static bool check_device_suitability(VkPhysicalDevice &physical_device);
 static QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
+static bool check_extension_support(VkPhysicalDevice &physical_device);
 
 bool
 Renderer::init(SDL_Window *window)
@@ -96,8 +101,8 @@ create_instance(SDL_Window *window,
     instance_create_info.ppEnabledExtensionNames = ext_names;
 
 #if ENABLE_VALIDATION_LAYERS
-    instance_create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char *);
-    instance_create_info.ppEnabledLayerNames = validation_layers;
+    instance_create_info.enabledLayerCount = enabled_layer_count;
+    instance_create_info.ppEnabledLayerNames = enabled_layers;
 #else
     instance_create_info.enabledLayerCount = 0;
     instance_create_info.ppEnabledLayerNames = nullptr;
@@ -166,11 +171,12 @@ create_logical_device(VkPhysicalDevice &physical_device,
     device_create_info.queueCreateInfoCount = 1;
     device_create_info.pQueueCreateInfos = &queue_create_info;
     device_create_info.pEnabledFeatures = &physical_device_feats;
-    device_create_info.enabledExtensionCount = 0;
+    device_create_info.enabledExtensionCount = enabled_extension_count;
+    device_create_info.ppEnabledExtensionNames = enabled_extensions;
 
 #if ENABLE_VALIDATION_LAYERS
-    device_create_info.enabledLayerCount = sizeof(validation_layers) / sizeof(char *);
-    device_create_info.ppEnabledLayerNames = validation_layers;
+    device_create_info.enabledLayerCount = enabled_layer_count;
+    device_create_info.ppEnabledLayerNames = enabled_layers;
 #else
     device_create_info.enabledLayerCount = 0;
     device_create_info.ppEnabledLayerNames = nullptr;
@@ -181,8 +187,9 @@ create_logical_device(VkPhysicalDevice &physical_device,
                                      nullptr,
                                      &device);
 
-    if (result != VK_SUCCESS)
+    if (result != VK_SUCCESS) {
         return false;
+    }
 
     vkGetDeviceQueue(device,
                      queue_family_indices.graphics.value(),
@@ -214,8 +221,9 @@ print_available_extensions()
     vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, ext_props);
 
     log::debug("Available Vulkan Extensions:");
-    for (auto &ext : ext_props)
+    for (auto &ext : ext_props) {
         log::debug(ext.extensionName);
+    }
 }
 
 static void
@@ -228,8 +236,9 @@ print_available_layers()
     vkEnumerateInstanceLayerProperties(&layer_count, layer_props);
 
     log::debug("Available Vulkan Layers:");
-    for (auto &layer : layer_props)
+    for (auto &layer : layer_props) {
         log::debug(layer.layerName);
+    }
 }
 
 static bool
@@ -256,7 +265,10 @@ check_device_suitability(VkPhysicalDevice &physical_device)
         break;
     }
 
-    return get_queue_family_indices(physical_device).graphics.has_value();
+    bool graphics_queue_support = get_queue_family_indices(physical_device).graphics.has_value();
+    bool extension_support = check_extension_support(physical_device);
+
+    return graphics_queue_support && extension_support;
 };
 
 static QueueFamilyIndices
@@ -275,11 +287,41 @@ get_queue_family_indices(VkPhysicalDevice &physical_device)
                                              queue_family_props);
 
     for (int i = 0; i < queue_family_count; ++i) {
-        if (queue_family_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue_family_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             queue_family_indices.graphics = i;
+        }
     }
 
     return queue_family_indices;
+}
+
+static bool
+check_extension_support(VkPhysicalDevice &physical_device)
+{
+    u32 ext_count = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, nullptr);
+
+    VkExtensionProperties ext_props[ext_count];
+    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, ext_props);
+
+    bool ext_support[enabled_extension_count] = {false};
+
+    for (u32 i = 0; i < enabled_extension_count; ++i) {
+        for (auto &ext : ext_props) {
+            if (strcmp(ext.extensionName, enabled_extensions[i])) {
+                ext_support[i] = true;
+            }
+        }
+    }
+
+    for (u32 i = 0; i < enabled_extension_count; ++i) {
+        if (!ext_support[i]) {
+            log::error(std::format("Missing support for required extension: {}", enabled_extensions[i]));
+            return false;
+        }
+    }
+
+    return true;
 }
 
 } // namespace gp
