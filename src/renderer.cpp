@@ -19,14 +19,15 @@ static const u32 enabled_extension_count = sizeof(enabled_extensions) / sizeof(c
 
 static bool create_instance(SDL_Window *window, VkInstance &instance);
 static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
-static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device, DeviceQueueFamilyIndices &queue_family_indices);
+static bool select_physical_device(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &physical_device, DeviceQueueFamilyIndices &queue_family_indices);
 static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, DeviceQueueFamilyIndices &queue_family_indices, DeviceQueues &queues);
 
 static void print_available_extensions();
 static void print_available_layers();
-static bool check_device_suitability(VkPhysicalDevice &physical_device);
+static bool check_device_suitability(VkPhysicalDevice &physical_device, VkSurfaceKHR &surface);
 static DeviceQueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
 static bool check_extension_support(VkPhysicalDevice &physical_device);
+static DeviceSwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice &physical_device, VkSurfaceKHR &surface);
 
 bool
 Renderer::init(SDL_Window *window)
@@ -46,7 +47,7 @@ Renderer::init(SDL_Window *window)
         return false;
     }
 
-    if (!select_physical_device(data.instance, data.physical_device, data.queue_family_indices)) {
+    if (!select_physical_device(data.instance, data.surface, data.physical_device, data.queue_family_indices)) {
         log::error("Failed to select physical device");
         return false;
     }
@@ -113,6 +114,7 @@ create_instance(SDL_Window *window,
 
 static bool
 select_physical_device(VkInstance &instance,
+                       VkSurfaceKHR &surface,
                        VkPhysicalDevice &physical_device,
                        DeviceQueueFamilyIndices &queue_family_indices)
 {
@@ -131,7 +133,7 @@ select_physical_device(VkInstance &instance,
 
     // TODO: probably want some logic to prefer discrete GPU if available
     for (auto &device : devices) {
-        if (check_device_suitability(device)) {
+        if (check_device_suitability(device, surface)) {
             physical_device = device;
             break;
         }
@@ -239,7 +241,8 @@ print_available_layers()
 }
 
 static bool
-check_device_suitability(VkPhysicalDevice &physical_device)
+check_device_suitability(VkPhysicalDevice &physical_device,
+                         VkSurfaceKHR &surface)
 {
     VkPhysicalDeviceProperties physical_device_props;
     VkPhysicalDeviceFeatures physical_device_feats;
@@ -265,7 +268,15 @@ check_device_suitability(VkPhysicalDevice &physical_device)
     bool graphics_queue_support = get_queue_family_indices(physical_device).graphics.has_value();
     bool extension_support = check_extension_support(physical_device);
 
-    return graphics_queue_support && extension_support;
+    DeviceSwapchainSupportDetails swapchain_support_details =
+        get_swapchain_support_details(physical_device, surface);
+
+    bool swapchain_support = swapchain_support_details.surface_format_count > 0 &&
+                             swapchain_support_details.present_mode_count > 0;
+
+    return graphics_queue_support &&
+           extension_support &&
+           swapchain_support;
 };
 
 static DeviceQueueFamilyIndices
@@ -283,7 +294,7 @@ get_queue_family_indices(VkPhysicalDevice &physical_device)
                                              &queue_family_count,
                                              queue_family_props);
 
-    for (int i = 0; i < queue_family_count; ++i) {
+    for (u32 i = 0; i < queue_family_count; ++i) {
         if (queue_family_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             queue_family_indices.graphics = i;
         }
@@ -301,6 +312,7 @@ check_extension_support(VkPhysicalDevice &physical_device)
     VkExtensionProperties extension_props[extension_count];
     vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extension_props);
 
+    // TODO: when you refuse to use STL
     bool extension_support[enabled_extension_count] = {false};
 
     for (u32 i = 0; i < enabled_extension_count; ++i) {
@@ -321,6 +333,48 @@ check_extension_support(VkPhysicalDevice &physical_device)
     }
 
     return true;
+}
+
+// TODO: i kinda hate this
+static DeviceSwapchainSupportDetails
+get_swapchain_support_details(VkPhysicalDevice &physical_device,
+                              VkSurfaceKHR &surface)
+{
+    u32 surface_format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        physical_device,
+        surface,
+        &surface_format_count,
+        nullptr);
+
+    u32 present_mode_count;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physical_device,
+        surface,
+        &present_mode_count,
+        nullptr);
+
+    DeviceSwapchainSupportDetails swapchain_support_details =
+        DeviceSwapchainSupportDetails(surface_format_count, present_mode_count);
+
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        physical_device,
+        surface,
+        &swapchain_support_details.surface_capabilities);
+
+    vkGetPhysicalDeviceSurfaceFormatsKHR(
+        physical_device,
+        surface,
+        &surface_format_count,
+        swapchain_support_details.surface_formats);
+
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        physical_device,
+        surface,
+        &present_mode_count,
+        swapchain_support_details.present_modes);
+
+    return swapchain_support_details;
 }
 
 } // namespace gp

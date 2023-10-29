@@ -19,6 +19,29 @@ struct DeviceQueues {
     VkQueue present;
 };
 
+struct DeviceSwapchainSupportDetails {
+    VkSurfaceCapabilitiesKHR surface_capabilities;
+    u32 surface_format_count;
+    VkSurfaceFormatKHR *surface_formats;
+    u32 present_mode_count;
+    VkPresentModeKHR *present_modes;
+
+    DeviceSwapchainSupportDetails(u32 surface_format_count,
+                                  u32 present_mode_count)
+        : surface_format_count(surface_format_count),
+          present_mode_count(present_mode_count)
+    {
+        surface_formats = (VkSurfaceFormatKHR *)malloc(surface_format_count / sizeof(uintptr_t));
+        present_modes = (VkPresentModeKHR *)malloc(present_mode_count / sizeof(uintptr_t));
+    }
+
+    ~DeviceSwapchainSupportDetails()
+    {
+        free(surface_formats);
+        free(present_modes);
+    }
+};
+
 struct RendererData {
     SDL_Window *window;
     VkSurfaceKHR surface;
