@@ -10,11 +10,11 @@ class Engine {
 private:
     SDL_Window *window;
     Renderer renderer;
+    bool init();
+    void cleanup();
 
 public:
-    bool init();
-    void run();
-    void cleanup();
+    bool run();
 };
 
 } // namespace gp

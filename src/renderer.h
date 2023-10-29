@@ -1,19 +1,34 @@
 #pragma once
 
+#include "core.h"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#include <optional>
 #include <vulkan/vulkan.h>
 
 namespace gp {
 
+struct DeviceQueueFamilyIndices {
+    std::optional<u32> graphics;
+    std::optional<u32> present;
+};
+
+struct DeviceQueues {
+    VkQueue graphics;
+    VkQueue present;
+};
+
 struct RendererData {
     SDL_Window *window;
-    VkInstance instance;
     VkSurfaceKHR surface;
+
+    VkInstance instance;
     VkPhysicalDevice physical_device;
     VkDevice device;
-    VkQueue graphics_queue;
-    VkQueue present_queue;
+
+    DeviceQueueFamilyIndices queue_family_indices;
+    DeviceQueues queues;
 };
 
 class Renderer {

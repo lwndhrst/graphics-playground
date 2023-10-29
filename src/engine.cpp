@@ -41,15 +41,20 @@ Engine::init()
     return true;
 }
 
-void
+bool
 Engine::run()
 {
+    if (!this->init()) {
+        log::error("Failed to initialize engine");
+        return false;
+    }
+
     SDL_Event event;
     for (;;) {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_QUIT:
-                return;
+                goto cleanup;
 
             default:
                 break;
@@ -58,6 +63,10 @@ Engine::run()
 
         renderer.draw();
     }
+
+cleanup:
+    this->cleanup();
+    return true;
 }
 
 void

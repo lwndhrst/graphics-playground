@@ -1,8 +1,8 @@
 #include "renderer.h"
 #include "core.h"
 #include "log.h"
+
 #include <optional>
-#include <vulkan/vulkan_core.h>
 
 namespace gp {
 
@@ -17,19 +17,15 @@ static const u32 enabled_layer_count = sizeof(enabled_layers) / sizeof(char *);
 static const char *enabled_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 static const u32 enabled_extension_count = sizeof(enabled_extensions) / sizeof(char *);
 
-struct QueueFamilyIndices {
-    std::optional<u32> graphics;
-};
-
 static bool create_instance(SDL_Window *window, VkInstance &instance);
 static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
-static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device);
-static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, VkQueue &graphics_queue, VkQueue &present_queue);
+static bool select_physical_device(VkInstance &instance, VkPhysicalDevice &physical_device, DeviceQueueFamilyIndices &queue_family_indices);
+static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, DeviceQueueFamilyIndices &queue_family_indices, DeviceQueues &queues);
 
 static void print_available_extensions();
 static void print_available_layers();
 static bool check_device_suitability(VkPhysicalDevice &physical_device);
-static QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
+static DeviceQueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
 static bool check_extension_support(VkPhysicalDevice &physical_device);
 
 bool
@@ -50,12 +46,12 @@ Renderer::init(SDL_Window *window)
         return false;
     }
 
-    if (!select_physical_device(data.instance, data.physical_device)) {
+    if (!select_physical_device(data.instance, data.physical_device, data.queue_family_indices)) {
         log::error("Failed to select physical device");
         return false;
     }
 
-    if (!create_logical_device(data.physical_device, data.device, data.graphics_queue, data.present_queue)) {
+    if (!create_logical_device(data.physical_device, data.device, data.queue_family_indices, data.queues)) {
         log::error("Failed to create logical device");
         return false;
     }
@@ -88,17 +84,17 @@ create_instance(SDL_Window *window,
     app_info.engineVersion = VK_MAKE_VERSION(0, 1, 0);
     app_info.apiVersion = VK_API_VERSION_1_3;
 
-    u32 ext_count;
-    SDL_Vulkan_GetInstanceExtensions(window, &ext_count, nullptr);
+    u32 extension_count;
+    SDL_Vulkan_GetInstanceExtensions(window, &extension_count, nullptr);
 
-    const char *ext_names[ext_count];
-    SDL_Vulkan_GetInstanceExtensions(window, &ext_count, ext_names);
+    const char *extension_names[extension_count];
+    SDL_Vulkan_GetInstanceExtensions(window, &extension_count, extension_names);
 
     VkInstanceCreateInfo instance_create_info = {};
     instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.pApplicationInfo = &app_info;
-    instance_create_info.enabledExtensionCount = ext_count;
-    instance_create_info.ppEnabledExtensionNames = ext_names;
+    instance_create_info.enabledExtensionCount = extension_count;
+    instance_create_info.ppEnabledExtensionNames = extension_names;
 
 #if ENABLE_VALIDATION_LAYERS
     instance_create_info.enabledLayerCount = enabled_layer_count;
@@ -117,7 +113,8 @@ create_instance(SDL_Window *window,
 
 static bool
 select_physical_device(VkInstance &instance,
-                       VkPhysicalDevice &physical_device)
+                       VkPhysicalDevice &physical_device,
+                       DeviceQueueFamilyIndices &queue_family_indices)
 {
     physical_device = VK_NULL_HANDLE;
 
@@ -145,17 +142,17 @@ select_physical_device(VkInstance &instance,
         return false;
     }
 
+    queue_family_indices = get_queue_family_indices(physical_device);
+
     return true;
 }
 
 static bool
 create_logical_device(VkPhysicalDevice &physical_device,
                       VkDevice &device,
-                      VkQueue &graphics_queue,
-                      VkQueue &present_queue)
+                      DeviceQueueFamilyIndices &queue_family_indices,
+                      DeviceQueues &queues)
 {
-    // the selected gpu should always support graphics queue, if we get here
-    QueueFamilyIndices queue_family_indices = get_queue_family_indices(physical_device);
     f32 queue_priorities = 1.0f;
 
     VkDeviceQueueCreateInfo queue_create_info = {};
@@ -194,10 +191,10 @@ create_logical_device(VkPhysicalDevice &physical_device,
     vkGetDeviceQueue(device,
                      queue_family_indices.graphics.value(),
                      0,
-                     &graphics_queue);
+                     &queues.graphics);
 
     // TODO: assuming graphics and present queues are identical for now
-    present_queue = graphics_queue;
+    queues.present = queues.graphics;
 
     return true;
 }
@@ -214,15 +211,15 @@ create_surface(SDL_Window *window,
 static void
 print_available_extensions()
 {
-    u32 ext_count = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, nullptr);
+    u32 extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
 
-    VkExtensionProperties ext_props[ext_count];
-    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, ext_props);
+    VkExtensionProperties extension_props[extension_count];
+    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extension_props);
 
     log::debug("Available Vulkan Extensions:");
-    for (auto &ext : ext_props) {
-        log::debug(ext.extensionName);
+    for (auto &extension : extension_props) {
+        log::debug(extension.extensionName);
     }
 }
 
@@ -271,10 +268,10 @@ check_device_suitability(VkPhysicalDevice &physical_device)
     return graphics_queue_support && extension_support;
 };
 
-static QueueFamilyIndices
+static DeviceQueueFamilyIndices
 get_queue_family_indices(VkPhysicalDevice &physical_device)
 {
-    QueueFamilyIndices queue_family_indices = {};
+    DeviceQueueFamilyIndices queue_family_indices = {};
 
     u32 queue_family_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device,
@@ -298,25 +295,27 @@ get_queue_family_indices(VkPhysicalDevice &physical_device)
 static bool
 check_extension_support(VkPhysicalDevice &physical_device)
 {
-    u32 ext_count = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, nullptr);
+    u32 extension_count = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, nullptr);
 
-    VkExtensionProperties ext_props[ext_count];
-    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, ext_props);
+    VkExtensionProperties extension_props[extension_count];
+    vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extension_props);
 
-    bool ext_support[enabled_extension_count] = {false};
+    bool extension_support[enabled_extension_count] = {false};
 
     for (u32 i = 0; i < enabled_extension_count; ++i) {
-        for (auto &ext : ext_props) {
-            if (strcmp(ext.extensionName, enabled_extensions[i])) {
-                ext_support[i] = true;
+        for (auto &extension : extension_props) {
+            if (strcmp(extension.extensionName, enabled_extensions[i])) {
+                extension_support[i] = true;
             }
         }
     }
 
     for (u32 i = 0; i < enabled_extension_count; ++i) {
-        if (!ext_support[i]) {
-            log::error(std::format("Missing support for required extension: {}", enabled_extensions[i]));
+        if (!extension_support[i]) {
+            log::error(std::format("Missing support for required extension: {}",
+                                   enabled_extensions[i]));
+
             return false;
         }
     }
