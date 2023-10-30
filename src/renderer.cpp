@@ -1,33 +1,92 @@
 #include "renderer.h"
+
 #include "core.h"
 #include "log.h"
 
-#include <optional>
-
 namespace gp {
+
+#define CLAMP(val, hi, lo) (val > hi ? hi : (val < lo ? lo : val))
 
 #ifndef ENABLE_VALIDATION_LAYERS
 #define ENABLE_VALIDATION_LAYERS false
 #elif ENABLE_VALIDATION_LAYERS
 // TODO: custom callback for printing validation layer messages
 static const char *enabled_layers[] = {"VK_LAYER_KHRONOS_validation"};
-static const u32 enabled_layer_count = sizeof(enabled_layers) / sizeof(char *);
+static const u32 enabled_layer_count = sizeof(enabled_layers) / sizeof(usize);
 #endif
 
 static const char *enabled_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-static const u32 enabled_extension_count = sizeof(enabled_extensions) / sizeof(char *);
+static const u32 enabled_extension_count = sizeof(enabled_extensions) / sizeof(usize);
 
-static bool create_instance(SDL_Window *window, VkInstance &instance);
-static bool create_surface(SDL_Window *window, VkInstance &instance, VkSurfaceKHR &surface);
-static bool select_physical_device(VkInstance &instance, VkSurfaceKHR &surface, VkPhysicalDevice &physical_device, DeviceQueueFamilyIndices &queue_family_indices);
-static bool create_logical_device(VkPhysicalDevice &physical_device, VkDevice &device, DeviceQueueFamilyIndices &queue_family_indices, DeviceQueues &queues);
+static bool
+create_instance(
+    SDL_Window *window,
+    VkInstance &instance);
 
-static void print_available_extensions();
-static void print_available_layers();
-static bool check_device_suitability(VkPhysicalDevice &physical_device, VkSurfaceKHR &surface);
-static DeviceQueueFamilyIndices get_queue_family_indices(VkPhysicalDevice &physical_device);
-static bool check_extension_support(VkPhysicalDevice &physical_device);
-static DeviceSwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice &physical_device, VkSurfaceKHR &surface);
+static bool
+create_surface(
+    SDL_Window *window,
+    VkInstance &instance,
+    VkSurfaceKHR &surface);
+
+static bool
+select_physical_device(
+    VkInstance &instance,
+    VkSurfaceKHR &surface,
+    VkPhysicalDevice &physical_device,
+    DeviceQueueFamilyIndices &queue_family_indices);
+
+static bool
+create_logical_device(
+    VkPhysicalDevice &physical_device,
+    VkDevice &device,
+    DeviceQueueFamilyIndices &queue_family_indices,
+    DeviceQueues &queues);
+
+static bool
+create_swapchain(
+    SDL_Window *window,
+    VkSurfaceKHR &surface,
+    VkPhysicalDevice &physical_device);
+
+static void
+print_available_extensions();
+
+static void
+print_available_layers();
+
+static bool
+check_device_suitability(
+    VkPhysicalDevice &physical_device,
+    VkSurfaceKHR &surface);
+
+static DeviceQueueFamilyIndices
+get_queue_family_indices(
+    VkPhysicalDevice &physical_device);
+
+static bool
+check_extension_support(
+    VkPhysicalDevice &physical_device);
+
+static DeviceSwapchainSupportDetails
+get_swapchain_support_details(
+    VkSurfaceKHR &surface,
+    VkPhysicalDevice &physical_device);
+
+static VkSurfaceFormatKHR
+select_surface_format(
+    u32 available_surface_format_count,
+    VkSurfaceFormatKHR *available_surface_formats);
+
+static VkPresentModeKHR
+select_present_mode(
+    u32 available_present_mode_count,
+    VkPresentModeKHR *available_present_modes);
+
+static VkExtent2D
+select_swap_extent(
+    SDL_Window *window,
+    VkSurfaceCapabilitiesKHR &surface_capabilities);
 
 bool
 Renderer::init(SDL_Window *window)
@@ -110,6 +169,15 @@ create_instance(SDL_Window *window,
                                        &instance);
 
     return result == VK_SUCCESS;
+}
+
+static bool
+create_surface(SDL_Window *window,
+               VkInstance &instance,
+               VkSurfaceKHR &surface)
+{
+    SDL_bool result = SDL_Vulkan_CreateSurface(window, instance, &surface);
+    return result == SDL_TRUE;
 }
 
 static bool
@@ -202,12 +270,12 @@ create_logical_device(VkPhysicalDevice &physical_device,
 }
 
 static bool
-create_surface(SDL_Window *window,
-               VkInstance &instance,
-               VkSurfaceKHR &surface)
+create_swapchain(SDL_Window *window,
+                 VkSurfaceKHR &surface,
+                 VkPhysicalDevice &physical_device)
 {
-    SDL_bool result = SDL_Vulkan_CreateSurface(window, instance, &surface);
-    return result == SDL_TRUE;
+
+    return true;
 }
 
 static void
@@ -240,6 +308,7 @@ print_available_layers()
     }
 }
 
+// TODO: more advanced feature checks?
 static bool
 check_device_suitability(VkPhysicalDevice &physical_device,
                          VkSurfaceKHR &surface)
@@ -252,7 +321,6 @@ check_device_suitability(VkPhysicalDevice &physical_device,
 
     log::debug(std::format("Found GPU: {}", physical_device_props.deviceName));
 
-    // TODO: more advanced feature checks?
     switch (physical_device_props.deviceType) {
     case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
         log::debug("Type: discrete");
@@ -269,7 +337,7 @@ check_device_suitability(VkPhysicalDevice &physical_device,
     bool extension_support = check_extension_support(physical_device);
 
     DeviceSwapchainSupportDetails swapchain_support_details =
-        get_swapchain_support_details(physical_device, surface);
+        get_swapchain_support_details(surface, physical_device);
 
     bool swapchain_support = swapchain_support_details.surface_format_count > 0 &&
                              swapchain_support_details.present_mode_count > 0;
@@ -312,7 +380,7 @@ check_extension_support(VkPhysicalDevice &physical_device)
     VkExtensionProperties extension_props[extension_count];
     vkEnumerateInstanceExtensionProperties(nullptr, &extension_count, extension_props);
 
-    // TODO: when you refuse to use STL
+    // NOTE: meh
     bool extension_support[enabled_extension_count] = {false};
 
     for (u32 i = 0; i < enabled_extension_count; ++i) {
@@ -335,10 +403,11 @@ check_extension_support(VkPhysicalDevice &physical_device)
     return true;
 }
 
-// TODO: i kinda hate this
+// NOTE: i kinda hate this
 static DeviceSwapchainSupportDetails
-get_swapchain_support_details(VkPhysicalDevice &physical_device,
-                              VkSurfaceKHR &surface)
+get_swapchain_support_details(VkSurfaceKHR &surface,
+                              VkPhysicalDevice &physical_device)
+
 {
     u32 surface_format_count;
     vkGetPhysicalDeviceSurfaceFormatsKHR(
@@ -375,6 +444,70 @@ get_swapchain_support_details(VkPhysicalDevice &physical_device,
         swapchain_support_details.present_modes);
 
     return swapchain_support_details;
+}
+
+static VkSurfaceFormatKHR
+select_surface_format(u32 available_surface_format_count,
+                      VkSurfaceFormatKHR *available_surface_formats)
+{
+    for (u32 i = 0; i < available_surface_format_count; ++i) {
+        VkSurfaceFormatKHR surface_format = available_surface_formats[i];
+        if (surface_format.format == VK_FORMAT_B8G8R8A8_SRGB &&
+            surface_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            return surface_format;
+        }
+    }
+
+    // NOTE: just settling for the first available format as a fallback
+    return available_surface_formats[0];
+}
+
+static VkPresentModeKHR
+select_present_mode(u32 available_present_mode_count,
+                    VkPresentModeKHR *available_present_modes)
+{
+    for (u32 i = 0; i < available_present_mode_count; ++i) {
+        VkPresentModeKHR present_mode = available_present_modes[i];
+        if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+            return present_mode;
+        }
+    }
+
+    // NOTE: just settling for fifo as a fallback
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+static VkExtent2D
+select_swap_extent(SDL_Window *window, VkSurfaceCapabilitiesKHR &surface_capabilities)
+{
+    i32 width, height;
+    SDL_Vulkan_GetDrawableSize(window, &width, &height);
+
+    VkExtent2D extent = {
+        CLAMP((u32)width,
+              surface_capabilities.maxImageExtent.width,
+              surface_capabilities.minImageExtent.width),
+        CLAMP((u32)height,
+              surface_capabilities.maxImageExtent.height,
+              surface_capabilities.minImageExtent.height),
+    };
+
+    return extent;
+}
+
+DeviceSwapchainSupportDetails::DeviceSwapchainSupportDetails(u32 surface_format_count,
+                                                             u32 present_mode_count)
+    : surface_format_count(surface_format_count),
+      present_mode_count(present_mode_count)
+{
+    surface_formats = (VkSurfaceFormatKHR *)malloc(surface_format_count / sizeof(usize));
+    present_modes = (VkPresentModeKHR *)malloc(present_mode_count / sizeof(usize));
+}
+
+DeviceSwapchainSupportDetails::~DeviceSwapchainSupportDetails()
+{
+    free(surface_formats);
+    free(present_modes);
 }
 
 } // namespace gp
