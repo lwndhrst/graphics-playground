@@ -37,6 +37,7 @@ struct RendererData {
     VkInstance instance;
     VkPhysicalDevice physical_device;
     VkDevice device;
+    VkSwapchainKHR swapchain;
 
     DeviceQueueFamilyIndices queue_family_indices;
     DeviceQueues queues;

@@ -5,6 +5,8 @@
 
 namespace gp {
 
+#define MIN(a, b) (a > b ? b : a)
+#define MAX(a, b) (a > b ? a : b)
 #define CLAMP(val, hi, lo) (val > hi ? hi : (val < lo ? lo : val))
 
 #ifndef ENABLE_VALIDATION_LAYERS
@@ -47,7 +49,9 @@ static bool
 create_swapchain(
     SDL_Window *window,
     VkSurfaceKHR &surface,
-    VkPhysicalDevice &physical_device);
+    VkDevice &device,
+    VkPhysicalDevice &physical_device,
+    VkSwapchainKHR &swapchain);
 
 static void
 print_available_extensions();
@@ -116,6 +120,11 @@ Renderer::init(SDL_Window *window)
         return false;
     }
 
+    if (!create_swapchain(window, data.surface, data.device, data.physical_device, data.swapchain)) {
+        log::error("Failed to create swapchain");
+        return false;
+    }
+
     return true;
 }
 
@@ -127,6 +136,7 @@ Renderer::draw()
 void
 Renderer::cleanup()
 {
+    vkDestroySwapchainKHR(data.device, data.swapchain, nullptr);
     vkDestroyDevice(data.device, nullptr);
     vkDestroySurfaceKHR(data.instance, data.surface, nullptr);
     vkDestroyInstance(data.instance, nullptr);
@@ -272,10 +282,64 @@ create_logical_device(VkPhysicalDevice &physical_device,
 static bool
 create_swapchain(SDL_Window *window,
                  VkSurfaceKHR &surface,
-                 VkPhysicalDevice &physical_device)
+                 VkDevice &device,
+                 VkPhysicalDevice &physical_device,
+                 VkSwapchainKHR &swapchain)
 {
+    DeviceSwapchainSupportDetails swapchain_support_details =
+        get_swapchain_support_details(surface, physical_device);
 
-    return true;
+    VkSurfaceFormatKHR surface_format = select_surface_format(
+        swapchain_support_details.surface_format_count,
+        swapchain_support_details.surface_formats);
+
+    VkPresentModeKHR present_mode = select_present_mode(
+        swapchain_support_details.present_mode_count,
+        swapchain_support_details.present_modes);
+
+    VkExtent2D extent = select_swap_extent(
+        window,
+        swapchain_support_details.surface_capabilities);
+
+    u32 image_count =
+        swapchain_support_details.surface_capabilities.minImageCount + 1;
+
+    // NOTE: maxImageCount == 0 means there's no max
+    if (swapchain_support_details.surface_capabilities.maxImageCount > 0) {
+        image_count = MIN(
+            image_count,
+            swapchain_support_details.surface_capabilities.maxImageCount);
+    }
+
+    VkSwapchainCreateInfoKHR swapchain_create_info = {};
+    swapchain_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    swapchain_create_info.surface = surface;
+
+    swapchain_create_info.minImageCount = image_count;
+    swapchain_create_info.imageFormat = surface_format.format;
+    swapchain_create_info.imageColorSpace = surface_format.colorSpace;
+    swapchain_create_info.imageExtent = extent;
+    swapchain_create_info.imageArrayLayers = 1;
+    swapchain_create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    // NOTE: adjust when using multiple concurrent queue families?
+    swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapchain_create_info.queueFamilyIndexCount = 0;
+    swapchain_create_info.pQueueFamilyIndices = nullptr;
+
+    swapchain_create_info.preTransform = swapchain_support_details.surface_capabilities.currentTransform;
+    swapchain_create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapchain_create_info.presentMode = present_mode;
+
+    swapchain_create_info.clipped = VK_TRUE;
+    swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
+
+    VkResult result = vkCreateSwapchainKHR(device,
+                                           &swapchain_create_info,
+                                           nullptr,
+                                           &swapchain);
+
+    return result == VK_SUCCESS;
 }
 
 static void
@@ -407,7 +471,6 @@ check_extension_support(VkPhysicalDevice &physical_device)
 static DeviceSwapchainSupportDetails
 get_swapchain_support_details(VkSurfaceKHR &surface,
                               VkPhysicalDevice &physical_device)
-
 {
     u32 surface_format_count;
     vkGetPhysicalDeviceSurfaceFormatsKHR(
