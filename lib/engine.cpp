@@ -1,9 +1,10 @@
+#include "engine.h"
+
 #include <iostream>
 
-int
-main(int argc, char **argv)
+bool
+engine::run()
 {
     std::cout << "Hello, World!" << std::endl;
-
-    return 0;
+    return true;
 }
