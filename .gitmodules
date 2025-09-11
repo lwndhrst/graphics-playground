@@ -10,3 +10,6 @@
 [submodule "dependencies/VulkanMemoryAllocator"]
 	path = dependencies/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "dependencies/fmt"]
+	path = dependencies/fmt
+	url = https://github.com/fmtlib/fmt

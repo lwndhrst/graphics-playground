@@ -14,6 +14,8 @@ find_package(Vulkan REQUIRED)
 
 find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
+add_subdirectory(dependencies)
+
 
 
 ########
