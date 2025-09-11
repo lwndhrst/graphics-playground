@@ -2,6 +2,7 @@
 build/
 bin/
 result
+*.spv
 
 # Prerequisites
 *.d
