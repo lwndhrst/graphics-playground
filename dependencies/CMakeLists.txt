@@ -24,7 +24,7 @@ target_include_directories(glm INTERFACE glm)
 add_library(vma INTERFACE)
 
 # header-only library
-target_include_directories(vma INTERFACE VulkanMemoryAllocator)
+target_include_directories(vma INTERFACE VulkanMemoryAllocator/include)
 
 
 
