@@ -17,25 +17,6 @@ target_include_directories(glm INTERFACE glm)
 
 
 
-#######
-# vma #
-#######
-
-add_library(vma INTERFACE)
-
-# header-only library
-target_include_directories(vma INTERFACE VulkanMemoryAllocator/include)
-
-
-
-#######
-# sdl #
-#######
-
-add_subdirectory(SDL EXCLUDE_FROM_ALL)
-
-
-
 #########
 # imgui #
 #########
@@ -58,3 +39,33 @@ target_sources(imgui PRIVATE
 )
 
 target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL3::SDL3)
+
+
+
+#######
+# sdl #
+#######
+
+add_subdirectory(SDL EXCLUDE_FROM_ALL)
+
+
+
+#############
+# stb_image #
+#############
+
+add_library(stb_image INTERFACE)
+
+# header-only library
+target_include_directories(stb_image INTERFACE stb_image)
+
+
+
+#######
+# vma #
+#######
+
+add_library(vma INTERFACE)
+
+# header-only library
+target_include_directories(vma INTERFACE VulkanMemoryAllocator/include)

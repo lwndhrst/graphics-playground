@@ -22,5 +22,6 @@ target_link_libraries(${TARGET_NAME} PUBLIC
     glm
     imgui
     SDL3::SDL3
+    stb_image
     vma
 )
