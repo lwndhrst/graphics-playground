@@ -8,3 +8,5 @@ AccessModifierOffset: -4
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: true
+  AfterControlStatement: Always
+  BeforeElse: true

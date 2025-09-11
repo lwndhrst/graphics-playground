@@ -1,16 +1,9 @@
-#include "engine.h"
-#include "log.h"
+#include <iostream>
 
 int
 main(int argc, char **argv)
 {
-    using namespace gp;
+    std::cout << "Hello, World!" << std::endl;
 
-    Engine engine;
-    if (!engine.run()) {
-        log::error("Failed to start engine");
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    return 0;
 }
