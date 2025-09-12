@@ -1,7 +1,10 @@
 set(TARGET_NAME goose)
 
+file(GLOB_RECURSE SOURCES *.cpp)
+file(GLOB_RECURSE HEADERS *.h)
+
 add_library(${TARGET_NAME} STATIC
-    honk.cpp
+    ${SOURCES}
 )
 
 target_include_directories(${TARGET_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
