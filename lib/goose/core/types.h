@@ -1,3 +1,10 @@
+#pragma once
+
+#include "fmt/core.h"
+
+#include "vulkan/vulkan.h"
+
+#include <cstdlib>
 #include <cstdint>
 
 typedef uint8_t u8;
@@ -11,3 +18,6 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 typedef intptr_t isize;
+
+typedef float f32;
+typedef double f64;

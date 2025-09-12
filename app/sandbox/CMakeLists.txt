@@ -5,13 +5,18 @@ file(GLOB_RECURSE HEADERS *.h)
 
 add_executable(${TARGET_NAME}
     ${SOURCES}
+    ${HEADERS}
 )
 
-target_include_directories(${TARGET_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(${TARGET_NAME} PUBLIC goose)
+target_link_libraries(${TARGET_NAME} PRIVATE
+    goose
+    SDL3::SDL3
+    imgui
+)
 
 
 
