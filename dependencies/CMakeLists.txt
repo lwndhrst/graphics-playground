@@ -1,14 +1,14 @@
-#######
-# fmt #
-#######
+##################
+# {fmt} (11.2.0) #
+##################
 
 add_subdirectory(fmt EXCLUDE_FROM_ALL)
 
 
 
-#######
-# glm #
-#######
+###############
+# GLM (1.0.1) #
+###############
 
 add_library(glm INTERFACE)
 
@@ -17,9 +17,17 @@ target_include_directories(glm INTERFACE glm)
 
 
 
-#########
-# imgui #
-#########
+################3
+# SDL3 (3.2.22) #
+#################
+
+add_subdirectory(SDL3 EXCLUDE_FROM_ALL)
+
+
+
+#########################
+# Dear ImGui (v1.92.2b) #
+#########################
 
 add_library(imgui STATIC)
 
@@ -42,11 +50,14 @@ target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL3::SDL3)
 
 
 
-#######
-# sdl #
-#######
+####################################
+# Vulkan Memory Allocator (v3.3.0) #
+####################################
 
-add_subdirectory(SDL EXCLUDE_FROM_ALL)
+add_library(vma INTERFACE)
+
+# header-only library
+target_include_directories(vma INTERFACE VulkanMemoryAllocator)
 
 
 
@@ -58,14 +69,3 @@ add_library(stb_image INTERFACE)
 
 # header-only library
 target_include_directories(stb_image INTERFACE stb_image)
-
-
-
-#######
-# vma #
-#######
-
-add_library(vma INTERFACE)
-
-# header-only library
-target_include_directories(vma INTERFACE VulkanMemoryAllocator/include)
