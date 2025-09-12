@@ -1,9 +1,8 @@
-#include "engine.h"
+#include "goose/honk.h"
 
 int
 main(int argc, char **argv)
 {
-    engine::run();
-
+    goose::honk();
     return 0;
 }

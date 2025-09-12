@@ -22,16 +22,17 @@ add_subdirectory(dependencies)
 # UTIL #
 ########
 
-function(compile_shaders TARGET_NAME SHADER_DIR)
+function(compile_shaders TARGET_NAME SHADER_PATH)
     file(GLOB_RECURSE GLSL_SOURCE_FILES
-        "${SHADER_DIR}/*.frag"
-        "${SHADER_DIR}/*.vert"
-        "${SHADER_DIR}/*.comp"
+        "${SHADER_PATH}/*.frag"
+        "${SHADER_PATH}/*.vert"
+        "${SHADER_PATH}/*.comp"
     )
 
     foreach(GLSL ${GLSL_SOURCE_FILES})
+        message(STATUS "FOUND SHADER")
         get_filename_component(FILE_NAME ${GLSL} NAME)
-        set(SPIRV "${SHADER_DIR}/${FILE_NAME}.spv")
+        set(SPIRV "${SHADER_PATH}/${FILE_NAME}.spv")
         message(STATUS ${GLSL})
         add_custom_command(
             OUTPUT ${SPIRV}
@@ -57,5 +58,5 @@ endfunction()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
-add_subdirectory(lib)
-add_subdirectory(apps/sandbox)
+add_subdirectory(lib/goose)
+add_subdirectory(app/sandbox)
