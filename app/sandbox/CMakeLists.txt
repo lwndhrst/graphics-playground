@@ -36,3 +36,16 @@ compile_shaders(${TARGET_NAME} ${SHADER_PATH})
 ###########
 
 target_compile_definitions(${TARGET_NAME} PRIVATE SHADER_PATH="${SHADER_PATH}")
+
+
+
+###########
+# WINDOWS #
+###########
+
+if (WIN32)
+    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET_NAME}> $<TARGET_FILE_DIR:${TARGET_NAME}>
+        COMMAND_EXPAND_LISTS
+    )
+endif()
