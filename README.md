@@ -1,1 +1,1 @@
-# graphics-playground
+# Graphics Playground
