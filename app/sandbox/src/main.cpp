@@ -56,7 +56,7 @@ init(AppData *data)
 
     if (!goose::graphics::init(&data->render_data, surface))
     {
-        LOG_ERROR("Failed to initialize Vulkan");
+        LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
     }
 
