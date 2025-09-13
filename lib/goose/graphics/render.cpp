@@ -2,7 +2,7 @@
 
 #include "goose/core/util.hpp"
 
-namespace goose {
+namespace goose::graphics {
 
 // Don't really want these in the header
 void select_physical_device();
@@ -45,16 +45,25 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
 }
 
 bool
-init_vulkan(RenderData *data)
+init(RenderData *data, VkSurfaceKHR surface)
 {
+    data->surface = surface;
+
     return true;
 }
 
 void
 cleanup(RenderData *data)
 {
-    vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
-    vkDestroyInstance(data->instance, nullptr);
+    if (data->surface != nullptr)
+    {
+        vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
+    }
+
+    if (data->instance != nullptr)
+    {
+        vkDestroyInstance(data->instance, nullptr);
+    }
 }
 
-} // namespace goose
+} // namespace goose::graphics

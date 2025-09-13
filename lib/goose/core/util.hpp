@@ -11,9 +11,9 @@
 #define LOG_ERROR(...) \
     fmt::println("ERROR {}", fmt::format(__VA_ARGS__))
 
-#define LOG_VK_ERROR(x)                                               \
-    VkResult err = x;                                                 \
-    if (err)                                                          \
-    {                                                                 \
-        LOG_ERROR("Detected Vulkan error: {}", string_VkResult(err)); \
+#define LOG_VK_ERROR(x)                                      \
+    VkResult err = x;                                        \
+    if (err)                                                 \
+    {                                                        \
+        LOG_ERROR("Vulkan error: {}", string_VkResult(err)); \
     }
