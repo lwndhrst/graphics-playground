@@ -18,10 +18,11 @@ target_sources(${TARGET_NAME}
         ${HEADERS}
 )
 
-target_link_libraries(${TARGET_NAME} PRIVATE
-    goose
-    SDL3::SDL3
-    imgui
+target_link_libraries(${TARGET_NAME}
+    PRIVATE
+        goose
+        SDL3::SDL3
+        imgui
 )
 
 
