@@ -20,10 +20,11 @@ static struct Data {
 static goose::graphics::RenderData render_data;
 
 bool
-init(const char *app_name, u32 app_version)
+init(const char *app_name)
 {
+    // TODO: Make app version configurable
     data.app_name = app_name;
-    data.app_version = app_version;
+    data.app_version = VK_MAKE_VERSION(0, 0, 1);
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {

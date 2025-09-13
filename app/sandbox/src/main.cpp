@@ -1,11 +1,9 @@
 #include "goose/goose.hpp"
 
-#include <vulkan/vulkan_core.h>
-
 int
 main(int argc, char **argv)
 {
-    goose::init("Sandbox", VK_MAKE_VERSION(0, 0, 1));
+    goose::init("Sandbox");
 
     goose::create_window("Sandbox", 1600, 900);
 
