@@ -1,6 +1,8 @@
 #include "goose/graphics/render.hpp"
 
-#include "goose/core/util.hpp"
+#include "fmt/core.h"
+
+#include "vulkan/vk_enum_string_helper.h"
 
 namespace goose::graphics {
 
@@ -37,7 +39,7 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     VkResult result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
     if (result != VK_SUCCESS)
     {
-        LOG_VK_ERROR(result);
+        fmt::println("Vulkan error: {}", string_VkResult(result));
         return false;
     }
 

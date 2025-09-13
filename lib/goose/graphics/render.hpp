@@ -2,6 +2,10 @@
 
 #include "goose/core/types.hpp"
 
+#include "vulkan/vulkan.h"
+
+#include <vector>
+
 namespace goose::graphics {
 
 struct RenderData {
@@ -17,7 +21,6 @@ struct RenderData {
 bool create_instance(RenderData *data, const char *app_name, u32 app_version);
 
 bool init(RenderData *data, VkSurfaceKHR surface);
-
 void cleanup(RenderData *data);
 
 } // namespace goose::graphics

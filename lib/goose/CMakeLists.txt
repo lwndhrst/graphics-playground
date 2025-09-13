@@ -23,8 +23,8 @@ target_link_libraries(${TARGET_NAME}
         Vulkan::Vulkan
         stb_image
         vma
-
-    PUBLIC
+        SDL3::SDL3
+        imgui
         fmt::fmt
         glm
 )
