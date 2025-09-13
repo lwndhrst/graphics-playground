@@ -1,10 +1,14 @@
-#include "goose/core/types.h"
+#include "goose/core/types.hpp"
+#include "goose/core/util.hpp"
+#include "goose/graphics/render.hpp"
 
 #include "SDL3/SDL.h"
+#include "SDL3/SDL_vulkan.h"
 
 struct AppData {
     SDL_Window *window;
-    VkExtent2D window_extent;
+
+    goose::RenderData render_data;
 };
 
 bool
@@ -12,7 +16,7 @@ init(AppData *data)
 {
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {
-        fmt::println("{}", SDL_GetError());
+        LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
@@ -20,13 +24,38 @@ init(AppData *data)
 
     data->window = SDL_CreateWindow(
         "Sandbox",
-        data->window_extent.width,
-        data->window_extent.height,
+        data->render_data.window_extent.width,
+        data->render_data.window_extent.height,
         window_flags);
 
     if (data->window == nullptr)
     {
-        fmt::println("{}", SDL_GetError());
+        LOG_ERROR("{}", SDL_GetError());
+        return false;
+    }
+
+    u32 extension_count;
+    auto extensions = SDL_Vulkan_GetInstanceExtensions(&extension_count);
+    for (int i = 0; i < extension_count; ++i)
+    {
+        data->render_data.instance_extensions.push_back(extensions[i]);
+    }
+
+    if (!goose::create_instance(&data->render_data, "Sandbox", VK_MAKE_VERSION(0, 0, 1)))
+    {
+        LOG_ERROR("Failed to create Vulkan instance");
+        return false;
+    }
+
+    if (!SDL_Vulkan_CreateSurface(data->window, data->render_data.instance, nullptr, &data->render_data.surface))
+    {
+        LOG_ERROR("{}", SDL_GetError());
+        return false;
+    }
+
+    if (!goose::init_vulkan(&data->render_data))
+    {
+        LOG_ERROR("Failed to initialize Vulkan");
         return false;
     }
 
@@ -45,10 +74,10 @@ run(AppData *data)
         case SDL_EVENT_QUIT:
             return false;
         case SDL_EVENT_WINDOW_RESIZED:
-            fmt::println("Window resized");
+            LOG_DEBUG("Window resized");
             break;
         case SDL_EVENT_WINDOW_OCCLUDED: // NOTE: Interesting for wayland (switching workspaces, etc.)
-            fmt::println("Window occluded");
+            LOG_DEBUG("Window occluded");
             break;
         }
     }
@@ -59,6 +88,8 @@ run(AppData *data)
 void
 cleanup(AppData *data)
 {
+    goose::cleanup(&data->render_data);
+
     if (data->window != nullptr)
     {
         SDL_DestroyWindow(data->window);
@@ -71,8 +102,8 @@ int
 main(int argc, char **argv)
 {
     AppData data = {};
-    data.window_extent.width = 1600;
-    data.window_extent.height = 900;
+    data.render_data.window_extent.width = 1600;
+    data.render_data.window_extent.height = 900;
 
     if (!init(&data))
     {

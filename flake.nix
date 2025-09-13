@@ -21,6 +21,7 @@
           vulkan-headers
           vulkan-loader
           vulkan-utility-libraries
+          vulkan-validation-layers
 
           # wayland dependencies for SDL
           libffi

@@ -1,16 +1,22 @@
 set(TARGET_NAME sandbox)
 
 file(GLOB_RECURSE SOURCES *.cpp)
-file(GLOB_RECURSE HEADERS *.h)
+file(GLOB_RECURSE HEADERS *.hpp)
 
-add_executable(${TARGET_NAME}
-    ${SOURCES}
-    ${HEADERS}
-)
-
-target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+add_executable(${TARGET_NAME})
 
 set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 20)
+
+target_sources(${TARGET_NAME}
+    PRIVATE
+        ${SOURCES}
+
+    PUBLIC FILE_SET HEADERS
+    BASE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    FILES
+        ${HEADERS}
+)
 
 target_link_libraries(${TARGET_NAME} PRIVATE
     goose
@@ -44,8 +50,5 @@ target_compile_definitions(${TARGET_NAME} PRIVATE SHADER_PATH="${SHADER_PATH}")
 ###########
 
 if (WIN32)
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET_NAME}> $<TARGET_FILE_DIR:${TARGET_NAME}>
-        COMMAND_EXPAND_LISTS
-    )
+    copy_runtime_dlls(${TARGET_NAME})
 endif()
