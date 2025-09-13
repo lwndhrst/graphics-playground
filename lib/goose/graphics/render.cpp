@@ -18,7 +18,7 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     app_info.pApplicationName = app_name;
     app_info.applicationVersion = app_version;
     app_info.pEngineName = "No Engine";
-    app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    app_info.engineVersion = VK_MAKE_VERSION(0, 1, 0);
     app_info.apiVersion = VK_API_VERSION_1_4;
 
     // TODO: Properly check layer/extension support
