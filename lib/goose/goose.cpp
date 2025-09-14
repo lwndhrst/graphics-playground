@@ -58,7 +58,7 @@ create_window(const char *title, u32 width, u32 height)
 
     u32 extension_count;
     auto extensions = SDL_Vulkan_GetInstanceExtensions(&extension_count);
-    for (int i = 0; i < extension_count; ++i)
+    for (usize i = 0; i < extension_count; ++i)
     {
         render_data.instance_extensions.push_back(extensions[i]);
     }
