@@ -20,13 +20,15 @@ target_sources(${TARGET_NAME}
 
 target_link_libraries(${TARGET_NAME}
     PRIVATE
-        Vulkan::Vulkan
         stb_image
         vma
         SDL3::SDL3
-        imgui
+
+    PUBLIC
+        Vulkan::Vulkan
         fmt::fmt
         glm
+        imgui
 )
 
 
@@ -36,12 +38,9 @@ target_link_libraries(${TARGET_NAME}
 ###########
 
 target_compile_definitions(${TARGET_NAME}
-    PRIVATE
-        $<$<CONFIG:Debug>:DEBUG>
-        $<$<CONFIG:Release>:NDEBUG>
-        $<$<CONFIG:RelWithDebInfo>:DEBUG>
-        $<$<CONFIG:MinSizeRel>:NDEBUG>
-
     PUBLIC
+        $<$<CONFIG:Debug>:GOOSE_DEBUG>
+        $<$<CONFIG:RelWithDebInfo>:GOOSE_DEBUG>
+
         GLM_FORCE_DEPTH_ZERO_TO_ONE
 )

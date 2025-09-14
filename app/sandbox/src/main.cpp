@@ -1,5 +1,7 @@
 #include "goose/goose.hpp"
 
+#include "goose/core/util.hpp"
+
 int
 main(int argc, char **argv)
 {
@@ -9,7 +11,7 @@ main(int argc, char **argv)
 
     while (!goose::window_should_close())
     {
-        goose::update();
+        // Main loop
     }
 
     goose::quit();

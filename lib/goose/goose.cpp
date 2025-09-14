@@ -1,11 +1,10 @@
 #include "goose/goose.hpp"
 
+#include "goose/core/util.hpp"
 #include "goose/graphics/render.hpp"
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_vulkan.h"
-
-#include "fmt/core.h"
 
 namespace goose {
 
@@ -17,7 +16,7 @@ static struct Data {
     bool window_should_close;
 } data;
 
-static goose::graphics::RenderData render_data;
+static graphics::RenderData render_data;
 
 bool
 init(const char *app_name)
@@ -28,7 +27,7 @@ init(const char *app_name)
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {
-        fmt::println("{}", SDL_GetError());
+        LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
@@ -48,7 +47,7 @@ create_window(const char *title, u32 width, u32 height)
 
     if (data.window == nullptr)
     {
-        fmt::println("{}", SDL_GetError());
+        LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
@@ -66,20 +65,20 @@ create_window(const char *title, u32 width, u32 height)
 
     if (!goose::graphics::create_instance(&render_data, data.app_name, data.app_version))
     {
-        fmt::println("Failed to create Vulkan instance");
+        LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
     VkSurfaceKHR surface;
     if (!SDL_Vulkan_CreateSurface(data.window, render_data.instance, nullptr, &surface))
     {
-        fmt::println("{}", SDL_GetError());
+        LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
     if (!goose::graphics::init(&render_data, surface))
     {
-        fmt::println("Failed to initialize Vulkan renderer");
+        LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
     }
 
@@ -88,12 +87,6 @@ create_window(const char *title, u32 width, u32 height)
 
 bool
 window_should_close()
-{
-    return data.window_should_close;
-}
-
-void
-update()
 {
     SDL_Event event;
 
@@ -112,6 +105,8 @@ update()
             break;
         }
     }
+
+    return data.window_should_close;
 }
 
 void

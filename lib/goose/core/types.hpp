@@ -1,5 +1,9 @@
 #pragma once
 
+#include "vulkan/vulkan.h"
+
+#include <vector>
+
 #include <cstdint>
 
 typedef uint8_t u8;

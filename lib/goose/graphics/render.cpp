@@ -1,8 +1,6 @@
 #include "goose/graphics/render.hpp"
 
-#include "fmt/core.h"
-
-#include "vulkan/vk_enum_string_helper.h"
+#include "goose/core/util.hpp"
 
 namespace goose::graphics {
 
@@ -23,7 +21,7 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
 
     // TODO: Properly check layer/extension support
 
-#ifdef DEBUG
+#ifdef GOOSE_DEBUG
     data->instance_layers.push_back("VK_LAYER_KHRONOS_validation");
     data->instance_extensions.push_back("VK_EXT_debug_utils");
 #endif
@@ -39,7 +37,7 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     VkResult result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
     if (result != VK_SUCCESS)
     {
-        fmt::println("Vulkan error: {}", string_VkResult(result));
+        LOG_ERROR("Vulkan error: {}", string_VkResult(result));
         return false;
     }
 
