@@ -1,8 +1,8 @@
-#include "goose/graphics/render.hpp"
+#include "goose/render/render.hpp"
 
 #include "goose/core/util.hpp"
 
-namespace goose::graphics {
+namespace goose::render {
 
 // Don't really want these in the header
 void select_physical_device();
@@ -66,4 +66,4 @@ cleanup(RenderData *data)
     }
 }
 
-} // namespace goose::graphics
+} // namespace goose::render

@@ -8,6 +8,8 @@
 
     in {
       devShell.${system} = pkgs.mkShell {
+        name = "graphics-playground";
+
         packages = with pkgs; [
           cmake
           glslang

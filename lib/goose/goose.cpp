@@ -1,7 +1,7 @@
 #include "goose/goose.hpp"
 
 #include "goose/core/util.hpp"
-#include "goose/graphics/render.hpp"
+#include "goose/render/render.hpp"
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_vulkan.h"
@@ -16,7 +16,7 @@ static struct Data {
     bool window_should_close;
 } data;
 
-static graphics::RenderData render_data;
+static render::RenderData render_data;
 
 bool
 init(const char *app_name)
@@ -63,7 +63,7 @@ create_window(const char *title, u32 width, u32 height)
         render_data.instance_extensions.push_back(extensions[i]);
     }
 
-    if (!goose::graphics::create_instance(&render_data, data.app_name, data.app_version))
+    if (!goose::render::create_instance(&render_data, data.app_name, data.app_version))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
@@ -76,7 +76,7 @@ create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    if (!goose::graphics::init(&render_data, surface))
+    if (!goose::render::init(&render_data, surface))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;

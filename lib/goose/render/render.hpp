@@ -2,7 +2,7 @@
 
 #include "goose/core/types.hpp"
 
-namespace goose::graphics {
+namespace goose::render {
 
 struct RenderData {
     VkExtent2D window_extent;
@@ -20,4 +20,4 @@ bool init(RenderData *data, VkSurfaceKHR surface);
 
 void cleanup(RenderData *data);
 
-} // namespace goose::graphics
+} // namespace goose::render
