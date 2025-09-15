@@ -1,16 +1,17 @@
 #include "goose/render/render.hpp"
 
 #include "goose/core/util.hpp"
+#include "goose/render/device.hpp"
+
+#define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 
 namespace goose::render {
-
-// Don't really want these in the header
-void select_physical_device();
-void create_logical_device();
 
 bool
 create_instance(RenderData *data, const char *app_name, u32 app_version)
 {
+    VkResult result;
+
     VkApplicationInfo app_info = {};
     app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app_info.pApplicationName = app_name;
@@ -22,8 +23,8 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     // TODO: Properly check layer/extension support
 
 #ifdef GOOSE_DEBUG
-    data->instance_layers.push_back("VK_LAYER_KHRONOS_validation");
-    data->instance_extensions.push_back("VK_EXT_debug_utils");
+    data->instance_layers.push_back(VALIDATION_LAYER_NAME);
+    data->instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
     VkInstanceCreateInfo instance_create_info = {};
@@ -34,7 +35,7 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     instance_create_info.enabledExtensionCount = static_cast<u32>(data->instance_extensions.size());
     instance_create_info.ppEnabledExtensionNames = data->instance_extensions.data();
 
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
+    result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
     if (result != VK_SUCCESS)
     {
         LOG_ERROR("Vulkan error: {}", string_VkResult(result));
@@ -49,21 +50,34 @@ init(RenderData *data, VkSurfaceKHR surface)
 {
     data->surface = surface;
 
+    // TODO: Which device extensions are needed?
+    VkPhysicalDevice gpu = get_gpu(data->instance, data->device_extensions);
+    if (gpu == nullptr)
+    {
+        return false;
+    }
+
+#ifdef GOOSE_DEBUG
+    data->device_layers.push_back(VALIDATION_LAYER_NAME);
+#endif
+
+    data->device = create_logical_device(gpu, data->device_layers, data->device_extensions);
+    if (data->device == nullptr)
+    {
+        return false;
+    }
+
     return true;
 }
 
 void
 cleanup(RenderData *data)
 {
-    if (data->surface != nullptr)
-    {
-        vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
-    }
+    vkDeviceWaitIdle(data->device);
 
-    if (data->instance != nullptr)
-    {
-        vkDestroyInstance(data->instance, nullptr);
-    }
+    vkDestroyDevice(data->device, nullptr);
+    vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
+    vkDestroyInstance(data->instance, nullptr);
 }
 
 } // namespace goose::render

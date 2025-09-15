@@ -2,6 +2,7 @@
 
 #include "vulkan/vulkan.h"
 
+#include <optional>
 #include <vector>
 
 #include <cstdint>

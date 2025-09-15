@@ -11,6 +11,10 @@ struct RenderData {
     std::vector<const char *> instance_layers;
     std::vector<const char *> instance_extensions;
 
+    VkDevice device;
+    std::vector<const char *> device_layers;
+    std::vector<const char *> device_extensions;
+
     VkSurfaceKHR surface;
 };
 
