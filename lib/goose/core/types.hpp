@@ -4,6 +4,7 @@
 
 #include <optional>
 #include <vector>
+#include <set>
 
 #include <cstdint>
 

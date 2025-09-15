@@ -4,14 +4,21 @@
 
 namespace goose::render {
 
+bool
+QueueFamilyIndices::is_complete()
+{
+    return graphics.has_value() && present.has_value();
+}
+
 QueueFamilyIndices
-get_queue_families(VkPhysicalDevice gpu)
+get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 {
     u32 queue_family_count;
     vkGetPhysicalDeviceQueueFamilyProperties2(gpu, &queue_family_count, nullptr);
 
-    VkQueueFamilyProperties2 queue_family_properties = {};
-    queue_family_properties.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2;
+    VkQueueFamilyProperties2 queue_family_properties = {
+        .sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2,
+    };
 
     std::vector<VkQueueFamilyProperties2> queue_families(queue_family_count, queue_family_properties);
     vkGetPhysicalDeviceQueueFamilyProperties2(gpu, &queue_family_count, queue_families.data());
@@ -20,10 +27,21 @@ get_queue_families(VkPhysicalDevice gpu)
 
     for (u32 i = 0; i < queue_family_count; ++i)
     {
+        VkBool32 present_support = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, surface, &present_support);
+        if (present_support)
+        {
+            indices.present = i;
+        }
+
         if (queue_families[i].queueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             indices.graphics = i;
-            return indices;
+        }
+
+        if (indices.is_complete())
+        {
+            break;
         }
     }
 
@@ -31,91 +49,111 @@ get_queue_families(VkPhysicalDevice gpu)
 }
 
 VkPhysicalDevice
-get_gpu(VkInstance instance, const std::vector<const char *> &extensions)
+get_gpu(VkInstance instance,
+        VkSurfaceKHR surface,
+        const std::vector<const char *> &extensions)
 {
-    VkResult result;
+    u32 gpu_count;
+    vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr);
 
-    u32 device_count;
-    result = vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
+    std::vector<VkPhysicalDevice> gpus(gpu_count);
+    vkEnumeratePhysicalDevices(instance, &gpu_count, gpus.data());
 
-    std::vector<VkPhysicalDevice> devices(device_count);
-    result = vkEnumeratePhysicalDevices(instance, &device_count, devices.data());
-
-    for (const auto &device : devices)
+    for (const auto &gpu : gpus)
     {
-        VkPhysicalDeviceProperties2 device_properties = {};
-        device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-        vkGetPhysicalDeviceProperties2(device, &device_properties);
+        VkPhysicalDeviceProperties2 gpu_properties = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        };
 
-        VkPhysicalDeviceFeatures2 device_features = {};
-        device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        vkGetPhysicalDeviceFeatures2(device, &device_features);
+        vkGetPhysicalDeviceProperties2(gpu, &gpu_properties);
 
-        LOG_INFO("Found GPU: {}", device_properties.properties.deviceName);
+        VkPhysicalDeviceFeatures2 gpu_features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        };
 
-        QueueFamilyIndices indices = get_queue_families(device);
+        vkGetPhysicalDeviceFeatures2(gpu, &gpu_features);
+
+        LOG_INFO("Found GPU: {}", gpu_properties.properties.deviceName);
+
+        QueueFamilyIndices indices = get_queue_families(gpu, surface);
 
         // TODO: Proper suitability check?
-        if (device_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-            indices.graphics.has_value())
+        if (gpu_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+            indices.is_complete())
         {
-            LOG_INFO("Using GPU: {}", device_properties.properties.deviceName);
-            return device;
+            LOG_INFO("Using GPU: {}", gpu_properties.properties.deviceName);
+            return gpu;
         }
     }
 
-    LOG_ERROR("No suitable GPU found");
     return nullptr;
 }
 
 VkDevice
 create_logical_device(VkPhysicalDevice gpu,
+                      VkSurfaceKHR surface,
                       const std::vector<const char *> &layers,
                       const std::vector<const char *> &extensions)
 {
-    QueueFamilyIndices indices = get_queue_families(gpu);
+    QueueFamilyIndices indices = get_queue_families(gpu, surface);
 
-    VkDeviceQueueCreateInfo queue_create_info = {};
-    queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queue_create_info.queueFamilyIndex = indices.graphics.value();
-    queue_create_info.queueCount = 1;
+    std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+    std::set<u32> unique_queue_families = {
+        indices.graphics.value(),
+        indices.present.value(),
+    };
 
     float queue_priority = 1.0f;
-    queue_create_info.pQueuePriorities = &queue_priority;
 
-    VkPhysicalDeviceVulkan12Features device_features_12 = {};
-    device_features_12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    device_features_12.bufferDeviceAddress = true;
-    device_features_12.descriptorIndexing = true;
+    VkDeviceQueueCreateInfo queue_create_info = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .queueCount = 1,
+        .pQueuePriorities = &queue_priority,
+    };
 
-    VkPhysicalDeviceVulkan13Features device_features_13 = {};
-    device_features_13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
-    device_features_13.pNext = &device_features_12;
-    device_features_13.dynamicRendering = true;
-    device_features_13.synchronization2 = true;
-
-    VkPhysicalDeviceFeatures2 device_features = {};
-    device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    device_features.pNext = &device_features_13;
-
-    VkDeviceCreateInfo device_create_info = {};
-    device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    device_create_info.pQueueCreateInfos = &queue_create_info;
-    device_create_info.queueCreateInfoCount = 1;
-    device_create_info.pEnabledFeatures = &device_features.features;
-    device_create_info.enabledLayerCount = static_cast<u32>(layers.size());
-    device_create_info.ppEnabledLayerNames = layers.data();
-    device_create_info.enabledExtensionCount = static_cast<u32>(extensions.size());
-    device_create_info.ppEnabledExtensionNames = extensions.data();
-
-    VkDevice logical_device;
-    VkResult result = vkCreateDevice(gpu, &device_create_info, nullptr, &logical_device);
-    if (result != VK_SUCCESS)
+    for (const auto &queue_family : unique_queue_families)
     {
-        LOG_ERROR("Failed to create logical device");
+        queue_create_info.queueFamilyIndex = queue_family;
+        queue_create_infos.push_back(queue_create_info);
     }
 
-    return logical_device;
+    VkPhysicalDeviceVulkan12Features device_features_12 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+        .descriptorIndexing = true,
+        .bufferDeviceAddress = true,
+    };
+
+    VkPhysicalDeviceVulkan13Features device_features_13 = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+        .pNext = &device_features_12,
+        .synchronization2 = true,
+        .dynamicRendering = true,
+    };
+
+    VkPhysicalDeviceFeatures2 device_features = {
+        .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+        .pNext = &device_features_13,
+    };
+
+    VkDeviceCreateInfo device_create_info = {
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .queueCreateInfoCount = static_cast<u32>(queue_create_infos.size()),
+        .pQueueCreateInfos = queue_create_infos.data(),
+        .enabledLayerCount = static_cast<u32>(layers.size()),
+        .ppEnabledLayerNames = layers.data(),
+        .enabledExtensionCount = static_cast<u32>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data(),
+        .pEnabledFeatures = &device_features.features,
+    };
+
+    VkDevice device;
+    VkResult result = vkCreateDevice(gpu, &device_create_info, nullptr, &device);
+    if (result != VK_SUCCESS)
+    {
+        // TODO: Error handling
+    }
+
+    return device;
 }
 
 } // namespace goose::render

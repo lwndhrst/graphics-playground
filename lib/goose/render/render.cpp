@@ -12,13 +12,14 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
 {
     VkResult result;
 
-    VkApplicationInfo app_info = {};
-    app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    app_info.pApplicationName = app_name;
-    app_info.applicationVersion = app_version;
-    app_info.pEngineName = "No Engine";
-    app_info.engineVersion = VK_MAKE_VERSION(0, 1, 0);
-    app_info.apiVersion = VK_API_VERSION_1_4;
+    VkApplicationInfo app_info = {
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = app_name,
+        .applicationVersion = app_version,
+        .pEngineName = "No Engine",
+        .engineVersion = VK_MAKE_VERSION(0, 1, 0),
+        .apiVersion = VK_API_VERSION_1_4,
+    };
 
     // TODO: Properly check layer/extension support
 
@@ -27,13 +28,14 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     data->instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
-    VkInstanceCreateInfo instance_create_info = {};
-    instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.pApplicationInfo = &app_info;
-    instance_create_info.enabledLayerCount = static_cast<u32>(data->instance_layers.size());
-    instance_create_info.ppEnabledLayerNames = data->instance_layers.data();
-    instance_create_info.enabledExtensionCount = static_cast<u32>(data->instance_extensions.size());
-    instance_create_info.ppEnabledExtensionNames = data->instance_extensions.data();
+    VkInstanceCreateInfo instance_create_info = {
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &app_info,
+        .enabledLayerCount = static_cast<u32>(data->instance_layers.size()),
+        .ppEnabledLayerNames = data->instance_layers.data(),
+        .enabledExtensionCount = static_cast<u32>(data->instance_extensions.size()),
+        .ppEnabledExtensionNames = data->instance_extensions.data(),
+    };
 
     result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
     if (result != VK_SUCCESS)
@@ -46,24 +48,34 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
 }
 
 bool
-init(RenderData *data, VkSurfaceKHR surface)
+init(RenderData *data)
 {
-    data->surface = surface;
+    if (data->surface == nullptr)
+    {
+        LOG_ERROR("Missing surface");
+        return false;
+    }
 
-    // TODO: Which device extensions are needed?
-    VkPhysicalDevice gpu = get_gpu(data->instance, data->device_extensions);
+    // TODO: Which device extensions are required?
+    data->device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    VkPhysicalDevice gpu = get_gpu(data->instance, data->surface, data->device_extensions);
     if (gpu == nullptr)
     {
+        LOG_ERROR("No suitable GPU found");
         return false;
     }
 
 #ifdef GOOSE_DEBUG
+    // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
+    //       This will just be ignored on modern Vulkan versions, but leaving this here anyway.
     data->device_layers.push_back(VALIDATION_LAYER_NAME);
 #endif
 
-    data->device = create_logical_device(gpu, data->device_layers, data->device_extensions);
+    data->device = create_logical_device(gpu, data->surface, data->device_layers, data->device_extensions);
     if (data->device == nullptr)
     {
+        LOG_ERROR("Failed to create logical device");
         return false;
     }
 

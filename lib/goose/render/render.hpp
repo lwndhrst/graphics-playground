@@ -20,7 +20,7 @@ struct RenderData {
 
 bool create_instance(RenderData *data, const char *app_name, u32 app_version);
 
-bool init(RenderData *data, VkSurfaceKHR surface);
+bool init(RenderData *data);
 
 void cleanup(RenderData *data);
 

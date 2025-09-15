@@ -69,14 +69,13 @@ create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    VkSurfaceKHR surface;
-    if (!SDL_Vulkan_CreateSurface(data.window, render_data.instance, nullptr, &surface))
+    if (!SDL_Vulkan_CreateSurface(data.window, render_data.instance, nullptr, &render_data.surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
-    if (!goose::render::init(&render_data, surface))
+    if (!goose::render::init(&render_data))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
