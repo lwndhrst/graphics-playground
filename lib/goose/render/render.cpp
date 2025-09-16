@@ -8,7 +8,7 @@
 namespace goose::render {
 
 bool
-create_instance(RenderData *data, const char *app_name, u32 app_version)
+create_instance(RenderContext *ctx, const char *app_name, u32 app_version)
 {
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -22,20 +22,20 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
     // TODO: Properly check layer/extension support
 
 #ifdef GOOSE_DEBUG
-    data->instance_layers.push_back(VALIDATION_LAYER_NAME);
-    data->instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    ctx->instance.layers.push_back(VALIDATION_LAYER_NAME);
+    ctx->instance.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
     VkInstanceCreateInfo instance_create_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &app_info,
-        .enabledLayerCount = static_cast<u32>(data->instance_layers.size()),
-        .ppEnabledLayerNames = data->instance_layers.data(),
-        .enabledExtensionCount = static_cast<u32>(data->instance_extensions.size()),
-        .ppEnabledExtensionNames = data->instance_extensions.data(),
+        .enabledLayerCount = static_cast<u32>(ctx->instance.layers.size()),
+        .ppEnabledLayerNames = ctx->instance.layers.data(),
+        .enabledExtensionCount = static_cast<u32>(ctx->instance.extensions.size()),
+        .ppEnabledExtensionNames = ctx->instance.extensions.data(),
     };
 
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
+    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &ctx->instance.handle);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -46,18 +46,18 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
 }
 
 bool
-init(RenderData *data)
+init(RenderContext *ctx)
 {
-    if (data->surface == nullptr)
+    if (ctx->window.surface == nullptr)
     {
         LOG_ERROR("Missing surface");
         return false;
     }
 
     // TODO: Which device extensions are required?
-    data->device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    ctx->device.extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    VkPhysicalDevice gpu = get_gpu(data->instance, data->surface, data->device_extensions);
+    VkPhysicalDevice gpu = get_gpu(ctx->instance.handle, ctx->window.surface, ctx->device.extensions);
     if (gpu == nullptr)
     {
         LOG_ERROR("No suitable GPU found");
@@ -67,11 +67,11 @@ init(RenderData *data)
 #ifdef GOOSE_DEBUG
     // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
     //       This will just be ignored on modern Vulkan versions, but leaving this here anyway.
-    data->device_layers.push_back(VALIDATION_LAYER_NAME);
+    ctx->device.layers.push_back(VALIDATION_LAYER_NAME);
 #endif
 
-    data->device = create_logical_device(gpu, data->surface, data->device_layers, data->device_extensions);
-    if (data->device == nullptr)
+    ctx->device.handle = create_logical_device(gpu, ctx->window.surface, ctx->device.layers, ctx->device.extensions, ctx->queues);
+    if (ctx->device.handle == nullptr)
     {
         LOG_ERROR("Failed to create logical device");
         return false;
@@ -81,13 +81,13 @@ init(RenderData *data)
 }
 
 void
-cleanup(RenderData *data)
+cleanup(RenderContext *ctx)
 {
-    vkDeviceWaitIdle(data->device);
+    vkDeviceWaitIdle(ctx->device.handle);
 
-    vkDestroyDevice(data->device, nullptr);
-    vkDestroySurfaceKHR(data->instance, data->surface, nullptr);
-    vkDestroyInstance(data->instance, nullptr);
+    vkDestroyDevice(ctx->device.handle, nullptr);
+    vkDestroySurfaceKHR(ctx->instance.handle, ctx->window.surface, nullptr);
+    vkDestroyInstance(ctx->instance.handle, nullptr);
 }
 
 } // namespace goose::render

@@ -134,7 +134,8 @@ VkDevice
 create_logical_device(VkPhysicalDevice gpu,
                       VkSurfaceKHR surface,
                       const std::vector<const char *> &layers,
-                      const std::vector<const char *> &extensions)
+                      const std::vector<const char *> &extensions,
+                      RenderContext::Queues &queues)
 {
     QueueFamilyIndices indices = get_queue_families(gpu, surface);
 
@@ -195,6 +196,9 @@ create_logical_device(VkPhysicalDevice gpu,
 
         // TODO: Error handling
     }
+
+    // TODO: How many queues and from families?
+    vkGetDeviceQueue(device, indices.graphics.value(), 0, &queues.graphics);
 
     return device;
 }
