@@ -111,6 +111,8 @@ window_should_close()
 void
 quit()
 {
+    goose::render::cleanup(&render_data);
+
     if (data.window != nullptr)
     {
         SDL_DestroyWindow(data.window);

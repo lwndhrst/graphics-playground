@@ -3,7 +3,7 @@
 #define DO_NOTHING() \
     do               \
     {                \
-    } while (false)
+    } while (0)
 
 #include "fmt/core.h"
 #include "vulkan/vk_enum_string_helper.h"
