@@ -10,8 +10,6 @@ namespace goose::render {
 bool
 create_instance(RenderData *data, const char *app_name, u32 app_version)
 {
-    VkResult result;
-
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = app_name,
@@ -37,10 +35,10 @@ create_instance(RenderData *data, const char *app_name, u32 app_version)
         .ppEnabledExtensionNames = data->instance_extensions.data(),
     };
 
-    result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
+    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &data->instance);
     if (result != VK_SUCCESS)
     {
-        LOG_ERROR("Vulkan error: {}", string_VkResult(result));
+        VK_LOG_ERROR(result);
         return false;
     }
 

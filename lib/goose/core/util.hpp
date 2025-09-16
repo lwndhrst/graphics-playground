@@ -10,13 +10,13 @@
 
 #ifdef GOOSE_DEBUG
 #define LOG_DEBUG(...) \
-    fmt::println(" DEBUG | {}", fmt::format(__VA_ARGS__));
+    fmt::println(" DEBUG | {}", fmt::format(__VA_ARGS__))
 #define LOG_INFO(...) \
-    fmt::println("  INFO | {}", fmt::format(__VA_ARGS__));
+    fmt::println("  INFO | {}", fmt::format(__VA_ARGS__))
 #define LOG_WARN(...) \
-    fmt::println("  WARN | {}", fmt::format(__VA_ARGS__));
+    fmt::println("  WARN | {}", fmt::format(__VA_ARGS__))
 #define LOG_ERROR(...) \
-    fmt::println(" ERROR | {}", fmt::format(__VA_ARGS__));
+    fmt::println(" ERROR | {}", fmt::format(__VA_ARGS__))
 #else
 #define LOG_DEBUG(...) \
     DO_NOTHING()
@@ -27,3 +27,6 @@
 #define LOG_ERROR(...) \
     DO_NOTHING()
 #endif
+
+#define VK_LOG_ERROR(result) \
+    LOG_ERROR("Vulkan: {}", string_VkResult(result))

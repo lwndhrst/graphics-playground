@@ -4,11 +4,17 @@
 
 namespace goose::render {
 
-bool
-QueueFamilyIndices::is_complete()
-{
-    return graphics.has_value() && present.has_value();
-}
+struct QueueFamilyIndices {
+    std::optional<u32> graphics;
+    std::optional<u32> present;
+
+    // TODO: More queue families
+
+    bool is_complete()
+    {
+        return graphics.has_value() && present.has_value();
+    }
+};
 
 QueueFamilyIndices
 get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface)
@@ -29,6 +35,7 @@ get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface)
     {
         VkBool32 present_support = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, surface, &present_support);
+
         if (present_support)
         {
             indices.present = i;
@@ -48,6 +55,30 @@ get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface)
     return indices;
 }
 
+u32
+score_gpu(const VkPhysicalDeviceProperties &properties, const VkPhysicalDeviceFeatures &features)
+{
+    u32 score = 0;
+
+    LOG_INFO("Checking GPU: {}", properties.deviceName);
+
+    // TODO: Figure out proper scoring
+
+    switch (properties.deviceType)
+    {
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        score += 10;
+        break;
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        score += 1;
+        break;
+    default:
+        break;
+    }
+
+    return score;
+}
+
 VkPhysicalDevice
 get_gpu(VkInstance instance,
         VkSurfaceKHR surface,
@@ -58,6 +89,11 @@ get_gpu(VkInstance instance,
 
     std::vector<VkPhysicalDevice> gpus(gpu_count);
     vkEnumeratePhysicalDevices(instance, &gpu_count, gpus.data());
+
+    VkPhysicalDevice chosen_gpu = nullptr;
+    u32 chosen_gpu_score = 0;
+    VkPhysicalDeviceProperties chosen_gpu_properties;
+    VkPhysicalDeviceFeatures chosen_gpu_features;
 
     for (const auto &gpu : gpus)
     {
@@ -73,20 +109,25 @@ get_gpu(VkInstance instance,
 
         vkGetPhysicalDeviceFeatures2(gpu, &gpu_features);
 
-        LOG_INFO("Found GPU: {}", gpu_properties.properties.deviceName);
+        u32 gpu_score = score_gpu(gpu_properties.properties, gpu_features.features);
 
         QueueFamilyIndices indices = get_queue_families(gpu, surface);
 
-        // TODO: Proper suitability check?
-        if (gpu_properties.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-            indices.is_complete())
+        if (gpu_score > chosen_gpu_score && indices.is_complete())
         {
-            LOG_INFO("Using GPU: {}", gpu_properties.properties.deviceName);
-            return gpu;
+            chosen_gpu = gpu;
+            chosen_gpu_score = gpu_score;
+            chosen_gpu_properties = gpu_properties.properties;
+            chosen_gpu_features = gpu_features.features;
         }
     }
 
-    return nullptr;
+    if (chosen_gpu != nullptr)
+    {
+        LOG_INFO("Using GPU: {}", chosen_gpu_properties.deviceName);
+    }
+
+    return chosen_gpu;
 }
 
 VkDevice
@@ -150,6 +191,8 @@ create_logical_device(VkPhysicalDevice gpu,
     VkResult result = vkCreateDevice(gpu, &device_create_info, nullptr, &device);
     if (result != VK_SUCCESS)
     {
+        VK_LOG_ERROR(result);
+
         // TODO: Error handling
     }
 
