@@ -14,9 +14,9 @@ static struct Data {
 
     SDL_Window *window;
     bool window_should_close;
-} data;
 
-static render::RenderContext render_ctx;
+    render::RenderContext render_ctx;
+} data;
 
 bool
 init(const char *app_name)
@@ -39,12 +39,7 @@ create_window(const char *title, u32 width, u32 height)
 {
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
 
-    data.window = SDL_CreateWindow(
-        title,
-        width,
-        height,
-        window_flags);
-
+    data.window = SDL_CreateWindow(title, width, height, window_flags);
     if (data.window == nullptr)
     {
         LOG_ERROR("{}", SDL_GetError());
@@ -53,29 +48,34 @@ create_window(const char *title, u32 width, u32 height)
 
     data.window_should_close = false;
 
-    render_ctx.window.extent.width = width;
-    render_ctx.window.extent.height = height;
+    data.render_ctx.window.extent.width = width;
+    data.render_ctx.window.extent.height = height;
 
     u32 extension_count;
     auto extensions = SDL_Vulkan_GetInstanceExtensions(&extension_count);
     for (usize i = 0; i < extension_count; ++i)
     {
-        render_ctx.instance.extensions.push_back(extensions[i]);
+        data.render_ctx.instance.extensions.push_back(extensions[i]);
     }
 
-    if (!goose::render::create_instance(&render_ctx, data.app_name, data.app_version))
+    if (!render::create_instance(&data.render_ctx,
+                                 data.app_name,
+                                 data.app_version))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
-    if (!SDL_Vulkan_CreateSurface(data.window, render_ctx.instance.handle, nullptr, &render_ctx.window.surface))
+    if (!SDL_Vulkan_CreateSurface(data.window,
+                                  data.render_ctx.instance.handle,
+                                  nullptr,
+                                  &data.render_ctx.window.surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
-    if (!goose::render::init(&render_ctx))
+    if (!render::init(&data.render_ctx))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
@@ -111,7 +111,7 @@ window_should_close()
 void
 quit()
 {
-    goose::render::cleanup(&render_ctx);
+    render::cleanup(&data.render_ctx);
 
     if (data.window != nullptr)
     {
