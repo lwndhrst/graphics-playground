@@ -10,7 +10,7 @@
 #define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 
 bool
-goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app_version)
+goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app_version, VkInstance *instance)
 {
     std::vector<const char *> instance_layers;
     std::vector<const char *> instance_extensions;
@@ -36,12 +36,23 @@ goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app
         instance_layers,
         instance_extensions);
 
+    if (instance != nullptr)
+    {
+        *instance = ctx->instance.handle;
+    }
+
     return ctx->instance.handle != VK_NULL_HANDLE;
 }
 
 bool
 goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR surface)
 {
+    if (ctx->instance.handle == VK_NULL_HANDLE)
+    {
+        LOG_ERROR("Missing instance");
+        return false;
+    }
+
     if (surface == VK_NULL_HANDLE)
     {
         LOG_ERROR("Missing surface");

@@ -50,14 +50,15 @@ goose::create_window(const char *title, u32 width, u32 height)
 
     data.window_should_close = false;
 
-    if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version))
+    VkInstance instance;
+    if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version, &instance))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
     VkSurfaceKHR surface;
-    if (!SDL_Vulkan_CreateSurface(data.window, data.render_ctx.instance.handle, nullptr, &surface))
+    if (!SDL_Vulkan_CreateSurface(data.window, instance, nullptr, &surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
