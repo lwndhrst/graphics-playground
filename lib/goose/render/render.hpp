@@ -14,6 +14,7 @@ struct RenderContext {
         VkInstance handle;
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
+        VkDebugUtilsMessengerEXT debug_messenger;
     };
 
     struct Device {

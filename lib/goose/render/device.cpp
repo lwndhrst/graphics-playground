@@ -17,7 +17,7 @@ struct QueueFamilyIndices {
 };
 
 QueueFamilyIndices
-get_queue_families(VkPhysicalDevice gpu, VkSurfaceKHR surface)
+get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 {
     u32 queue_family_count;
     vkGetPhysicalDeviceQueueFamilyProperties2(gpu, &queue_family_count, nullptr);
@@ -111,7 +111,7 @@ get_gpu(VkInstance instance,
 
         u32 gpu_score = score_gpu(gpu_properties.properties, gpu_features.features);
 
-        QueueFamilyIndices indices = get_queue_families(gpu, surface);
+        QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
 
         if (gpu_score > chosen_gpu_score && indices.is_complete())
         {
@@ -137,7 +137,7 @@ create_logical_device(VkPhysicalDevice gpu,
                       const std::vector<const char *> &extensions,
                       RenderContext::Queues &queues)
 {
-    QueueFamilyIndices indices = get_queue_families(gpu, surface);
+    QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<u32> unique_queue_families = {
