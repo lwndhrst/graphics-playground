@@ -5,7 +5,12 @@ main(int argc, char **argv)
 {
     goose::init("Sandbox");
 
-    goose::create_window("Sandbox", 1600, 900);
+    if (!goose::create_window("Sandbox", 1600, 900))
+    {
+        goose::quit();
+
+        return EXIT_FAILURE;
+    }
 
     while (!goose::window_should_close())
     {
@@ -14,5 +19,5 @@ main(int argc, char **argv)
 
     goose::quit();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

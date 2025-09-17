@@ -37,6 +37,13 @@ goose::init(const char *app_name)
 bool
 goose::create_window(const char *title, u32 width, u32 height)
 {
+    // TODO: Support multiple windows
+    if (data.window != nullptr)
+    {
+        LOG_ERROR("There is already an active window, multiple windows are currently not supported");
+        return false;
+    }
+
     bool success;
 
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
