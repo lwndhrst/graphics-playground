@@ -1,23 +1,10 @@
 #include "goose/render/device.hpp"
 
 #include "goose/core/util.hpp"
+#include "goose/render/swapchain.hpp"
 
-namespace goose::render {
-
-struct QueueFamilyIndices {
-    std::optional<u32> graphics;
-    std::optional<u32> present;
-
-    // TODO: More queue families
-
-    bool is_complete()
-    {
-        return graphics.has_value() && present.has_value();
-    }
-};
-
-QueueFamilyIndices
-get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
+goose::render::QueueFamilyIndices
+goose::render::get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 {
     u32 queue_family_count;
     vkGetPhysicalDeviceQueueFamilyProperties2(gpu, &queue_family_count, nullptr);
@@ -55,7 +42,7 @@ get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
     return indices;
 }
 
-u32
+static u32
 score_gpu(const VkPhysicalDeviceProperties &properties, const VkPhysicalDeviceFeatures &features)
 {
     u32 score = 0;
@@ -79,10 +66,30 @@ score_gpu(const VkPhysicalDeviceProperties &properties, const VkPhysicalDeviceFe
     return score;
 }
 
+static bool
+check_extension_support(VkPhysicalDevice gpu, const std::vector<const char *> &extensions)
+{
+    uint32_t extension_count;
+    vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extension_count, nullptr);
+
+    std::vector<VkExtensionProperties> available_extensions(extension_count);
+    vkEnumerateDeviceExtensionProperties(gpu, nullptr, &extension_count, available_extensions.data());
+
+    std::set<std::string> required_extensions(extensions.begin(), extensions.end());
+
+    for (const auto &extension : available_extensions)
+    {
+        required_extensions.erase(extension.extensionName);
+    }
+
+    return required_extensions.empty();
+}
+
 VkPhysicalDevice
-get_gpu(VkInstance instance,
-        VkSurfaceKHR surface,
-        const std::vector<const char *> &extensions)
+goose::render::get_gpu(
+    VkInstance instance,
+    VkSurfaceKHR surface,
+    const std::vector<const char *> &extensions)
 {
     u32 gpu_count;
     vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr);
@@ -110,10 +117,14 @@ get_gpu(VkInstance instance,
         vkGetPhysicalDeviceFeatures2(gpu, &gpu_features);
 
         u32 gpu_score = score_gpu(gpu_properties.properties, gpu_features.features);
-
         QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
+        SwapchainSupportDetails swapchain_support = get_swapchain_support_details(gpu, surface);
 
-        if (gpu_score > chosen_gpu_score && indices.is_complete())
+        if (gpu_score > chosen_gpu_score &&
+            indices.is_complete() &&
+            check_extension_support(gpu, extensions) &&
+            !swapchain_support.formats.empty() &&
+            !swapchain_support.present_modes.empty())
         {
             chosen_gpu = gpu;
             chosen_gpu_score = gpu_score;
@@ -130,12 +141,12 @@ get_gpu(VkInstance instance,
     return chosen_gpu;
 }
 
-VkDevice
-create_logical_device(VkPhysicalDevice gpu,
-                      VkSurfaceKHR surface,
-                      const std::vector<const char *> &layers,
-                      const std::vector<const char *> &extensions,
-                      RenderContext::Queues &queues)
+std::pair<VkDevice, goose::render::DeviceQueues>
+goose::render::create_logical_device(
+    VkPhysicalDevice gpu,
+    VkSurfaceKHR surface,
+    const std::vector<const char *> &layers,
+    const std::vector<const char *> &extensions)
 {
     QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
 
@@ -197,10 +208,9 @@ create_logical_device(VkPhysicalDevice gpu,
         // TODO: Error handling
     }
 
-    // TODO: How many queues and from families?
+    // TODO: How many queues and from which families?
+    DeviceQueues queues = {};
     vkGetDeviceQueue(device, indices.graphics.value(), 0, &queues.graphics);
 
-    return device;
+    return std::make_pair(device, queues);
 }
-
-} // namespace goose::render

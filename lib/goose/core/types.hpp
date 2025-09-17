@@ -1,10 +1,14 @@
 #pragma once
 
 #include "vulkan/vulkan.h"
+#include "vulkan/vulkan_core.h"
 
+#include <algorithm>
+#include <limits>
 #include <optional>
-#include <vector>
 #include <set>
+#include <string>
+#include <vector>
 
 #include <cstdint>
 

@@ -6,20 +6,20 @@
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_vulkan.h"
 
-namespace goose {
-
-static struct Data {
+struct Data {
     const char *app_name;
     u32 app_version;
 
     SDL_Window *window;
     bool window_should_close;
 
-    render::RenderContext render_ctx;
-} data;
+    goose::render::RenderContext render_ctx;
+};
+
+static Data data;
 
 bool
-init(const char *app_name)
+goose::init(const char *app_name)
 {
     // TODO: Make app version configurable
     data.app_name = app_name;
@@ -35,8 +35,10 @@ init(const char *app_name)
 }
 
 bool
-create_window(const char *title, u32 width, u32 height)
+goose::create_window(const char *title, u32 width, u32 height)
 {
+    bool success;
+
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
 
     data.window = SDL_CreateWindow(title, width, height, window_flags);
@@ -58,24 +60,19 @@ create_window(const char *title, u32 width, u32 height)
         data.render_ctx.instance.extensions.push_back(extensions[i]);
     }
 
-    if (!render::create_instance(&data.render_ctx,
-                                 data.app_name,
-                                 data.app_version))
+    if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
-    if (!SDL_Vulkan_CreateSurface(data.window,
-                                  data.render_ctx.instance.handle,
-                                  nullptr,
-                                  &data.render_ctx.window.surface))
+    if (!SDL_Vulkan_CreateSurface(data.window, data.render_ctx.instance.handle, nullptr, &data.render_ctx.window.surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
-    if (!render::init(&data.render_ctx))
+    if (!goose::render::init(&data.render_ctx))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
@@ -85,7 +82,7 @@ create_window(const char *title, u32 width, u32 height)
 }
 
 bool
-window_should_close()
+goose::window_should_close()
 {
     SDL_Event event;
 
@@ -109,9 +106,9 @@ window_should_close()
 }
 
 void
-quit()
+goose::quit()
 {
-    render::cleanup(&data.render_ctx);
+    goose::render::cleanup(&data.render_ctx);
 
     if (data.window != nullptr)
     {
@@ -120,5 +117,3 @@ quit()
 
     SDL_Quit();
 }
-
-} // namespace goose

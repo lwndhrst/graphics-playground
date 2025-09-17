@@ -2,13 +2,12 @@
 
 #include "goose/core/util.hpp"
 
-namespace goose::render {
-
 VkInstance
-create_instance(const char *app_name,
-                u32 app_version,
-                const std::vector<const char *> &layers,
-                const std::vector<const char *> &extensions)
+goose::render::create_instance(
+    const char *app_name,
+    u32 app_version,
+    const std::vector<const char *> &layers,
+    const std::vector<const char *> &extensions)
 {
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -41,5 +40,3 @@ create_instance(const char *app_name,
 
     return instance;
 }
-
-} // namespace goose::render

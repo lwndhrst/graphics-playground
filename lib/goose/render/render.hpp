@@ -2,10 +2,13 @@
 
 #include "goose/core/types.hpp"
 
+struct SDL_Window;
+
 namespace goose::render {
 
 struct RenderContext {
     struct Window {
+        SDL_Window *handle;
         VkExtent2D extent;
         VkSurfaceKHR surface;
     };
@@ -14,11 +17,11 @@ struct RenderContext {
         VkInstance handle;
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
-        VkDebugUtilsMessengerEXT debug_messenger;
     };
 
     struct Device {
-        VkDevice handle;
+        VkPhysicalDevice physical;
+        VkDevice logical;
         std::vector<const char *> layers;
         std::vector<const char *> extensions;
     };
@@ -28,10 +31,16 @@ struct RenderContext {
         VkQueue present;
     };
 
+    struct Swapchain {
+        VkSwapchainKHR handle;
+        VkExtent2D extent;
+    };
+
     Window window;
     Instance instance;
     Device device;
     Queues queues;
+    Swapchain swapchain;
 };
 
 bool create_instance(RenderContext *ctx, const char *app_name, u32 app_version);
