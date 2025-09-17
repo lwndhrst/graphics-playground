@@ -1,6 +1,6 @@
 #include "goose/render/device.hpp"
 
-#include "goose/core/util.hpp"
+#include "goose/common/util.hpp"
 #include "goose/render/swapchain.hpp"
 
 goose::render::QueueFamilyIndices

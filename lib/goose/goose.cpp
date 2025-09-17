@@ -1,6 +1,6 @@
 #include "goose/goose.hpp"
 
-#include "goose/core/util.hpp"
+#include "goose/common/util.hpp"
 #include "goose/render/render.hpp"
 
 #include "SDL3/SDL.h"

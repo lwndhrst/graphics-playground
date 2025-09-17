@@ -1,6 +1,6 @@
 #include "goose/render/instance.hpp"
 
-#include "goose/core/util.hpp"
+#include "goose/common/util.hpp"
 
 goose::render::Instance
 goose::render::create_instance(

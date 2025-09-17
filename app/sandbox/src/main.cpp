@@ -1,7 +1,5 @@
 #include "goose/goose.hpp"
 
-#include "goose/core/util.hpp"
-
 int
 main(int argc, char **argv)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "goose/core/types.hpp"
+#include "goose/common/types.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"

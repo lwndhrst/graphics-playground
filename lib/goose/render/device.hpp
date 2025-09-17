@@ -1,6 +1,6 @@
 #pragma once
 
-#include "goose/core/types.hpp"
+#include "goose/common/types.hpp"
 
 namespace goose::render {
 

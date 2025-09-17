@@ -1,6 +1,6 @@
 #include "goose/render/swapchain.hpp"
 
-#include "goose/core/util.hpp"
+#include "goose/common/util.hpp"
 #include "goose/render/device.hpp"
 
 goose::render::SwapchainSupportDetails
