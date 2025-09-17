@@ -2,9 +2,14 @@
 
 #include "goose/core/types.hpp"
 
-struct SDL_Window;
-
 namespace goose::render {
+
+struct Swapchain {
+    VkSwapchainKHR handle;
+    VkExtent2D extent;
+    VkFormat format;
+    std::vector<VkImage> images;
+};
 
 struct SwapchainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
@@ -14,6 +19,6 @@ struct SwapchainSupportDetails {
 
 SwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-VkSwapchainKHR create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, SDL_Window *window);
+Swapchain create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkExtent2D window_extent);
 
 } // namespace goose::render

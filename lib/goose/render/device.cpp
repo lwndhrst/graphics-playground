@@ -85,8 +85,8 @@ check_extension_support(VkPhysicalDevice gpu, const std::vector<const char *> &e
     return required_extensions.empty();
 }
 
-VkPhysicalDevice
-goose::render::get_gpu(
+static VkPhysicalDevice
+get_gpu(
     VkInstance instance,
     VkSurfaceKHR surface,
     const std::vector<const char *> &extensions)
@@ -117,8 +117,8 @@ goose::render::get_gpu(
         vkGetPhysicalDeviceFeatures2(gpu, &gpu_features);
 
         u32 gpu_score = score_gpu(gpu_properties.properties, gpu_features.features);
-        QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
-        SwapchainSupportDetails swapchain_support = get_swapchain_support_details(gpu, surface);
+        goose::render::QueueFamilyIndices indices = goose::render::get_queue_family_indices(gpu, surface);
+        goose::render::SwapchainSupportDetails swapchain_support = goose::render::get_swapchain_support_details(gpu, surface);
 
         if (gpu_score > chosen_gpu_score &&
             indices.is_complete() &&
@@ -141,13 +141,20 @@ goose::render::get_gpu(
     return chosen_gpu;
 }
 
-std::pair<VkDevice, goose::render::DeviceQueues>
-goose::render::create_logical_device(
-    VkPhysicalDevice gpu,
+goose::render::Device
+goose::render::create_device(
+    VkInstance instance,
     VkSurfaceKHR surface,
     const std::vector<const char *> &layers,
     const std::vector<const char *> &extensions)
 {
+    VkPhysicalDevice gpu = get_gpu(instance, surface, extensions);
+    if (gpu == VK_NULL_HANDLE)
+    {
+        LOG_ERROR("No suitable GPU found");
+        return {};
+    }
+
     QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
@@ -209,8 +216,14 @@ goose::render::create_logical_device(
     }
 
     // TODO: How many queues and from which families?
-    DeviceQueues queues = {};
+    Device::Queues queues = {};
     vkGetDeviceQueue(device, indices.graphics.value(), 0, &queues.graphics);
 
-    return std::make_pair(device, queues);
+    return {
+        .physical = gpu,
+        .logical = device,
+        .layers = layers,
+        .extensions = extensions,
+        .queues = queues,
+    };
 }

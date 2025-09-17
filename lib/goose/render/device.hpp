@@ -4,9 +4,16 @@
 
 namespace goose::render {
 
-struct DeviceQueues {
-    VkQueue graphics;
-    VkQueue present;
+struct Device {
+    VkPhysicalDevice physical;
+    VkDevice logical;
+    std::vector<const char *> layers;
+    std::vector<const char *> extensions;
+
+    struct Queues {
+        VkQueue graphics;
+        VkQueue present;
+    } queues;
 };
 
 struct QueueFamilyIndices {
@@ -23,8 +30,6 @@ struct QueueFamilyIndices {
 
 QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-VkPhysicalDevice get_gpu(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &extensions);
-
-std::pair<VkDevice, DeviceQueues> create_logical_device(VkPhysicalDevice gpu, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
+Device create_device(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
 
 } // namespace goose::render

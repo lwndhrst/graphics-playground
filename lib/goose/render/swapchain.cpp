@@ -3,8 +3,6 @@
 #include "goose/core/util.hpp"
 #include "goose/render/device.hpp"
 
-#include "SDL3/SDL_video.h"
-
 goose::render::SwapchainSupportDetails
 goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 {
@@ -79,51 +77,46 @@ choose_swapchain_present_mode(const std::vector<VkPresentModeKHR> &available_pre
 }
 
 static VkExtent2D
-choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, SDL_Window *window)
+choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D window_extent)
 {
     if (capabilities.currentExtent.width != std::numeric_limits<u32>::max())
     {
         return capabilities.currentExtent;
     }
 
-    int width, height;
-    SDL_GetWindowSize(window, &width, &height);
-
-    VkExtent2D extent = {
-        .width = std::clamp<u32>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
-        .height = std::clamp<u32>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height),
+    return {
+        .width = std::clamp<u32>(window_extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+        .height = std::clamp<u32>(window_extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height),
     };
-
-    return extent;
 }
 
-VkSwapchainKHR
-goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, SDL_Window *window)
+goose::render::Swapchain
+goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkExtent2D window_extent)
 {
     SwapchainSupportDetails swapchain_support = get_swapchain_support_details(gpu, surface);
 
-    VkSurfaceFormatKHR surface_format = choose_swapchain_surface_format(swapchain_support.formats);
-    VkPresentModeKHR present_mode = choose_swapchain_present_mode(swapchain_support.present_modes);
-    VkExtent2D extent = choose_swapchain_extent(swapchain_support.capabilities, window);
+    VkSurfaceFormatKHR swapchain_surface_format = choose_swapchain_surface_format(swapchain_support.formats);
+    VkPresentModeKHR swapchain_present_mode = choose_swapchain_present_mode(swapchain_support.present_modes);
+    VkExtent2D swapchain_extent = choose_swapchain_extent(swapchain_support.capabilities, window_extent);
 
-    u32 image_count = swapchain_support.capabilities.minImageCount + 1;
+    u32 swapchain_image_count = swapchain_support.capabilities.minImageCount + 1;
     if (swapchain_support.capabilities.maxImageCount > 0)
     {
-        image_count = std::max(image_count, swapchain_support.capabilities.maxImageCount);
+        swapchain_image_count = std::min(swapchain_image_count, swapchain_support.capabilities.maxImageCount);
     }
 
     VkSwapchainCreateInfoKHR swapchain_create_info = {
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = surface,
-        .minImageCount = image_count,
-        .imageFormat = surface_format.format,
-        .imageColorSpace = surface_format.colorSpace,
-        .imageExtent = extent,
+        .minImageCount = swapchain_image_count,
+        .imageFormat = swapchain_surface_format.format,
+        .imageColorSpace = swapchain_surface_format.colorSpace,
+        .imageExtent = swapchain_extent,
         .imageArrayLayers = 1,
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .preTransform = swapchain_support.capabilities.currentTransform,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        .presentMode = present_mode,
+        .presentMode = swapchain_present_mode,
         .clipped = VK_TRUE,
         .oldSwapchain = VK_NULL_HANDLE,
     };
@@ -158,5 +151,15 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
         // TODO: Error handling
     }
 
-    return swapchain;
+    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, nullptr);
+
+    std::vector<VkImage> swapchain_images(swapchain_image_count);
+    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, swapchain_images.data());
+
+    return {
+        .handle = swapchain,
+        .extent = swapchain_extent,
+        .format = swapchain_surface_format.format,
+        .images = std::move(swapchain_images),
+    };
 }

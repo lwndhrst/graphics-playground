@@ -2,7 +2,7 @@
 
 #include "goose/core/util.hpp"
 
-VkInstance
+goose::render::Instance
 goose::render::create_instance(
     const char *app_name,
     u32 app_version,
@@ -38,5 +38,9 @@ goose::render::create_instance(
         // TODO: Error handling
     }
 
-    return instance;
+    return {
+        .handle = instance,
+        .layers = layers,
+        .extensions = extensions,
+    };
 }

@@ -50,29 +50,25 @@ goose::create_window(const char *title, u32 width, u32 height)
 
     data.window_should_close = false;
 
-    data.render_ctx.window.extent.width = width;
-    data.render_ctx.window.extent.height = height;
-
-    u32 extension_count;
-    auto extensions = SDL_Vulkan_GetInstanceExtensions(&extension_count);
-    for (usize i = 0; i < extension_count; ++i)
-    {
-        data.render_ctx.instance.extensions.push_back(extensions[i]);
-    }
-
     if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
-    if (!SDL_Vulkan_CreateSurface(data.window, data.render_ctx.instance.handle, nullptr, &data.render_ctx.window.surface))
+    VkSurfaceKHR surface;
+    if (!SDL_Vulkan_CreateSurface(data.window, data.render_ctx.instance.handle, nullptr, &surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
 
-    if (!goose::render::init(&data.render_ctx))
+    VkExtent2D window_extent = {
+        .width = width,
+        .height = height,
+    };
+
+    if (!goose::render::init(&data.render_ctx, window_extent, surface))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
