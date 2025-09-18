@@ -7,12 +7,13 @@
 struct QueueFamilyIndices {
     std::optional<u32> graphics;
     std::optional<u32> present;
+    std::optional<u32> compute;
 
     // TODO: More queue families
 
     bool is_complete()
     {
-        return graphics.has_value() && present.has_value();
+        return graphics.has_value() && present.has_value() && compute.has_value();
     }
 };
 
@@ -44,6 +45,11 @@ get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
         if (queue_families[i].queueFamilyProperties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
         {
             indices.graphics = i;
+        }
+
+        if (queue_families[i].queueFamilyProperties.queueFlags & VK_QUEUE_COMPUTE_BIT)
+        {
+            indices.compute = i;
         }
 
         if (indices.is_complete())
@@ -171,9 +177,10 @@ goose::render::create_device(
     QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
-    std::set<u32> unique_queue_families = {
+    std::set<u32> unique_queue_family_indices = {
         indices.graphics.value(),
         indices.present.value(),
+        indices.compute.value(),
     };
 
     // TODO: Support multiple queues
@@ -186,9 +193,9 @@ goose::render::create_device(
         .pQueuePriorities = &queue_priority,
     };
 
-    for (const auto &queue_family : unique_queue_families)
+    for (const auto &queue_family_index : unique_queue_family_indices)
     {
-        queue_create_info.queueFamilyIndex = queue_family;
+        queue_create_info.queueFamilyIndex = queue_family_index;
         queue_create_infos.push_back(queue_create_info);
     }
 
@@ -226,31 +233,43 @@ goose::render::create_device(
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
-
-        // TODO: Error handling
+        return {};
     }
 
-    // TODO: How many queues and from which families?
-    u32 graphics_queue_count = queue_count;
-    Device::QueueFamily graphics_family = {
-        .index = indices.graphics.value(),
-        .queues = std::vector<VkQueue>(graphics_queue_count),
+    QueueFamilies queue_families = {
+        .graphics = {
+            .index = indices.graphics.value(),
+            .queues = std::vector<VkQueue>(queue_count),
+        },
+        .present = {
+            .index = indices.present.value(),
+            .queues = std::vector<VkQueue>(queue_count),
+        },
+        .compute = {
+            .index = indices.compute.value(),
+            .queues = std::vector<VkQueue>(queue_count),
+        },
     };
 
-    for (usize i = 0; i < graphics_queue_count; ++i)
+    // TODO: How many queues from which families?
+    //       Currently only getting one queue per unique family.
+    //       Assuming multiple queues are needed in order to support multiple windows.
+    for (const auto &queue_family_index : unique_queue_family_indices)
     {
-        vkGetDeviceQueue(device, graphics_family.index, i, &graphics_family.queues[i]);
-    }
+        if (queue_family_index == queue_families.graphics.index)
+        {
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.graphics.queues[0]);
+        }
 
-    u32 present_queue_count = queue_count;
-    Device::QueueFamily present_family = {
-        .index = indices.present.value(),
-        .queues = std::vector<VkQueue>(present_queue_count),
-    };
+        if (queue_family_index == queue_families.present.index)
+        {
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.present.queues[0]);
+        }
 
-    for (usize i = 0; i < present_queue_count; ++i)
-    {
-        vkGetDeviceQueue(device, present_family.index, i, &present_family.queues[i]);
+        if (queue_family_index == queue_families.compute.index)
+        {
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.compute.queues[0]);
+        }
     }
 
     return {
@@ -258,10 +277,7 @@ goose::render::create_device(
         .logical = device,
         .layers = layers,
         .extensions = extensions,
-        .queue_families = {
-            .graphics = graphics_family,
-            .present = present_family,
-        },
+        .queue_families = queue_families,
     };
 }
 
