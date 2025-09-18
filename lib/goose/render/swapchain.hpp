@@ -4,7 +4,13 @@
 
 namespace goose::render {
 
-struct Device;
+struct SwapchainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> present_modes;
+};
+
+SwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
 struct Swapchain {
     VkSwapchainKHR handle;
@@ -14,16 +20,7 @@ struct Swapchain {
     std::vector<VkImageView> image_views;
 };
 
-struct SwapchainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> present_modes;
-};
-
-SwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface);
-
-Swapchain create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkExtent2D window_extent);
-
-void destroy_swapchain(Device &device, Swapchain &swapchain);
+Swapchain create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent);
+void destroy_swapchain(const Device &device, Swapchain &swapchain);
 
 } // namespace goose::render

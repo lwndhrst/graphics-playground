@@ -10,28 +10,18 @@ struct Device {
     std::vector<const char *> layers;
     std::vector<const char *> extensions;
 
-    struct Queues {
-        VkQueue graphics;
-        VkQueue present;
-    } queues;
+    struct QueueFamily {
+        u32 index;
+        std::vector<VkQueue> queues;
+    };
+
+    struct {
+        QueueFamily graphics;
+        QueueFamily present;
+    } queue_families;
 };
 
-struct QueueFamilyIndices {
-    std::optional<u32> graphics;
-    std::optional<u32> present;
-
-    // TODO: More queue families
-
-    bool is_complete()
-    {
-        return graphics.has_value() && present.has_value();
-    }
-};
-
-QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface);
-
-Device create_device(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
-
+Device create_device(const Instance &instance, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
 void destroy_device(Device &device);
 
 } // namespace goose::render

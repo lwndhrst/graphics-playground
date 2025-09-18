@@ -28,3 +28,13 @@ typedef intptr_t isize;
 
 typedef float f32;
 typedef double f64;
+
+// Forward declarations
+
+namespace goose::render {
+
+struct Instance;
+struct Device;
+struct Swapchain;
+
+} // namespace goose::render

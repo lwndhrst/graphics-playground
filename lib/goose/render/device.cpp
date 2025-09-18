@@ -1,10 +1,23 @@
 #include "goose/render/device.hpp"
 
 #include "goose/common/util.hpp"
+#include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"
 
-goose::render::QueueFamilyIndices
-goose::render::get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
+struct QueueFamilyIndices {
+    std::optional<u32> graphics;
+    std::optional<u32> present;
+
+    // TODO: More queue families
+
+    bool is_complete()
+    {
+        return graphics.has_value() && present.has_value();
+    }
+};
+
+static QueueFamilyIndices
+get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR surface)
 {
     u32 queue_family_count;
     vkGetPhysicalDeviceQueueFamilyProperties2(gpu, &queue_family_count, nullptr);
@@ -117,7 +130,7 @@ get_gpu(
         vkGetPhysicalDeviceFeatures2(gpu, &gpu_features);
 
         u32 gpu_score = score_gpu(gpu_properties.properties, gpu_features.features);
-        goose::render::QueueFamilyIndices indices = goose::render::get_queue_family_indices(gpu, surface);
+        QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
         goose::render::SwapchainSupportDetails swapchain_support = goose::render::get_swapchain_support_details(gpu, surface);
 
         if (gpu_score > chosen_gpu_score &&
@@ -143,12 +156,12 @@ get_gpu(
 
 goose::render::Device
 goose::render::create_device(
-    VkInstance instance,
+    const Instance &instance,
     VkSurfaceKHR surface,
     const std::vector<const char *> &layers,
     const std::vector<const char *> &extensions)
 {
-    VkPhysicalDevice gpu = get_gpu(instance, surface, extensions);
+    VkPhysicalDevice gpu = get_gpu(instance.handle, surface, extensions);
     if (gpu == VK_NULL_HANDLE)
     {
         LOG_ERROR("No suitable GPU found");
@@ -163,11 +176,13 @@ goose::render::create_device(
         indices.present.value(),
     };
 
+    // TODO: Support multiple queues
+    u32 queue_count = 1;
     float queue_priority = 1.0f;
 
     VkDeviceQueueCreateInfo queue_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueCount = 1,
+        .queueCount = queue_count,
         .pQueuePriorities = &queue_priority,
     };
 
@@ -216,15 +231,37 @@ goose::render::create_device(
     }
 
     // TODO: How many queues and from which families?
-    Device::Queues queues = {};
-    vkGetDeviceQueue(device, indices.graphics.value(), 0, &queues.graphics);
+    u32 graphics_queue_count = queue_count;
+    Device::QueueFamily graphics_family = {
+        .index = indices.graphics.value(),
+        .queues = std::vector<VkQueue>(graphics_queue_count),
+    };
+
+    for (usize i = 0; i < graphics_queue_count; ++i)
+    {
+        vkGetDeviceQueue(device, graphics_family.index, i, &graphics_family.queues[i]);
+    }
+
+    u32 present_queue_count = queue_count;
+    Device::QueueFamily present_family = {
+        .index = indices.present.value(),
+        .queues = std::vector<VkQueue>(present_queue_count),
+    };
+
+    for (usize i = 0; i < present_queue_count; ++i)
+    {
+        vkGetDeviceQueue(device, present_family.index, i, &present_family.queues[i]);
+    }
 
     return {
         .physical = gpu,
         .logical = device,
         .layers = layers,
         .extensions = extensions,
-        .queues = queues,
+        .queue_families = {
+            .graphics = graphics_family,
+            .present = present_family,
+        },
     };
 }
 

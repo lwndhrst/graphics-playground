@@ -91,11 +91,11 @@ choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D
 }
 
 goose::render::Swapchain
-goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkExtent2D window_extent)
+goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent)
 {
     // Create swapchain
 
-    SwapchainSupportDetails swapchain_support = get_swapchain_support_details(gpu, surface);
+    SwapchainSupportDetails swapchain_support = get_swapchain_support_details(device.physical, surface);
 
     VkSurfaceFormatKHR swapchain_surface_format = choose_swapchain_surface_format(swapchain_support.formats);
     VkPresentModeKHR swapchain_present_mode = choose_swapchain_present_mode(swapchain_support.present_modes);
@@ -123,14 +123,13 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
-    QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
-    u32 queue_family_indices[] = {
-        indices.graphics.value(),
-        indices.present.value(),
-    };
-
-    if (indices.graphics != indices.present)
+    if (device.queue_families.graphics.index != device.queue_families.present.index)
     {
+        u32 queue_family_indices[] = {
+            device.queue_families.graphics.index,
+            device.queue_families.present.index,
+        };
+
         // TODO: Is VK_SHARING_MODE_CONCURRENT the way?
         swapchain_create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         swapchain_create_info.queueFamilyIndexCount = 2;
@@ -145,7 +144,7 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
     }
 
     VkSwapchainKHR swapchain;
-    VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain);
+    VkResult result = vkCreateSwapchainKHR(device.logical, &swapchain_create_info, nullptr, &swapchain);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -155,10 +154,10 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
 
     // Get swapchain images
 
-    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, nullptr);
+    vkGetSwapchainImagesKHR(device.logical, swapchain, &swapchain_image_count, nullptr);
 
     std::vector<VkImage> swapchain_images(swapchain_image_count);
-    vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, swapchain_images.data());
+    vkGetSwapchainImagesKHR(device.logical, swapchain, &swapchain_image_count, swapchain_images.data());
 
     // Create swapchain image views
 
@@ -186,7 +185,7 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
     {
         image_view_create_info.image = swapchain_images[i];
 
-        VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+        VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &swapchain_image_views[i]);
         if (result != VK_SUCCESS)
         {
             VK_LOG_ERROR(result);
@@ -205,7 +204,7 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
 }
 
 void
-goose::render::destroy_swapchain(Device &device, Swapchain &swapchain)
+goose::render::destroy_swapchain(const Device &device, Swapchain &swapchain)
 {
     for (auto image_view : swapchain.image_views)
     {

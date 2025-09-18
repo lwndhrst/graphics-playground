@@ -77,7 +77,7 @@ goose::render::init(RenderContext &ctx, VkExtent2D window_extent, VkSurfaceKHR s
     device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
     ctx.device = create_device(
-        ctx.instance.handle,
+        ctx.instance,
         ctx.window.surface,
         device_layers,
         device_extensions);
@@ -89,8 +89,7 @@ goose::render::init(RenderContext &ctx, VkExtent2D window_extent, VkSurfaceKHR s
     }
 
     ctx.swapchain = create_swapchain(
-        ctx.device.logical,
-        ctx.device.physical,
+        ctx.device,
         ctx.window.surface,
         ctx.window.extent);
 
