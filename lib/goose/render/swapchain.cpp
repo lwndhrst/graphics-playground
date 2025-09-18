@@ -93,6 +93,8 @@ choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D
 goose::render::Swapchain
 goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurfaceKHR surface, VkExtent2D window_extent)
 {
+    // Create swapchain
+
     SwapchainSupportDetails swapchain_support = get_swapchain_support_details(gpu, surface);
 
     VkSurfaceFormatKHR swapchain_surface_format = choose_swapchain_surface_format(swapchain_support.formats);
@@ -151,21 +153,64 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
         // TODO: Error handling
     }
 
+    // Get swapchain images
+
     vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, nullptr);
 
     std::vector<VkImage> swapchain_images(swapchain_image_count);
     vkGetSwapchainImagesKHR(device, swapchain, &swapchain_image_count, swapchain_images.data());
+
+    // Create swapchain image views
+
+    VkImageViewCreateInfo image_view_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = swapchain_surface_format.format,
+        .components = {
+            .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+            .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+        },
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    };
+
+    std::vector<VkImageView> swapchain_image_views(swapchain_image_count);
+    for (usize i = 0; i < swapchain_image_count; ++i)
+    {
+        image_view_create_info.image = swapchain_images[i];
+
+        VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+        if (result != VK_SUCCESS)
+        {
+            VK_LOG_ERROR(result);
+
+            // TODO: Error handling
+        }
+    }
 
     return {
         .handle = swapchain,
         .extent = swapchain_extent,
         .format = swapchain_surface_format.format,
         .images = swapchain_images,
+        .image_views = swapchain_image_views,
     };
 }
 
 void
 goose::render::destroy_swapchain(Device &device, Swapchain &swapchain)
 {
+    for (auto image_view : swapchain.image_views)
+    {
+        vkDestroyImageView(device.logical, image_view, nullptr);
+    }
+
     vkDestroySwapchainKHR(device.logical, swapchain.handle, nullptr);
 }
