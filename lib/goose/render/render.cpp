@@ -106,10 +106,17 @@ goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR s
 void
 goose::render::cleanup(RenderContext *ctx)
 {
-    vkDeviceWaitIdle(ctx->device.logical);
+    if (ctx->device.logical != VK_NULL_HANDLE)
+    {
+        vkDeviceWaitIdle(ctx->device.logical);
 
-    vkDestroySwapchainKHR(ctx->device.logical, ctx->swapchain.handle, nullptr);
-    vkDestroyDevice(ctx->device.logical, nullptr);
-    vkDestroySurfaceKHR(ctx->instance.handle, ctx->window.surface, nullptr);
-    vkDestroyInstance(ctx->instance.handle, nullptr);
+        vkDestroySwapchainKHR(ctx->device.logical, ctx->swapchain.handle, nullptr);
+        vkDestroyDevice(ctx->device.logical, nullptr);
+    }
+
+    if (ctx->instance.handle != VK_NULL_HANDLE)
+    {
+        vkDestroySurfaceKHR(ctx->instance.handle, ctx->window.surface, nullptr);
+        vkDestroyInstance(ctx->instance.handle, nullptr);
+    }
 }

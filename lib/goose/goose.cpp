@@ -13,7 +13,6 @@ struct Data {
 
     SDL_Window *window;
     bool window_should_close;
-
     goose::render::RenderContext render_ctx;
 };
 
@@ -31,6 +30,8 @@ goose::init(const char *app_name)
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
+
+    data.app_is_running = true;
 
     return true;
 }
@@ -79,7 +80,6 @@ goose::create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    data.app_is_running = true;
     data.window_should_close = false;
 
     return true;
@@ -88,12 +88,6 @@ goose::create_window(const char *title, u32 width, u32 height)
 bool
 goose::run()
 {
-    if (data.window == nullptr)
-    {
-        LOG_ERROR("Missing window, create a window first");
-        return false;
-    }
-
     SDL_Event event;
 
     // TODO: Support multiple windows
