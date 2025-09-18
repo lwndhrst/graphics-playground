@@ -251,9 +251,8 @@ goose::render::create_device(
         },
     };
 
-    // TODO: How many queues from which families?
-    //       Currently only getting one queue per unique family.
-    //       Assuming multiple queues are needed in order to support multiple windows.
+    // TODO: How many queues and from which families?
+    //       Currently only getting one queue per unique family
     for (const auto &queue_family_index : unique_queue_family_indices)
     {
         if (queue_family_index == queue_families.graphics.index)
