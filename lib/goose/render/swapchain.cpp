@@ -123,6 +123,7 @@ goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkEx
         .oldSwapchain = VK_NULL_HANDLE,
     };
 
+    // TODO: How do deal with compute queue here?
     if (device.queue_families.graphics.index != device.queue_families.present.index)
     {
         u32 queue_family_indices[] = {
@@ -137,7 +138,7 @@ goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkEx
     }
     else
     {
-        // NOTE: Graphics and present indices should be the same on most hardware
+        // NOTE: Graphics and present queue indices should be the same on most hardware
         swapchain_create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         swapchain_create_info.queueFamilyIndexCount = 0;
         swapchain_create_info.pQueueFamilyIndices = nullptr;
