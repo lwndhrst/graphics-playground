@@ -44,3 +44,9 @@ goose::render::create_instance(
         .extensions = extensions,
     };
 }
+
+void
+goose::render::destroy_instance(Instance &instance)
+{
+    vkDestroyInstance(instance.handle, nullptr);
+}

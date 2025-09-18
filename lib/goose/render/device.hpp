@@ -32,4 +32,6 @@ QueueFamilyIndices get_queue_family_indices(VkPhysicalDevice gpu, VkSurfaceKHR s
 
 Device create_device(VkInstance instance, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
 
+void destroy_device(Device &device);
+
 } // namespace goose::render

@@ -10,7 +10,7 @@
 #define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 
 bool
-goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app_version, VkInstance *instance)
+goose::render::create_instance(RenderContext &ctx, const char *app_name, u32 app_version, VkInstance *instance)
 {
     std::vector<const char *> instance_layers;
     std::vector<const char *> instance_extensions;
@@ -30,7 +30,7 @@ goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app
     instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
 
-    ctx->instance = create_instance(
+    ctx.instance = create_instance(
         app_name,
         app_version,
         instance_layers,
@@ -38,16 +38,16 @@ goose::render::create_instance(RenderContext *ctx, const char *app_name, u32 app
 
     if (instance != nullptr)
     {
-        *instance = ctx->instance.handle;
+        *instance = ctx.instance.handle;
     }
 
-    return ctx->instance.handle != VK_NULL_HANDLE;
+    return ctx.instance.handle != VK_NULL_HANDLE;
 }
 
 bool
-goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR surface)
+goose::render::init(RenderContext &ctx, VkExtent2D window_extent, VkSurfaceKHR surface)
 {
-    if (ctx->instance.handle == VK_NULL_HANDLE)
+    if (ctx.instance.handle == VK_NULL_HANDLE)
     {
         LOG_ERROR("Missing instance");
         return false;
@@ -59,7 +59,7 @@ goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR s
         return false;
     }
 
-    ctx->window = {
+    ctx.window = {
         .extent = window_extent,
         .surface = surface,
     };
@@ -76,25 +76,25 @@ goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR s
     // TODO: Which device extensions are required?
     device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    ctx->device = create_device(
-        ctx->instance.handle,
-        ctx->window.surface,
+    ctx.device = create_device(
+        ctx.instance.handle,
+        ctx.window.surface,
         device_layers,
         device_extensions);
 
-    if (ctx->device.logical == VK_NULL_HANDLE)
+    if (ctx.device.logical == VK_NULL_HANDLE)
     {
         LOG_ERROR("Failed to create logical device");
         return false;
     }
 
-    ctx->swapchain = create_swapchain(
-        ctx->device.logical,
-        ctx->device.physical,
-        ctx->window.surface,
-        ctx->window.extent);
+    ctx.swapchain = create_swapchain(
+        ctx.device.logical,
+        ctx.device.physical,
+        ctx.window.surface,
+        ctx.window.extent);
 
-    if (ctx->swapchain.handle == VK_NULL_HANDLE)
+    if (ctx.swapchain.handle == VK_NULL_HANDLE)
     {
         LOG_ERROR("Failed to create swapchain");
         return false;
@@ -104,19 +104,19 @@ goose::render::init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR s
 }
 
 void
-goose::render::cleanup(RenderContext *ctx)
+goose::render::cleanup(RenderContext &ctx)
 {
-    if (ctx->device.logical != VK_NULL_HANDLE)
+    if (ctx.device.logical != VK_NULL_HANDLE)
     {
-        vkDeviceWaitIdle(ctx->device.logical);
+        vkDeviceWaitIdle(ctx.device.logical);
 
-        vkDestroySwapchainKHR(ctx->device.logical, ctx->swapchain.handle, nullptr);
-        vkDestroyDevice(ctx->device.logical, nullptr);
+        destroy_swapchain(ctx.device, ctx.swapchain);
+        destroy_device(ctx.device);
     }
 
-    if (ctx->instance.handle != VK_NULL_HANDLE)
+    if (ctx.instance.handle != VK_NULL_HANDLE)
     {
-        vkDestroySurfaceKHR(ctx->instance.handle, ctx->window.surface, nullptr);
-        vkDestroyInstance(ctx->instance.handle, nullptr);
+        vkDestroySurfaceKHR(ctx.instance.handle, ctx.window.surface, nullptr);
+        destroy_instance(ctx.instance);
     }
 }

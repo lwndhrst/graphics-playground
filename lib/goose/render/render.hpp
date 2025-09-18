@@ -19,10 +19,10 @@ struct RenderContext {
     Swapchain swapchain;
 };
 
-bool create_instance(RenderContext *ctx, const char *app_name, u32 app_version, VkInstance *instance);
+bool create_instance(RenderContext &ctx, const char *app_name, u32 app_version, VkInstance *instance);
 
-bool init(RenderContext *ctx, VkExtent2D window_extent, VkSurfaceKHR surface);
+bool init(RenderContext &ctx, VkExtent2D window_extent, VkSurfaceKHR surface);
 
-void cleanup(RenderContext *ctx);
+void cleanup(RenderContext &ctx);
 
 } // namespace goose::render

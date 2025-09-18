@@ -56,7 +56,7 @@ goose::create_window(const char *title, u32 width, u32 height)
     }
 
     VkInstance instance;
-    if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version, &instance))
+    if (!goose::render::create_instance(data.render_ctx, data.app_name, data.app_version, &instance))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
@@ -74,7 +74,7 @@ goose::create_window(const char *title, u32 width, u32 height)
         .height = height,
     };
 
-    if (!goose::render::init(&data.render_ctx, window_extent, surface))
+    if (!goose::render::init(data.render_ctx, window_extent, surface))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
@@ -116,7 +116,7 @@ goose::run()
 void
 goose::quit()
 {
-    goose::render::cleanup(&data.render_ctx);
+    goose::render::cleanup(data.render_ctx);
 
     if (data.window != nullptr)
     {

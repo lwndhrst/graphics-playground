@@ -227,3 +227,9 @@ goose::render::create_device(
         .queues = queues,
     };
 }
+
+void
+goose::render::destroy_device(Device &device)
+{
+    vkDestroyDevice(device.logical, nullptr);
+}

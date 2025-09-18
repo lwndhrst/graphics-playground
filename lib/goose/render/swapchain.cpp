@@ -160,6 +160,12 @@ goose::render::create_swapchain(VkDevice device, VkPhysicalDevice gpu, VkSurface
         .handle = swapchain,
         .extent = swapchain_extent,
         .format = swapchain_surface_format.format,
-        .images = std::move(swapchain_images),
+        .images = swapchain_images,
     };
+}
+
+void
+goose::render::destroy_swapchain(Device &device, Swapchain &swapchain)
+{
+    vkDestroySwapchainKHR(device.logical, swapchain.handle, nullptr);
 }
