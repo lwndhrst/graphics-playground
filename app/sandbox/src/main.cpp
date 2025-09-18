@@ -12,7 +12,7 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    while (!goose::window_should_close())
+    while (goose::run())
     {
         // Main loop
     }

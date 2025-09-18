@@ -9,6 +9,7 @@
 struct Data {
     const char *app_name;
     u32 app_version;
+    bool app_is_running;
 
     SDL_Window *window;
     bool window_should_close;
@@ -16,7 +17,7 @@ struct Data {
     goose::render::RenderContext render_ctx;
 };
 
-static Data data;
+static Data data = {};
 
 bool
 goose::init(const char *app_name)
@@ -44,8 +45,6 @@ goose::create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    bool success;
-
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
 
     data.window = SDL_CreateWindow(title, width, height, window_flags);
@@ -54,8 +53,6 @@ goose::create_window(const char *title, u32 width, u32 height)
         LOG_ERROR("{}", SDL_GetError());
         return false;
     }
-
-    data.window_should_close = false;
 
     VkInstance instance;
     if (!goose::render::create_instance(&data.render_ctx, data.app_name, data.app_version, &instance))
@@ -82,19 +79,32 @@ goose::create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
+    data.app_is_running = true;
+    data.window_should_close = false;
+
     return true;
 }
 
 bool
-goose::window_should_close()
+goose::run()
 {
+    if (data.window == nullptr)
+    {
+        LOG_ERROR("Missing window, create a window first");
+        return false;
+    }
+
     SDL_Event event;
 
+    // TODO: Support multiple windows
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
+            data.app_is_running = false;
+            break;
+        case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
             data.window_should_close = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
@@ -106,7 +116,7 @@ goose::window_should_close()
         }
     }
 
-    return data.window_should_close;
+    return data.app_is_running && !data.window_should_close;
 }
 
 void
