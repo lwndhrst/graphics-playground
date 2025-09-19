@@ -161,18 +161,18 @@ get_gpu(
 }
 
 bool
-goose::render::create_device(
-    const Instance &instance,
-    VkSurfaceKHR surface,
-    Device &device)
+goose::render::create_device(VkSurfaceKHR surface, Device &device)
 {
+    // NOTE: Should always be initialized at this point
+    const Instance &instance = get_instance();
+
 #ifdef GOOSE_DEBUG
     // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
     //       This will just be ignored on modern Vulkan versions, but leaving this here anyway.
-    device.layers.push_back(VALIDATION_LAYER_NAME);
+    device.layers.insert(device.layers.end(), instance.layers.begin(), instance.layers.end());
 #endif
 
-    // TODO: Which device extensions are required?
+    // TODO: Which device extensions?
     device.extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
     device.physical = get_gpu(instance.handle, surface, device.extensions);

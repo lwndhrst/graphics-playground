@@ -1,6 +1,7 @@
 #include "goose/render/context.hpp"
 
 #include "goose/common/util.hpp"
+#include "goose/render/instance.hpp"
 #include "goose/window/window.hpp"
 
 bool
@@ -13,10 +14,7 @@ goose::render::create_render_context(const goose::window::Window &window, Render
         return false;
     }
 
-    // NOTE: Should always be initialized at this point
-    ctx.instance = get_instance();
-
-    if (!create_device(ctx.instance, window.surface, ctx.device))
+    if (!create_device(window.surface, ctx.device))
     {
         LOG_ERROR("Failed to create logical device");
         return false;

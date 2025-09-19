@@ -2,13 +2,11 @@
 
 #include "goose/common/types.hpp"
 #include "goose/render/device.hpp"
-#include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"
 
 namespace goose::render {
 
 struct RenderContext {
-    Instance instance;
     Device device;
     Swapchain swapchain;
 };

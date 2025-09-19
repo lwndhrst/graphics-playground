@@ -62,7 +62,7 @@ goose::render::create_instance(const char *app_name, u32 app_version)
     return true;
 }
 
-goose::render::Instance
+const goose::render::Instance &
 goose::render::get_instance()
 {
     if (s_instance.handle == VK_NULL_HANDLE)

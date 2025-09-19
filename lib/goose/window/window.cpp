@@ -18,7 +18,8 @@ goose::window::create_window(const char *title, u32 width, u32 height, Window &w
         return false;
     }
 
-    goose::render::Instance instance = goose::render::get_instance();
+    // NOTE: Should always be initialized at this point
+    const goose::render::Instance &instance = goose::render::get_instance();
 
     if (!SDL_Vulkan_CreateSurface(window.handle, instance.handle, nullptr, &window.surface))
     {
@@ -37,7 +38,7 @@ goose::window::create_window(const char *title, u32 width, u32 height, Window &w
 void
 goose::window::destroy_window(Window &window)
 {
-    goose::render::Instance instance = goose::render::get_instance();
+    const goose::render::Instance &instance = goose::render::get_instance();
 
     vkDestroySurfaceKHR(instance.handle, window.surface, nullptr);
     SDL_DestroyWindow(window.handle);

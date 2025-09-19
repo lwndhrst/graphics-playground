@@ -11,7 +11,7 @@ struct Instance {
 };
 
 bool create_instance(const char *app_name, u32 app_version);
-Instance get_instance();
+const Instance &get_instance();
 void destroy_instance();
 
 // TODO: Setup debug messenger?
