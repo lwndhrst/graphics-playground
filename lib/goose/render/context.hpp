@@ -1,0 +1,19 @@
+#pragma once
+
+#include "goose/common/types.hpp"
+#include "goose/render/device.hpp"
+#include "goose/render/instance.hpp"
+#include "goose/render/swapchain.hpp"
+
+namespace goose::render {
+
+struct RenderContext {
+    Instance instance;
+    Device device;
+    Swapchain swapchain;
+};
+
+bool create_render_context(const goose::window::Window &window, RenderContext &ctx);
+void destroy_render_context(RenderContext &ctx);
+
+} // namespace goose::render

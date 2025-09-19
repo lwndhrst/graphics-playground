@@ -24,7 +24,7 @@ struct Device {
     QueueFamilies queue_families;
 };
 
-Device create_device(const Instance &instance, VkSurfaceKHR surface, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
+bool create_device(const Instance &instance, VkSurfaceKHR surface, Device &device);
 void destroy_device(Device &device);
 
 } // namespace goose::render

@@ -1,0 +1,44 @@
+#include "goose/window/window.hpp"
+
+#include "goose/common/util.hpp"
+#include "goose/render/instance.hpp"
+
+#include "SDL3/SDL_video.h"
+#include "SDL3/SDL_vulkan.h"
+
+bool
+goose::window::create_window(const char *title, u32 width, u32 height, Window &window)
+{
+    SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
+
+    window.handle = SDL_CreateWindow(title, width, height, window_flags);
+    if (window.handle == nullptr)
+    {
+        LOG_ERROR("{}", SDL_GetError());
+        return false;
+    }
+
+    goose::render::Instance instance = goose::render::get_instance();
+
+    if (!SDL_Vulkan_CreateSurface(window.handle, instance.handle, nullptr, &window.surface))
+    {
+        LOG_ERROR("{}", SDL_GetError());
+        return false;
+    }
+
+    window.id = SDL_GetWindowID(window.handle);
+    window.flags = SDL_GetWindowFlags(window.handle);
+    window.should_close = false;
+    window.extent = {width, height};
+
+    return true;
+}
+
+void
+goose::window::destroy_window(Window &window)
+{
+    goose::render::Instance instance = goose::render::get_instance();
+
+    vkDestroySurfaceKHR(instance.handle, window.surface, nullptr);
+    SDL_DestroyWindow(window.handle);
+}

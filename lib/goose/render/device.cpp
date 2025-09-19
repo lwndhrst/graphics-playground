@@ -160,21 +160,29 @@ get_gpu(
     return chosen_gpu;
 }
 
-goose::render::Device
+bool
 goose::render::create_device(
     const Instance &instance,
     VkSurfaceKHR surface,
-    const std::vector<const char *> &layers,
-    const std::vector<const char *> &extensions)
+    Device &device)
 {
-    VkPhysicalDevice gpu = get_gpu(instance.handle, surface, extensions);
-    if (gpu == VK_NULL_HANDLE)
+#ifdef GOOSE_DEBUG
+    // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
+    //       This will just be ignored on modern Vulkan versions, but leaving this here anyway.
+    device.layers.push_back(VALIDATION_LAYER_NAME);
+#endif
+
+    // TODO: Which device extensions are required?
+    device.extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    device.physical = get_gpu(instance.handle, surface, device.extensions);
+    if (device.physical == VK_NULL_HANDLE)
     {
         LOG_ERROR("No suitable GPU found");
-        return {};
+        return false;
     }
 
-    QueueFamilyIndices indices = get_queue_family_indices(gpu, surface);
+    QueueFamilyIndices indices = get_queue_family_indices(device.physical, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<u32> unique_queue_family_indices = {
@@ -221,19 +229,18 @@ goose::render::create_device(
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount = static_cast<u32>(queue_create_infos.size()),
         .pQueueCreateInfos = queue_create_infos.data(),
-        .enabledLayerCount = static_cast<u32>(layers.size()),
-        .ppEnabledLayerNames = layers.data(),
-        .enabledExtensionCount = static_cast<u32>(extensions.size()),
-        .ppEnabledExtensionNames = extensions.data(),
+        .enabledLayerCount = static_cast<u32>(device.layers.size()),
+        .ppEnabledLayerNames = device.layers.data(),
+        .enabledExtensionCount = static_cast<u32>(device.extensions.size()),
+        .ppEnabledExtensionNames = device.extensions.data(),
         .pEnabledFeatures = &device_features.features,
     };
 
-    VkDevice device;
-    VkResult result = vkCreateDevice(gpu, &device_create_info, nullptr, &device);
+    VkResult result = vkCreateDevice(device.physical, &device_create_info, nullptr, &device.logical);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
-        return {};
+        return false;
     }
 
     QueueFamilies queue_families = {
@@ -257,27 +264,23 @@ goose::render::create_device(
     {
         if (queue_family_index == queue_families.graphics.index)
         {
-            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.graphics.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.graphics.queues[0]);
         }
 
         if (queue_family_index == queue_families.present.index)
         {
-            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.present.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.present.queues[0]);
         }
 
         if (queue_family_index == queue_families.compute.index)
         {
-            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.compute.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.compute.queues[0]);
         }
     }
 
-    return {
-        .physical = gpu,
-        .logical = device,
-        .layers = layers,
-        .extensions = extensions,
-        .queue_families = queue_families,
-    };
+    device.queue_families = queue_families;
+
+    return true;
 }
 
 void

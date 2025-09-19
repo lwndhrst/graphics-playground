@@ -1,29 +1,29 @@
 #include "goose/goose.hpp"
 
 #include "goose/common/util.hpp"
-#include "goose/render/render.hpp"
+#include "goose/render/context.hpp"
+#include "goose/render/instance.hpp"
+#include "goose/window/window.hpp"
 
-#include "SDL3/SDL.h"
-#include "SDL3/SDL_vulkan.h"
+#include "SDL3/SDL_init.h"
 
 struct Data {
     const char *app_name;
     u32 app_version;
     bool app_is_running;
 
-    SDL_Window *window;
-    bool window_should_close;
+    goose::window::Window window;
     goose::render::RenderContext render_ctx;
 };
 
-static Data data = {};
+static Data s_data = {};
 
 bool
 goose::init(const char *app_name)
 {
     // TODO: Make app version configurable
-    data.app_name = app_name;
-    data.app_version = VK_MAKE_VERSION(0, 1, 0);
+    s_data.app_name = app_name;
+    s_data.app_version = VK_MAKE_VERSION(0, 1, 0);
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {
@@ -31,7 +31,13 @@ goose::init(const char *app_name)
         return false;
     }
 
-    data.app_is_running = true;
+    if (!goose::render::create_instance(s_data.app_name, s_data.app_version))
+    {
+        LOG_ERROR("Failed to create Vulkan instance");
+        return false;
+    }
+
+    s_data.app_is_running = true;
 
     return true;
 }
@@ -40,47 +46,25 @@ bool
 goose::create_window(const char *title, u32 width, u32 height)
 {
     // TODO: Support multiple windows
-    if (data.window != nullptr)
+    if (s_data.window.handle != nullptr)
     {
         LOG_ERROR("There is already an active window, multiple windows are currently not supported");
         return false;
     }
 
-    SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
-
-    data.window = SDL_CreateWindow(title, width, height, window_flags);
-    if (data.window == nullptr)
+    if (!goose::window::create_window(title, width, height, s_data.window))
     {
-        LOG_ERROR("{}", SDL_GetError());
+        LOG_ERROR("Failed to create window");
         return false;
     }
 
-    VkInstance instance;
-    if (!goose::render::create_instance(data.render_ctx, data.app_name, data.app_version, &instance))
-    {
-        LOG_ERROR("Failed to create Vulkan instance");
-        return false;
-    }
-
-    VkSurfaceKHR surface;
-    if (!SDL_Vulkan_CreateSurface(data.window, instance, nullptr, &surface))
-    {
-        LOG_ERROR("{}", SDL_GetError());
-        return false;
-    }
-
-    VkExtent2D window_extent = {
-        .width = width,
-        .height = height,
-    };
-
-    if (!goose::render::init(data.render_ctx, window_extent, surface))
+    if (!goose::render::create_render_context(s_data.window, s_data.render_ctx))
     {
         LOG_ERROR("Failed to initialize Vulkan renderer");
         return false;
     }
 
-    data.window_should_close = false;
+    s_data.window.should_close = false;
 
     return true;
 }
@@ -96,10 +80,10 @@ goose::run()
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
-            data.app_is_running = false;
+            s_data.app_is_running = false;
             break;
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            data.window_should_close = true;
+            s_data.window.should_close = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
             fmt::println("Window resized");
@@ -110,18 +94,15 @@ goose::run()
         }
     }
 
-    return data.app_is_running && !data.window_should_close;
+    return s_data.app_is_running && !s_data.window.should_close;
 }
 
 void
 goose::quit()
 {
-    goose::render::cleanup(data.render_ctx);
-
-    if (data.window != nullptr)
-    {
-        SDL_DestroyWindow(data.window);
-    }
+    goose::render::destroy_render_context(s_data.render_ctx);
+    goose::window::destroy_window(s_data.window);
+    goose::render::destroy_instance();
 
     SDL_Quit();
 }

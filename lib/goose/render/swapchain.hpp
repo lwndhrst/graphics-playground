@@ -20,7 +20,7 @@ struct Swapchain {
     std::vector<VkImageView> image_views;
 };
 
-Swapchain create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent);
+bool create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent, Swapchain &swapchain);
 void destroy_swapchain(const Device &device, Swapchain &swapchain);
 
 } // namespace goose::render

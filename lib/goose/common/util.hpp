@@ -1,5 +1,7 @@
 #pragma once
 
+#define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
+
 #define DO_NOTHING() \
     do               \
     {                \

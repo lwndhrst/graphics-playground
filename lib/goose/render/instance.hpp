@@ -10,8 +10,9 @@ struct Instance {
     std::vector<const char *> extensions;
 };
 
-Instance create_instance(const char *app_name, u32 app_version, const std::vector<const char *> &layers, const std::vector<const char *> &extensions);
-void destroy_instance(Instance &instance);
+bool create_instance(const char *app_name, u32 app_version);
+Instance get_instance();
+void destroy_instance();
 
 // TODO: Setup debug messenger?
 

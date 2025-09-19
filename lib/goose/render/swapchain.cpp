@@ -90,8 +90,12 @@ choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D
     };
 }
 
-goose::render::Swapchain
-goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent)
+bool
+goose::render::create_swapchain(
+    const Device &device,
+    VkSurfaceKHR surface,
+    VkExtent2D window_extent,
+    Swapchain &swapchain)
 {
     // Create swapchain
 
@@ -144,21 +148,19 @@ goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkEx
         swapchain_create_info.pQueueFamilyIndices = nullptr;
     }
 
-    VkSwapchainKHR swapchain;
-    VkResult result = vkCreateSwapchainKHR(device.logical, &swapchain_create_info, nullptr, &swapchain);
+    VkResult result = vkCreateSwapchainKHR(device.logical, &swapchain_create_info, nullptr, &swapchain.handle);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
-
-        // TODO: Error handling
+        return false;
     }
 
     // Get swapchain images
 
-    vkGetSwapchainImagesKHR(device.logical, swapchain, &swapchain_image_count, nullptr);
+    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, nullptr);
 
-    std::vector<VkImage> swapchain_images(swapchain_image_count);
-    vkGetSwapchainImagesKHR(device.logical, swapchain, &swapchain_image_count, swapchain_images.data());
+    swapchain.images.resize(swapchain_image_count);
+    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, swapchain.images.data());
 
     // Create swapchain image views
 
@@ -181,27 +183,23 @@ goose::render::create_swapchain(const Device &device, VkSurfaceKHR surface, VkEx
         },
     };
 
-    std::vector<VkImageView> swapchain_image_views(swapchain_image_count);
+    swapchain.image_views.resize(swapchain_image_count);
     for (usize i = 0; i < swapchain_image_count; ++i)
     {
-        image_view_create_info.image = swapchain_images[i];
+        image_view_create_info.image = swapchain.images[i];
 
-        VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &swapchain_image_views[i]);
+        VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &swapchain.image_views[i]);
         if (result != VK_SUCCESS)
         {
             VK_LOG_ERROR(result);
-
-            // TODO: Error handling
+            return false;
         }
     }
 
-    return {
-        .handle = swapchain,
-        .extent = swapchain_extent,
-        .format = swapchain_surface_format.format,
-        .images = swapchain_images,
-        .image_views = swapchain_image_views,
-    };
+    swapchain.extent = swapchain_extent;
+    swapchain.format = swapchain_surface_format.format;
+
+    return true;
 }
 
 void
