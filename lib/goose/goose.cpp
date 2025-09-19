@@ -64,8 +64,6 @@ goose::create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    s_data.window.should_close = false;
-
     return true;
 }
 
