@@ -6,7 +6,7 @@ struct SDL_Window;
 typedef u32 SDL_WindowID;
 typedef u64 SDL_WindowFlags;
 
-namespace goose::window {
+namespace goose {
 
 struct Window {
     SDL_Window *handle;

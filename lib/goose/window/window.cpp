@@ -7,7 +7,7 @@
 #include "SDL3/SDL_vulkan.h"
 
 bool
-goose::window::create_window(const char *title, u32 width, u32 height, Window &window)
+goose::create_window(const char *title, u32 width, u32 height, Window &window)
 {
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
 
@@ -36,7 +36,7 @@ goose::window::create_window(const char *title, u32 width, u32 height, Window &w
 }
 
 void
-goose::window::destroy_window(Window &window)
+goose::destroy_window(Window &window)
 {
     const goose::render::Instance &instance = goose::render::get_instance();
 

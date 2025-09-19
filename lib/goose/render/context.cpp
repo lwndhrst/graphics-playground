@@ -1,11 +1,10 @@
 #include "goose/render/context.hpp"
 
 #include "goose/common/util.hpp"
-#include "goose/render/instance.hpp"
 #include "goose/window/window.hpp"
 
 bool
-goose::render::create_render_context(const goose::window::Window &window, RenderContext &ctx)
+goose::render::create_render_context(const Window &window, RenderContext &ctx)
 {
     // TODO: Allow usage without surface
     if (window.surface == VK_NULL_HANDLE)

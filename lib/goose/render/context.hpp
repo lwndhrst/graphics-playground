@@ -11,7 +11,7 @@ struct RenderContext {
     Swapchain swapchain;
 };
 
-bool create_render_context(const goose::window::Window &window, RenderContext &ctx);
+bool create_render_context(const Window &window, RenderContext &ctx);
 void destroy_render_context(RenderContext &ctx);
 
 } // namespace goose::render

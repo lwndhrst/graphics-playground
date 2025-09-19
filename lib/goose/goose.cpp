@@ -12,7 +12,7 @@ struct Data {
     u32 app_version;
     bool app_is_running;
 
-    goose::window::Window window;
+    goose::Window window;
     goose::render::RenderContext render_ctx;
 };
 
@@ -52,7 +52,7 @@ goose::create_window(const char *title, u32 width, u32 height)
         return false;
     }
 
-    if (!goose::window::create_window(title, width, height, s_data.window))
+    if (!goose::create_window(title, width, height, s_data.window))
     {
         LOG_ERROR("Failed to create window");
         return false;
@@ -99,7 +99,7 @@ void
 goose::quit()
 {
     goose::render::destroy_render_context(s_data.render_ctx);
-    goose::window::destroy_window(s_data.window);
+    goose::destroy_window(s_data.window);
     goose::render::destroy_instance();
 
     SDL_Quit();

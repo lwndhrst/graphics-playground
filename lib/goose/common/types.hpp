@@ -31,11 +31,11 @@ typedef double f64;
 
 // Forward declarations
 
-namespace goose::window {
+namespace goose {
 
 struct Window;
 
-} // namespace goose::window
+} // namespace goose
 
 namespace goose::render {
 
