@@ -4,11 +4,11 @@
 
 namespace goose::render {
 
-struct CommandBuffer {};
+struct CommandPool {
+    VkCommandPool handle;
+};
 
-struct CommandPool {};
-
-CommandPool create_command_pool();
-void destroy_command_pool();
+bool create_command_pool(const Device &device, CommandPool &command_pool);
+void destroy_command_pool(CommandPool &command_pool);
 
 } // namespace goose::render
