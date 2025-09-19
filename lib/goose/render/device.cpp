@@ -243,42 +243,35 @@ goose::render::create_device(VkSurfaceKHR surface, Device &device)
         return false;
     }
 
-    QueueFamilies queue_families = {
-        .graphics = {
-            .index = indices.graphics.value(),
-            .queues = std::vector<VkQueue>(queue_count),
-        },
-        .present = {
-            .index = indices.present.value(),
-            .queues = std::vector<VkQueue>(queue_count),
-        },
-        .compute = {
-            .index = indices.compute.value(),
-            .queues = std::vector<VkQueue>(queue_count),
-        },
-    };
-
     // TODO: How many queues and from which families?
-    //       Currently only getting one queue per unique family
+    //       Currently only getting one queue per family; families are likely all the same anyway
+
+    device.queue_families.graphics.index = indices.graphics.value();
+    device.queue_families.graphics.queues.resize(queue_count);
+
+    device.queue_families.present.index = indices.present.value();
+    device.queue_families.present.queues.resize(queue_count);
+
+    device.queue_families.compute.index = indices.compute.value();
+    device.queue_families.compute.queues.resize(queue_count);
+
     for (const auto &queue_family_index : unique_queue_family_indices)
     {
-        if (queue_family_index == queue_families.graphics.index)
+        if (queue_family_index == device.queue_families.graphics.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.graphics.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.graphics.queues[0]);
         }
 
-        if (queue_family_index == queue_families.present.index)
+        if (queue_family_index == device.queue_families.present.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.present.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.present.queues[0]);
         }
 
-        if (queue_family_index == queue_families.compute.index)
+        if (queue_family_index == device.queue_families.compute.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &queue_families.compute.queues[0]);
+            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.compute.queues[0]);
         }
     }
-
-    device.queue_families = queue_families;
 
     return true;
 }
