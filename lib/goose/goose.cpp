@@ -7,6 +7,9 @@
 
 #include "SDL3/SDL_init.h"
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 struct Data {
     const char *app_name;
     u32 app_version;

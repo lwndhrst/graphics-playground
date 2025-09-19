@@ -62,6 +62,12 @@ goose::render::create_instance(const char *app_name, u32 app_version)
     return true;
 }
 
+void
+goose::render::destroy_instance()
+{
+    vkDestroyInstance(s_instance.handle, nullptr);
+}
+
 const goose::render::Instance &
 goose::render::get_instance()
 {
@@ -71,10 +77,4 @@ goose::render::get_instance()
     }
 
     return s_instance;
-}
-
-void
-goose::render::destroy_instance()
-{
-    vkDestroyInstance(s_instance.handle, nullptr);
 }

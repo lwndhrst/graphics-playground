@@ -165,6 +165,7 @@ goose::render::create_device(VkSurfaceKHR surface, Device &device)
 {
     // NOTE: Should always be initialized at this point
     const Instance &instance = get_instance();
+    ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
 
 #ifdef GOOSE_DEBUG
     // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
