@@ -163,7 +163,6 @@ get_gpu(
 bool
 goose::render::create_device(VkSurfaceKHR surface, Device &device)
 {
-    // NOTE: Should always be initialized at this point
     const Instance &instance = get_instance();
     ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
 

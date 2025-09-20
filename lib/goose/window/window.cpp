@@ -18,7 +18,6 @@ goose::create_window(const char *title, u32 width, u32 height, Window &window)
         return false;
     }
 
-    // NOTE: Should always be initialized at this point
     const goose::render::Instance &instance = goose::render::get_instance();
     ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
 

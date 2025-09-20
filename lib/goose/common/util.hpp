@@ -1,14 +1,14 @@
 #pragma once
 
+#include "fmt/core.h"
+#include "vulkan/vk_enum_string_helper.h"
+
 #define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 
 #define DO_NOTHING() \
     do               \
     {                \
     } while (false)
-
-#include "fmt/core.h"
-#include "vulkan/vk_enum_string_helper.h"
 
 #ifdef GOOSE_DEBUG
 #define LOG_DEBUG(...) \
@@ -55,6 +55,23 @@
 
 #else
 #define ASSERT(condition, msg) \
+    DO_NOTHING()
+#endif
+
+#ifdef GOOSE_DEBUG
+#define VK_ASSERT(x)                                                                                                                 \
+    do                                                                                                                               \
+    {                                                                                                                                \
+        VkResult the_sea_of_suffering_has_no_bounds = x;                                                                             \
+        if (the_sea_of_suffering_has_no_bounds != VK_SUCCESS)                                                                        \
+        {                                                                                                                            \
+            LOG_ERROR("Vulkan error in {} at line {}: {}", __FILE__, __LINE__, string_VkResult(the_sea_of_suffering_has_no_bounds)); \
+            std::abort();                                                                                                            \
+        }                                                                                                                            \
+    } while (false)
+
+#else
+#define VK_ASSERT(x) \
     DO_NOTHING()
 #endif
 

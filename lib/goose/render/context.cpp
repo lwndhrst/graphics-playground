@@ -25,6 +25,17 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
         return false;
     }
 
+    for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        if (!create_frame(ctx.device, ctx.frames[i]))
+        {
+            LOG_ERROR("Failed to create frame data for frame {}", i);
+            return false;
+        }
+    }
+
+    ctx.current_frame = 0;
+
     return true;
 }
 
@@ -33,6 +44,22 @@ goose::render::destroy_render_context(RenderContext &ctx)
 {
     vkDeviceWaitIdle(ctx.device.logical);
 
+    for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        destroy_frame(ctx.device, ctx.frames[i]);
+    }
+
     destroy_swapchain(ctx.device, ctx.swapchain);
     destroy_device(ctx.device);
+}
+
+void
+goose::render::begin_drawing(RenderContext &ctx)
+{
+}
+
+void
+goose::render::end_drawing(RenderContext &ctx)
+{
+    ctx.current_frame = (ctx.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
