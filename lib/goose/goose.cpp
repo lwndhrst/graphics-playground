@@ -2,6 +2,7 @@
 
 #include "goose/common/util.hpp"
 #include "goose/render/context.hpp"
+#include "goose/render/frame.hpp"
 #include "goose/render/instance.hpp"
 #include "goose/window/window.hpp"
 
@@ -15,6 +16,7 @@ struct Data {
     u32 app_version;
     bool app_is_running;
 
+    // TODO: Allow multiple windows and render contexts
     goose::Window window;
     goose::render::RenderContext render_ctx;
 };
@@ -45,10 +47,20 @@ goose::init(const char *app_name)
     return true;
 }
 
+void
+goose::quit()
+{
+    goose::render::destroy_render_context(s_data.render_ctx);
+    goose::destroy_window(s_data.window);
+    goose::render::destroy_instance();
+
+    SDL_Quit();
+}
+
 bool
 goose::create_window(const char *title, u32 width, u32 height)
 {
-    // TODO: Support multiple windows
+    // TODO: Allow multiple windows and render contexts
     if (s_data.window.handle != nullptr)
     {
         LOG_ERROR("There is already an active window, multiple windows are currently not supported");
@@ -71,11 +83,11 @@ goose::create_window(const char *title, u32 width, u32 height)
 }
 
 bool
-goose::run()
+goose::should_run()
 {
     SDL_Event event;
 
-    // TODO: Support multiple windows
+    // TODO: Allow multiple windows and render contexts
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
@@ -99,11 +111,13 @@ goose::run()
 }
 
 void
-goose::quit()
+goose::render::begin_frame()
 {
-    goose::render::destroy_render_context(s_data.render_ctx);
-    goose::destroy_window(s_data.window);
-    goose::render::destroy_instance();
+    begin_frame(s_data.render_ctx);
+}
 
-    SDL_Quit();
+void
+goose::render::end_frame()
+{
+    end_frame(s_data.render_ctx);
 }

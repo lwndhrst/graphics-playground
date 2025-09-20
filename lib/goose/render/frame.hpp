@@ -11,11 +11,14 @@ struct Frame {
     VkCommandBuffer command_buffer;
 
     VkFence in_flight_fence;
-    VkSemaphore present_complete_semaphore;
+    VkSemaphore image_available_semaphore;
     VkSemaphore render_finished_semaphore;
 };
 
 bool create_frame(const Device &device, Frame &frame);
 void destroy_frame(const Device &device, Frame &frame);
+
+void begin_command_buffer(Frame &frame);
+void end_command_buffer(Frame &frame);
 
 } // namespace goose::render

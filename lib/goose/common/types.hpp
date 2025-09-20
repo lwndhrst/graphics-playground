@@ -44,5 +44,6 @@ struct RenderContext;
 struct Instance;
 struct Device;
 struct Swapchain;
+struct Frame;
 
 } // namespace goose::render

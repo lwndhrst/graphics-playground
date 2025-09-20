@@ -11,6 +11,7 @@ namespace goose::render {
 
 struct RenderContext {
     Device device;
+
     Swapchain swapchain;
 
     Frame frames[MAX_FRAMES_IN_FLIGHT];
@@ -20,7 +21,7 @@ struct RenderContext {
 bool create_render_context(const Window &window, RenderContext &ctx);
 void destroy_render_context(RenderContext &ctx);
 
-void begin_drawing(RenderContext &ctx);
-void end_drawing(RenderContext &ctx);
+void begin_frame(RenderContext &ctx);
+void end_frame(RenderContext &ctx);
 
 } // namespace goose::render

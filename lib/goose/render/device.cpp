@@ -220,6 +220,7 @@ goose::render::create_device(VkSurfaceKHR surface, Device &device)
         .dynamicRendering = true,
     };
 
+    // NOTE: Need to enable at least one feature for the pNext chain to work
     VkPhysicalDeviceFeatures2 device_features = {
         .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
         .pNext = &device_features_13,
@@ -227,13 +228,13 @@ goose::render::create_device(VkSurfaceKHR surface, Device &device)
 
     VkDeviceCreateInfo device_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext = &device_features_13,
         .queueCreateInfoCount = static_cast<u32>(queue_create_infos.size()),
         .pQueueCreateInfos = queue_create_infos.data(),
         .enabledLayerCount = static_cast<u32>(device.layers.size()),
         .ppEnabledLayerNames = device.layers.data(),
         .enabledExtensionCount = static_cast<u32>(device.extensions.size()),
         .ppEnabledExtensionNames = device.extensions.data(),
-        .pEnabledFeatures = &device_features.features,
     };
 
     VkResult result = vkCreateDevice(device.physical, &device_create_info, nullptr, &device.logical);

@@ -81,7 +81,7 @@ bool
 goose::render::create_frame(const Device &device, Frame &frame)
 {
     frame.in_flight_fence = create_fence(device.logical, VK_FENCE_CREATE_SIGNALED_BIT);
-    frame.present_complete_semaphore = create_semaphore(device.logical);
+    frame.image_available_semaphore = create_semaphore(device.logical);
     frame.render_finished_semaphore = create_semaphore(device.logical);
 
     frame.command_pool = create_command_pool(
@@ -103,6 +103,25 @@ goose::render::destroy_frame(const Device &device, Frame &frame)
     vkDestroyCommandPool(device.logical, frame.command_pool, nullptr);
 
     vkDestroySemaphore(device.logical, frame.render_finished_semaphore, nullptr);
-    vkDestroySemaphore(device.logical, frame.present_complete_semaphore, nullptr);
+    vkDestroySemaphore(device.logical, frame.image_available_semaphore, nullptr);
     vkDestroyFence(device.logical, frame.in_flight_fence, nullptr);
+}
+
+void
+goose::render::begin_command_buffer(Frame &frame)
+{
+    vkResetCommandBuffer(frame.command_buffer, 0);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+
+    vkBeginCommandBuffer(frame.command_buffer, &command_buffer_begin_info);
+}
+
+void
+goose::render::end_command_buffer(Frame &frame)
+{
+    vkEndCommandBuffer(frame.command_buffer);
 }

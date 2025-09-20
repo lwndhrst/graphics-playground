@@ -12,9 +12,11 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    while (goose::run())
+    while (goose::should_run())
     {
         // Main loop
+        goose::render::begin_frame();
+        goose::render::end_frame();
     }
 
     goose::quit();
