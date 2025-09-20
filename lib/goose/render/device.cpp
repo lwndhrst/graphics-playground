@@ -1,6 +1,6 @@
 #include "goose/render/device.hpp"
 
-#include "goose/common/util.hpp"
+#include "goose/common/log.hpp"
 #include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"
 

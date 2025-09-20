@@ -16,6 +16,7 @@ struct Swapchain {
     VkSwapchainKHR handle;
     VkExtent2D extent;
     VkFormat format;
+    usize image_count;
     std::vector<VkImage> images;
     std::vector<VkImageView> image_views;
 };

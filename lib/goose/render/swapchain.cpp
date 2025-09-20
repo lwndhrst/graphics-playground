@@ -1,6 +1,6 @@
 #include "goose/render/swapchain.hpp"
 
-#include "goose/common/util.hpp"
+#include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
 
 goose::render::SwapchainSupportDetails
@@ -198,6 +198,7 @@ goose::render::create_swapchain(
 
     swapchain.extent = swapchain_extent;
     swapchain.format = swapchain_surface_format.format;
+    swapchain.image_count = swapchain_image_count;
 
     return true;
 }

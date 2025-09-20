@@ -1,6 +1,6 @@
 #include "goose/window/window.hpp"
 
-#include "goose/common/util.hpp"
+#include "goose/common/log.hpp"
 #include "goose/render/instance.hpp"
 
 #include "SDL3/SDL_video.h"

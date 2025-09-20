@@ -1,8 +1,7 @@
 #include "goose/goose.hpp"
 
-#include "goose/common/util.hpp"
+#include "goose/common/log.hpp"
 #include "goose/render/context.hpp"
-#include "goose/render/frame.hpp"
 #include "goose/render/instance.hpp"
 #include "goose/window/window.hpp"
 

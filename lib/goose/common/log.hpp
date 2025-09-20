@@ -3,8 +3,6 @@
 #include "fmt/core.h"
 #include "vulkan/vk_enum_string_helper.h"
 
-#define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
-
 #define DO_NOTHING() \
     do               \
     {                \

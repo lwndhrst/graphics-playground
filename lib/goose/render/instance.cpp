@@ -1,6 +1,6 @@
 #include "goose/render/instance.hpp"
 
-#include "goose/common/util.hpp"
+#include "goose/common/log.hpp"
 
 #include "SDL3/SDL_vulkan.h"
 

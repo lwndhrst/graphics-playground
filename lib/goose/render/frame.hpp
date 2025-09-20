@@ -9,10 +9,6 @@ struct Frame {
     //       Additional secondary command buffers?
     VkCommandPool command_pool;
     VkCommandBuffer command_buffer;
-
-    VkFence in_flight_fence;
-    VkSemaphore image_available_semaphore;
-    VkSemaphore render_finished_semaphore;
 };
 
 bool create_frame(const Device &device, Frame &frame);
