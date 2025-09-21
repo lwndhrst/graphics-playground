@@ -29,8 +29,6 @@ typedef intptr_t isize;
 typedef float f32;
 typedef double f64;
 
-#define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
-
 // Forward declarations
 
 namespace goose {

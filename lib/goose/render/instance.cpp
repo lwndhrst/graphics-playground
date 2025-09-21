@@ -4,6 +4,8 @@
 
 #include "SDL3/SDL_vulkan.h"
 
+#define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
+
 static goose::render::Instance s_instance = {
     .handle = VK_NULL_HANDLE,
 };

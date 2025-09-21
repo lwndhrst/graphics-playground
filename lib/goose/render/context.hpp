@@ -17,13 +17,6 @@ struct RenderContext {
 
     Frame frames[MAX_FRAMES_IN_FLIGHT];
     u32 current_frame;
-
-    // 1 per frame in flight
-    std::vector<VkFence> in_flight_fences;
-    std::vector<VkSemaphore> image_available_semaphores;
-
-    // 1 per swapchain image
-    std::vector<VkSemaphore> render_finished_semaphores;
 };
 
 bool create_render_context(const Window &window, RenderContext &ctx);

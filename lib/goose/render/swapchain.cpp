@@ -2,6 +2,7 @@
 
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
+#include "goose/render/util.hpp"
 
 goose::render::SwapchainSupportDetails
 goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface)
@@ -159,8 +160,8 @@ goose::render::create_swapchain(
 
     vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, nullptr);
 
-    swapchain.images.resize(swapchain_image_count);
-    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, swapchain.images.data());
+    std::vector<VkImage> swapchain_images(swapchain_image_count);
+    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, swapchain_images.data());
 
     // Create swapchain image views
 
@@ -183,17 +184,22 @@ goose::render::create_swapchain(
         },
     };
 
-    swapchain.image_views.resize(swapchain_image_count);
+    swapchain.images.resize(swapchain_image_count);
     for (usize i = 0; i < swapchain_image_count; ++i)
     {
-        image_view_create_info.image = swapchain.images[i];
+        image_view_create_info.image = swapchain_images[i];
 
-        VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &swapchain.image_views[i]);
+        VkImageView image_view;
+        VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &image_view);
         if (result != VK_SUCCESS)
         {
             VK_LOG_ERROR(result);
             return false;
         }
+
+        swapchain.images[i].handle = swapchain_images[i],
+        swapchain.images[i].view = image_view,
+        swapchain.images[i].render_finished_semaphore = create_semaphore(device.logical);
     }
 
     swapchain.extent = swapchain_extent;
@@ -206,9 +212,10 @@ goose::render::create_swapchain(
 void
 goose::render::destroy_swapchain(const Device &device, Swapchain &swapchain)
 {
-    for (auto image_view : swapchain.image_views)
+    for (SwapchainImage &image : swapchain.images)
     {
-        vkDestroyImageView(device.logical, image_view, nullptr);
+        vkDestroySemaphore(device.logical, image.render_finished_semaphore, nullptr);
+        vkDestroyImageView(device.logical, image.view, nullptr);
     }
 
     vkDestroySwapchainKHR(device.logical, swapchain.handle, nullptr);

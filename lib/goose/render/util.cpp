@@ -2,6 +2,52 @@
 
 #include "goose/common/log.hpp"
 
+VkCommandPool
+goose::render::create_command_pool(VkDevice device, u32 queue_family_index, VkCommandPoolCreateFlags flags)
+{
+    VkCommandPoolCreateInfo command_pool_create_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = flags,
+        .queueFamilyIndex = queue_family_index,
+    };
+
+    VkCommandPool command_pool;
+    VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
+
+    return command_pool;
+}
+
+VkCommandBuffer
+goose::render::alloc_command_buffer(VkDevice device, VkCommandPool command_pool, VkCommandBufferLevel buffer_level)
+{
+    VkCommandBufferAllocateInfo command_buffer_alloc_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = command_pool,
+        .level = buffer_level,
+        .commandBufferCount = 1,
+    };
+
+    VkCommandBuffer command_buffer;
+    VkResult result = vkAllocateCommandBuffers(device, &command_buffer_alloc_info, &command_buffer);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
+
+    return command_buffer;
+}
+
+VkCommandBufferSubmitInfo
+goose::render::make_command_buffer_submit_info(VkCommandBuffer command_buffer)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = command_buffer,
+    };
+}
+
 VkFence
 goose::render::create_fence(VkDevice device, VkFenceCreateFlags flags)
 {
@@ -36,6 +82,29 @@ goose::render::create_semaphore(VkDevice device, VkSemaphoreCreateFlags flags)
     return semaphore;
 }
 
+VkSemaphoreSubmitInfo
+goose::render::make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = semaphore,
+        .value = 1,
+        .stageMask = stage_flags,
+    };
+}
+
+VkImageSubresourceRange
+goose::render::make_image_subresource_range(VkImageAspectFlags aspect_flags)
+{
+    return {
+        .aspectMask = aspect_flags,
+        .baseMipLevel = 0,
+        .levelCount = VK_REMAINING_MIP_LEVELS,
+        .baseArrayLayer = 0,
+        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+    };
+}
+
 void
 goose::render::transition_image(
     VkCommandBuffer command_buffer,
@@ -43,18 +112,13 @@ goose::render::transition_image(
     VkImageLayout old_layout,
     VkImageLayout new_layout)
 {
-    VkImageAspectFlags aspect_mask =
+    VkImageAspectFlags aspect_flags =
         new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL
             ? VK_IMAGE_ASPECT_DEPTH_BIT
             : VK_IMAGE_ASPECT_COLOR_BIT;
 
-    VkImageSubresourceRange subresource_range = {
-        .aspectMask = aspect_mask,
-        .baseMipLevel = 0,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .baseArrayLayer = 0,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-    };
+    VkImageSubresourceRange subresource_range =
+        make_image_subresource_range(aspect_flags);
 
     VkImageMemoryBarrier2 image_memory_barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,

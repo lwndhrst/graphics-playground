@@ -26,14 +26,6 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
         return false;
     }
 
-    ctx.render_finished_semaphores.reserve(ctx.swapchain.image_count);
-    for (usize i = 0; i < ctx.swapchain.image_count; ++i)
-    {
-        ctx.render_finished_semaphores.emplace_back(create_semaphore(ctx.device.logical));
-    }
-
-    ctx.in_flight_fences.reserve(MAX_FRAMES_IN_FLIGHT);
-    ctx.image_available_semaphores.reserve(MAX_FRAMES_IN_FLIGHT);
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
         if (!create_frame(ctx.device, ctx.frames[i]))
@@ -41,9 +33,6 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
             LOG_ERROR("Failed to create frame data for frame {}", i);
             return false;
         }
-
-        ctx.in_flight_fences.emplace_back(create_fence(ctx.device.logical, VK_FENCE_CREATE_SIGNALED_BIT));
-        ctx.image_available_semaphores.emplace_back(create_semaphore(ctx.device.logical));
     }
 
     ctx.current_frame = 0;
@@ -59,14 +48,6 @@ goose::render::destroy_render_context(RenderContext &ctx)
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
         destroy_frame(ctx.device, ctx.frames[i]);
-
-        vkDestroySemaphore(ctx.device.logical, ctx.image_available_semaphores[i], nullptr);
-        vkDestroyFence(ctx.device.logical, ctx.in_flight_fences[i], nullptr);
-    }
-
-    for (usize i = 0; i < ctx.swapchain.image_count; ++i)
-    {
-        vkDestroySemaphore(ctx.device.logical, ctx.render_finished_semaphores[i], nullptr);
     }
 
     destroy_swapchain(ctx.device, ctx.swapchain);
@@ -78,58 +59,39 @@ goose::render::begin_frame(RenderContext &ctx)
 {
     Frame &frame = ctx.frames[ctx.current_frame];
 
-    vkWaitForFences(ctx.device.logical, 1, &ctx.in_flight_fences[ctx.current_frame], true, 1000000000);
-    vkResetFences(ctx.device.logical, 1, &ctx.in_flight_fences[ctx.current_frame]);
+    vkWaitForFences(ctx.device.logical, 1, &frame.in_flight_fence, true, 1000000000);
+    vkResetFences(ctx.device.logical, 1, &frame.in_flight_fence);
 
-    vkAcquireNextImageKHR(ctx.device.logical, ctx.swapchain.handle, 1000000000, ctx.image_available_semaphores[ctx.current_frame], nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(ctx.device.logical, ctx.swapchain.handle, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+
+    SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     begin_command_buffer(frame);
+    transition_image(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    transition_image(frame.command_buffer, ctx.swapchain.images[ctx.current_swapchain_image], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
+    // TODO: Real rendering
     VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
-
-    VkImageSubresourceRange clear_subresource_range = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseMipLevel = 0,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .baseArrayLayer = 0,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-    };
-
-    vkCmdClearColorImage(frame.command_buffer, ctx.swapchain.images[ctx.current_swapchain_image], VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
+    VkImageSubresourceRange clear_subresource_range = make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+    vkCmdClearColorImage(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
 }
 
 void
 goose::render::end_frame(RenderContext &ctx)
 {
     Frame &frame = ctx.frames[ctx.current_frame];
+    SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    transition_image(frame.command_buffer, ctx.swapchain.images[ctx.current_swapchain_image], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
+    transition_image(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
     end_command_buffer(frame);
 
-    VkCommandBufferSubmitInfo command_buffer_submit_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = frame.command_buffer,
-        .deviceMask = 0,
-    };
+    VkSemaphoreSubmitInfo wait_semaphore_submit_info =
+        make_semaphore_submit_info(frame.image_available_semaphore, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
 
-    VkSemaphoreSubmitInfo wait_semaphore_submit_info = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = ctx.image_available_semaphores[ctx.current_frame],
-        .value = 1,
-        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
-        .deviceIndex = 0,
-    };
+    VkCommandBufferSubmitInfo command_buffer_submit_info =
+        make_command_buffer_submit_info(frame.command_buffer);
 
-    VkSemaphoreSubmitInfo signal_semaphore_submit_info = {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = ctx.render_finished_semaphores[ctx.current_swapchain_image],
-        .value = 1,
-        .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
-        .deviceIndex = 0,
-    };
+    VkSemaphoreSubmitInfo signal_semaphore_submit_info =
+        make_semaphore_submit_info(swapchain_image.render_finished_semaphore, VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT);
 
     VkSubmitInfo2 submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
@@ -144,26 +106,24 @@ goose::render::end_frame(RenderContext &ctx)
         .pSignalSemaphoreInfos = &signal_semaphore_submit_info,
     };
 
-    VkResult result = vkQueueSubmit2(ctx.device.queue_families.graphics.queues[0], 1, &submit_info, ctx.in_flight_fences[ctx.current_frame]);
-    if (result != VK_SUCCESS)
-    {
-        VK_LOG_ERROR(result);
-    }
+    VkResult result = vkQueueSubmit2(ctx.device.queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
 
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &ctx.render_finished_semaphores[ctx.current_swapchain_image],
+        .pWaitSemaphores = &swapchain_image.render_finished_semaphore,
         .swapchainCount = 1,
         .pSwapchains = &ctx.swapchain.handle,
         .pImageIndices = &ctx.current_swapchain_image,
     };
 
     result = vkQueuePresentKHR(ctx.device.queue_families.graphics.queues[0], &present_info);
-    if (result != VK_SUCCESS)
-    {
-        VK_LOG_ERROR(result);
-    }
+
+    // TODO: Error handling
+    VK_ASSERT(result);
 
     ctx.current_frame = (ctx.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 }

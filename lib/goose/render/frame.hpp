@@ -9,6 +9,12 @@ struct Frame {
     //       Additional secondary command buffers?
     VkCommandPool command_pool;
     VkCommandBuffer command_buffer;
+
+    // Used to wait for the previous queue submit call of this frame to finish
+    VkFence in_flight_fence;
+
+    // Used to wait for the aquired swapchain image to be available for rendering
+    VkSemaphore image_available_semaphore;
 };
 
 bool create_frame(const Device &device, Frame &frame);

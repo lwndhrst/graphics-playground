@@ -2,46 +2,7 @@
 
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
-
-static VkCommandPool
-create_command_pool(VkDevice device, u32 queue_family_index, VkCommandPoolCreateFlags flags = 0)
-{
-    VkCommandPoolCreateInfo command_pool_create_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = flags,
-        .queueFamilyIndex = queue_family_index,
-    };
-
-    VkCommandPool command_pool;
-    VkResult result = vkCreateCommandPool(device, &command_pool_create_info, nullptr, &command_pool);
-
-    // TODO: Error handling
-    VK_ASSERT(result);
-
-    return command_pool;
-}
-
-// TODO: Add function for allocating multiple command buffers at once
-static VkCommandBuffer
-alloc_command_buffer(VkDevice device, VkCommandPool command_pool, VkCommandBufferLevel command_buffer_level)
-{
-    ASSERT(command_pool != VK_NULL_HANDLE, "Command pool does not exist");
-
-    VkCommandBufferAllocateInfo command_buffer_alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = command_pool,
-        .level = command_buffer_level,
-        .commandBufferCount = 1,
-    };
-
-    VkCommandBuffer command_buffer;
-    VkResult result = vkAllocateCommandBuffers(device, &command_buffer_alloc_info, &command_buffer);
-
-    // TODO: Error handling
-    VK_ASSERT(result);
-
-    return command_buffer;
-}
+#include "goose/render/util.hpp"
 
 bool
 goose::render::create_frame(const Device &device, Frame &frame)
@@ -56,12 +17,18 @@ goose::render::create_frame(const Device &device, Frame &frame)
         frame.command_pool,
         VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
+    frame.in_flight_fence = create_fence(device.logical, VK_FENCE_CREATE_SIGNALED_BIT);
+    frame.image_available_semaphore = create_semaphore(device.logical);
+
     return true;
 }
 
 void
 goose::render::destroy_frame(const Device &device, Frame &frame)
 {
+    vkDestroySemaphore(device.logical, frame.image_available_semaphore, nullptr);
+    vkDestroyFence(device.logical, frame.in_flight_fence, nullptr);
+
     vkDestroyCommandPool(device.logical, frame.command_pool, nullptr);
 }
 
