@@ -1,7 +1,6 @@
 #pragma once
 
 #include "goose/common/types.hpp"
-#include "goose/render/device.hpp"
 #include "goose/render/frame.hpp"
 #include "goose/render/swapchain.hpp"
 

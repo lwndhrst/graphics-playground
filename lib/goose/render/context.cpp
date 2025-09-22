@@ -1,6 +1,7 @@
 #include "goose/render/context.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/render/device.hpp"
 #include "goose/render/util.hpp"
 #include "goose/window/window.hpp"
 

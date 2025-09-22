@@ -2,6 +2,7 @@
 
 #include "goose/common/log.hpp"
 #include "goose/render/instance.hpp"
+#include "goose/render/device.hpp"
 
 #include "SDL3/SDL_init.h"
 
