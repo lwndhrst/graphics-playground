@@ -22,7 +22,7 @@ struct RenderContext {
 bool create_render_context(const Window &window, RenderContext &ctx);
 void destroy_render_context(RenderContext &ctx);
 
-void begin_frame(RenderContext &ctx);
+std::pair<VkCommandBuffer, VkImage> begin_frame(RenderContext &ctx);
 void end_frame(RenderContext &ctx);
 
 } // namespace goose::render

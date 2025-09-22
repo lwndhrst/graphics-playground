@@ -1,23 +1,14 @@
 #include "goose/goose.hpp"
 
 #include "goose/common/log.hpp"
-#include "goose/render/context.hpp"
 #include "goose/render/instance.hpp"
-#include "goose/window/window.hpp"
 
 #include "SDL3/SDL_init.h"
-
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
 
 struct Data {
     const char *app_name;
     u32 app_version;
     bool app_is_running;
-
-    // TODO: Allow multiple windows and render contexts
-    goose::Window window;
-    goose::render::RenderContext render_ctx;
 };
 
 static Data s_data = {};
@@ -49,74 +40,37 @@ goose::init(const char *app_name)
 void
 goose::quit()
 {
-    goose::render::destroy_render_context(s_data.render_ctx);
-    goose::destroy_window(s_data.window);
     goose::render::destroy_instance();
 
     SDL_Quit();
 }
 
 bool
-goose::create_window(const char *title, u32 width, u32 height)
-{
-    // TODO: Allow multiple windows and render contexts
-    if (s_data.window.handle != nullptr)
-    {
-        LOG_ERROR("There is already an active window, multiple windows are currently not supported");
-        return false;
-    }
-
-    if (!goose::create_window(title, width, height, s_data.window))
-    {
-        LOG_ERROR("Failed to create window");
-        return false;
-    }
-
-    if (!goose::render::create_render_context(s_data.window, s_data.render_ctx))
-    {
-        LOG_ERROR("Failed to initialize Vulkan renderer");
-        return false;
-    }
-
-    return true;
-}
-
-bool
 goose::should_run()
 {
     SDL_Event event;
-
-    // TODO: Allow multiple windows and render contexts
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
+            // TODO: Is this simply triggered when there are no active windows?
             s_data.app_is_running = false;
             break;
+
+        // Window events
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            s_data.window.should_close = true;
+            get_window_by_id(event.window.windowID)->event_flags.close_requested = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            fmt::println("Window resized");
+            get_window_by_id(event.window.windowID)->event_flags.resized = true;
             break;
-        case SDL_EVENT_WINDOW_OCCLUDED: // NOTE: Interesting for wayland (switching workspaces, etc.)
-            fmt::println("Window occluded");
+        case SDL_EVENT_WINDOW_OCCLUDED:
+            // NOTE: Interesting for wayland (switching workspaces, etc.)
+            get_window_by_id(event.window.windowID)->event_flags.occluded = true;
             break;
         }
     }
 
-    return s_data.app_is_running && !s_data.window.should_close;
-}
-
-void
-goose::render::begin_frame()
-{
-    begin_frame(s_data.render_ctx);
-}
-
-void
-goose::render::end_frame()
-{
-    end_frame(s_data.render_ctx);
+    return s_data.app_is_running;
 }

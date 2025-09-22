@@ -4,6 +4,9 @@
 #include "goose/render/util.hpp"
 #include "goose/window/window.hpp"
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 bool
 goose::render::create_render_context(const Window &window, RenderContext &ctx)
 {
@@ -54,7 +57,7 @@ goose::render::destroy_render_context(RenderContext &ctx)
     destroy_device(ctx.device);
 }
 
-void
+std::pair<VkCommandBuffer, VkImage>
 goose::render::begin_frame(RenderContext &ctx)
 {
     Frame &frame = ctx.frames[ctx.current_frame];
@@ -69,10 +72,7 @@ goose::render::begin_frame(RenderContext &ctx)
     begin_command_buffer(frame);
     transition_image(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    // TODO: Real rendering
-    VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
-    VkImageSubresourceRange clear_subresource_range = make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
-    vkCmdClearColorImage(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
+    return {frame.command_buffer, swapchain_image.handle};
 }
 
 void
