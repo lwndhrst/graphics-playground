@@ -96,13 +96,9 @@ goose::render::begin_frame(RenderContext &ctx)
 
     vkAcquireNextImageKHR(device.logical, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
-    Image &draw_image = ctx.draw_image;
-
     begin_command_buffer(frame);
 
-    transition_image(frame.command_buffer, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-    return {frame.command_buffer, draw_image.image};
+    return {frame.command_buffer, ctx.draw_image.image};
 }
 
 void
@@ -114,7 +110,6 @@ goose::render::end_frame(RenderContext &ctx)
     Image &draw_image = ctx.draw_image;
     SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    transition_image(frame.command_buffer, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     transition_image(frame.command_buffer, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     copy_image_to_image(frame.command_buffer, draw_image.image, swapchain_image.image, ctx.draw_extent, ctx.swapchain.extent);

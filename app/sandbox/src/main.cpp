@@ -32,9 +32,15 @@ run()
     {
         auto [cmd, img] = goose::render::begin_frame(render_context);
 
+        // Transition image to a usable layout
+        goose::render::transition_image(cmd, img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
         VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
         VkImageSubresourceRange clear_subresource_range = goose::render::make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
         vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
+
+        // The image is expected to be in layout VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL for copying into the swapchain
+        goose::render::transition_image(cmd, img, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
         goose::render::end_frame(render_context);
     }
