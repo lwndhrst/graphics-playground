@@ -22,7 +22,7 @@ goose::create_window(const char *title, u32 width, u32 height, Window &window)
 
     const goose::render::Instance &instance = goose::render::get_instance();
 
-    if (!SDL_Vulkan_CreateSurface(window.handle, instance.handle, nullptr, &window.surface))
+    if (!SDL_Vulkan_CreateSurface(window.handle, instance.instance, nullptr, &window.surface))
     {
         LOG_ERROR("{}", SDL_GetError());
         return false;
@@ -49,7 +49,7 @@ goose::destroy_window(Window &window)
 
     const goose::render::Instance &instance = goose::render::get_instance();
 
-    vkDestroySurfaceKHR(instance.handle, window.surface, nullptr);
+    vkDestroySurfaceKHR(instance.instance, window.surface, nullptr);
     SDL_DestroyWindow(window.handle);
 
     // Remove destroyed window from internal list of active windows and move last entry to the freed position

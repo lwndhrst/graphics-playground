@@ -185,7 +185,7 @@ goose::render::create_device(VkSurfaceKHR surface)
     // TODO: Which device extensions?
     device.extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    device.physical = get_gpu(instance.handle, surface, device.extensions);
+    device.physical = get_gpu(instance.instance, surface, device.extensions);
     if (device.physical == VK_NULL_HANDLE)
     {
         LOG_ERROR("No suitable GPU found");

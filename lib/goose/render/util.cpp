@@ -93,6 +93,40 @@ goose::render::make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStage
     };
 }
 
+VkImageCreateInfo
+goose::render::make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = format,
+        .extent = extent,
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = usage_flags,
+    };
+}
+
+VkImageViewCreateInfo
+goose::render::make_image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .subresourceRange = {
+            .aspectMask = aspect_flags,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+    };
+}
+
 VkImageSubresourceRange
 goose::render::make_image_subresource_range(VkImageAspectFlags aspect_flags)
 {
@@ -122,15 +156,12 @@ goose::render::transition_image(
 
     VkImageMemoryBarrier2 image_memory_barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-
         .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
         .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
         .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
         .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
-
         .oldLayout = old_layout,
         .newLayout = new_layout,
-
         .image = image,
         .subresourceRange = subresource_range,
     };
@@ -143,4 +174,48 @@ goose::render::transition_image(
     };
 
     vkCmdPipelineBarrier2(command_buffer, &dependency_info);
+}
+
+void
+goose::render::copy_image_to_image(
+    VkCommandBuffer command_buffer,
+    VkImage source,
+    VkImage destination,
+    VkExtent2D src_size,
+    VkExtent2D dst_size)
+{
+    VkImageBlit2 blit_region = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
+    };
+
+    blit_region.srcOffsets[1].x = src_size.width;
+    blit_region.srcOffsets[1].y = src_size.height;
+    blit_region.srcOffsets[1].z = 1;
+
+    blit_region.dstOffsets[1].x = dst_size.width;
+    blit_region.dstOffsets[1].y = dst_size.height;
+    blit_region.dstOffsets[1].z = 1;
+
+    blit_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit_region.srcSubresource.baseArrayLayer = 0;
+    blit_region.srcSubresource.layerCount = 1;
+    blit_region.srcSubresource.mipLevel = 0;
+
+    blit_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    blit_region.dstSubresource.baseArrayLayer = 0;
+    blit_region.dstSubresource.layerCount = 1;
+    blit_region.dstSubresource.mipLevel = 0;
+
+    VkBlitImageInfo2 blit_info = {
+        .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,
+        .srcImage = source,
+        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        .dstImage = destination,
+        .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .regionCount = 1,
+        .pRegions = &blit_region,
+        .filter = VK_FILTER_LINEAR,
+    };
+
+    vkCmdBlitImage2(command_buffer, &blit_info);
 }

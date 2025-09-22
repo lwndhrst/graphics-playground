@@ -1,6 +1,7 @@
 #include "goose/goose.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/render/allocator.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/instance.hpp"
 
@@ -41,6 +42,7 @@ goose::init(const char *app_name)
 void
 goose::quit()
 {
+    goose::render::destroy_allocator();
     goose::render::destroy_device();
     goose::render::destroy_instance();
 

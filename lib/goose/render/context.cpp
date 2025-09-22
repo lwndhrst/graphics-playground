@@ -1,6 +1,7 @@
 #include "goose/render/context.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/render/allocator.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/util.hpp"
 #include "goose/window/window.hpp"
@@ -18,9 +19,17 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
         return false;
     }
 
-    // NOTE: The vulkan device is a singleton and will only be created once
-    //       It's created here instead of in goose::init() as it needs a valid window surface (for now anyway)
+    // NOTE: The device is a singleton and will only be created once
+    //       It's created here instead of in goose::init() as it needs a valid surface
     if (!create_device(window.surface))
+    {
+        LOG_ERROR("Failed to create logical device");
+        return false;
+    }
+
+    // NOTE: The allocator is a singleton and will only be created once
+    //       It's created here instead of in goose::init() as it needs a valid device
+    if (!create_allocator())
     {
         LOG_ERROR("Failed to create logical device");
         return false;
@@ -43,6 +52,14 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
 
     ctx.current_frame = 0;
 
+    if (!create_draw_image(window.extent, ctx.draw_image))
+    {
+        LOG_ERROR("Failed to create draw image");
+        return false;
+    }
+
+    ctx.draw_extent = window.extent;
+
     return true;
 }
 
@@ -54,6 +71,8 @@ goose::render::destroy_render_context(RenderContext &ctx)
     // TODO: Does this make sense when there are potentially multiple render contexts?
     vkDeviceWaitIdle(device.logical);
 
+    destroy_image(ctx.draw_image);
+
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
         destroy_frame(ctx.frames[i]);
@@ -61,7 +80,8 @@ goose::render::destroy_render_context(RenderContext &ctx)
 
     destroy_swapchain(ctx.swapchain);
 
-    // NOTE: The vulkan device singleton is destroyed when goose::quit() is called
+    // NOTE: The allocator singleton is destroyed when goose::quit() is called
+    // NOTE: The device singleton is destroyed when goose::quit() is called
 }
 
 std::pair<VkCommandBuffer, VkImage>
@@ -74,14 +94,15 @@ goose::render::begin_frame(RenderContext &ctx)
     vkWaitForFences(device.logical, 1, &frame.in_flight_fence, true, 1000000000);
     vkResetFences(device.logical, 1, &frame.in_flight_fence);
 
-    vkAcquireNextImageKHR(device.logical, ctx.swapchain.handle, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(device.logical, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
-    SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
+    Image &draw_image = ctx.draw_image;
 
     begin_command_buffer(frame);
-    transition_image(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    return {frame.command_buffer, swapchain_image.handle};
+    transition_image(frame.command_buffer, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+    return {frame.command_buffer, draw_image.image};
 }
 
 void
@@ -90,9 +111,16 @@ goose::render::end_frame(RenderContext &ctx)
     const Device &device = get_device();
 
     Frame &frame = ctx.frames[ctx.current_frame];
+    Image &draw_image = ctx.draw_image;
     SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    transition_image(frame.command_buffer, swapchain_image.handle, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    transition_image(frame.command_buffer, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    transition_image(frame.command_buffer, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    copy_image_to_image(frame.command_buffer, draw_image.image, swapchain_image.image, ctx.draw_extent, ctx.swapchain.extent);
+
+    transition_image(frame.command_buffer, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
     end_command_buffer(frame);
 
     VkSemaphoreSubmitInfo wait_semaphore_submit_info =
@@ -127,7 +155,7 @@ goose::render::end_frame(RenderContext &ctx)
         .waitSemaphoreCount = 1,
         .pWaitSemaphores = &swapchain_image.render_finished_semaphore,
         .swapchainCount = 1,
-        .pSwapchains = &ctx.swapchain.handle,
+        .pSwapchains = &ctx.swapchain.swapchain,
         .pImageIndices = &ctx.current_swapchain_image,
     };
 

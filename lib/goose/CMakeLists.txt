@@ -21,11 +21,11 @@ target_sources(${TARGET_NAME}
 target_link_libraries(${TARGET_NAME}
     PRIVATE
         stb_image
-        vma
         SDL3::SDL3
 
     PUBLIC
         Vulkan::Vulkan
+        vma
         fmt::fmt
         glm
         imgui

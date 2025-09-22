@@ -10,10 +10,10 @@ struct Frame {
     VkCommandPool command_pool;
     VkCommandBuffer command_buffer;
 
-    // Used to wait for the previous queue submit call of this frame to finish
+    // Signaled when the previous queue submit call of this frame is finished
     VkFence in_flight_fence;
 
-    // Used to wait for the aquired swapchain image to be available for rendering
+    // Signaled when the aquired swapchain image is actually available for rendering
     VkSemaphore image_available_semaphore;
 };
 

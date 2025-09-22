@@ -55,7 +55,7 @@ goose::render::create_instance(const char *app_name, u32 app_version)
         .ppEnabledExtensionNames = instance.extensions.data(),
     };
 
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance.handle);
+    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance.instance);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -71,7 +71,7 @@ goose::render::create_instance(const char *app_name, u32 app_version)
 void
 goose::render::destroy_instance()
 {
-    vkDestroyInstance(s_instance.handle, nullptr);
+    vkDestroyInstance(s_instance.instance, nullptr);
 
     s_instance = {};
     s_initialized = false;

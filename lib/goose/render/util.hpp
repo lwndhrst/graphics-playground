@@ -14,8 +14,11 @@ VkFence create_fence(VkDevice device, VkFenceCreateFlags flags = 0);
 VkSemaphore create_semaphore(VkDevice device, VkSemaphoreCreateFlags flags = 0);
 VkSemaphoreSubmitInfo make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags);
 
+VkImageCreateInfo make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent);
+VkImageViewCreateInfo make_image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags);
 VkImageSubresourceRange make_image_subresource_range(VkImageAspectFlags aspect_flags);
 
 void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
+void copy_image_to_image(VkCommandBuffer command_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size);
 
 } // namespace goose::render

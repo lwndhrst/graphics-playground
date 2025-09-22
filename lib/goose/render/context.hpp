@@ -2,6 +2,7 @@
 
 #include "goose/common/types.hpp"
 #include "goose/render/frame.hpp"
+#include "goose/render/image.hpp"
 #include "goose/render/swapchain.hpp"
 
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -14,6 +15,9 @@ struct RenderContext {
 
     Frame frames[MAX_FRAMES_IN_FLIGHT];
     u32 current_frame;
+
+    Image draw_image;
+    VkExtent2D draw_extent;
 };
 
 bool create_render_context(const Window &window, RenderContext &ctx);

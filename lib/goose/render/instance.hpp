@@ -5,7 +5,7 @@
 namespace goose::render {
 
 struct Instance {
-    VkInstance handle;
+    VkInstance instance;
     std::vector<const char *> layers;
     std::vector<const char *> extensions;
 };

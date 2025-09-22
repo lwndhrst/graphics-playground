@@ -13,17 +13,19 @@ struct SwapchainSupportDetails {
 SwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
 struct SwapchainImage {
-    VkImage handle;
+    VkImage image;
     VkImageView view;
 
-    // Used to wait for the image to be ready for presentation, i.e. for rendering to be finished
+    // Signaled when the image is ready for presentation, i.e. when rendering is finished
     VkSemaphore render_finished_semaphore;
 };
 
 struct Swapchain {
-    VkSwapchainKHR handle;
+    VkSwapchainKHR swapchain;
+
     VkExtent2D extent;
     VkFormat format;
+
     usize image_count;
     std::vector<SwapchainImage> images;
 };

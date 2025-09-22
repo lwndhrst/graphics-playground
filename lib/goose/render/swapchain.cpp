@@ -150,7 +150,7 @@ goose::render::create_swapchain(
         swapchain_create_info.pQueueFamilyIndices = nullptr;
     }
 
-    VkResult result = vkCreateSwapchainKHR(device.logical, &swapchain_create_info, nullptr, &swapchain.handle);
+    VkResult result = vkCreateSwapchainKHR(device.logical, &swapchain_create_info, nullptr, &swapchain.swapchain);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -159,10 +159,10 @@ goose::render::create_swapchain(
 
     // Get swapchain images
 
-    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, nullptr);
+    vkGetSwapchainImagesKHR(device.logical, swapchain.swapchain, &swapchain_image_count, nullptr);
 
     std::vector<VkImage> swapchain_images(swapchain_image_count);
-    vkGetSwapchainImagesKHR(device.logical, swapchain.handle, &swapchain_image_count, swapchain_images.data());
+    vkGetSwapchainImagesKHR(device.logical, swapchain.swapchain, &swapchain_image_count, swapchain_images.data());
 
     // Create swapchain image views
 
@@ -198,7 +198,7 @@ goose::render::create_swapchain(
             return false;
         }
 
-        swapchain.images[i].handle = swapchain_images[i],
+        swapchain.images[i].image = swapchain_images[i],
         swapchain.images[i].view = image_view,
         swapchain.images[i].render_finished_semaphore = create_semaphore(device.logical);
     }
@@ -221,5 +221,5 @@ goose::render::destroy_swapchain(Swapchain &swapchain)
         vkDestroyImageView(device.logical, image.view, nullptr);
     }
 
-    vkDestroySwapchainKHR(device.logical, swapchain.handle, nullptr);
+    vkDestroySwapchainKHR(device.logical, swapchain.swapchain, nullptr);
 }
