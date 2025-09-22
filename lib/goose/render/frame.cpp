@@ -5,8 +5,10 @@
 #include "goose/render/util.hpp"
 
 bool
-goose::render::create_frame(const Device &device, Frame &frame)
+goose::render::create_frame(Frame &frame)
 {
+    const Device &device = get_device();
+
     frame.command_pool = create_command_pool(
         device.logical,
         device.queue_families.graphics.index,
@@ -24,8 +26,10 @@ goose::render::create_frame(const Device &device, Frame &frame)
 }
 
 void
-goose::render::destroy_frame(const Device &device, Frame &frame)
+goose::render::destroy_frame(Frame &frame)
 {
+    const Device &device = get_device();
+
     vkDestroySemaphore(device.logical, frame.image_available_semaphore, nullptr);
     vkDestroyFence(device.logical, frame.in_flight_fence, nullptr);
 

@@ -30,10 +30,8 @@ run()
 {
     while (goose::should_run())
     {
-        // Render loop
         auto [cmd, img] = goose::render::begin_frame(render_context);
 
-        // TODO: Real rendering
         VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
         VkImageSubresourceRange clear_subresource_range = goose::render::make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
         vkCmdClearColorImage(cmd, img, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);

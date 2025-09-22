@@ -40,6 +40,7 @@ goose::init(const char *app_name)
 void
 goose::quit()
 {
+    goose::render::destroy_device();
     goose::render::destroy_instance();
 
     SDL_Quit();
@@ -54,7 +55,6 @@ goose::should_run()
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
-            // TODO: Is this simply triggered when there are no active windows?
             s_data.app_is_running = false;
             break;
 

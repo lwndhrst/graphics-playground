@@ -4,6 +4,9 @@
 #include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"
 
+static goose::render::Device s_device = {};
+static bool s_initialized = false;
+
 struct QueueFamilyIndices {
     std::optional<u32> graphics;
     std::optional<u32> present;
@@ -161,10 +164,17 @@ get_gpu(
 }
 
 bool
-goose::render::create_device(VkSurfaceKHR surface, Device &device)
+goose::render::create_device(VkSurfaceKHR surface)
 {
+    if (s_initialized)
+    {
+        LOG_INFO("Vulkan device is already initialized");
+        return true;
+    }
+
     const Instance &instance = get_instance();
-    ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
+
+    Device device = {};
 
 #ifdef GOOSE_DEBUG
     // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
@@ -274,11 +284,24 @@ goose::render::create_device(VkSurfaceKHR surface, Device &device)
         }
     }
 
+    s_device = std::move(device);
+    s_initialized = true;
+
     return true;
 }
 
 void
-goose::render::destroy_device(Device &device)
+goose::render::destroy_device()
 {
-    vkDestroyDevice(device.logical, nullptr);
+    vkDestroyDevice(s_device.logical, nullptr);
+
+    s_device = {};
+    s_initialized = false;
+}
+
+const goose::render::Device &
+goose::render::get_device()
+{
+    ASSERT(s_initialized, "Vulkan device is not initialized");
+    return s_device;
 }

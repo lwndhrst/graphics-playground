@@ -24,7 +24,9 @@ struct Device {
     QueueFamilies queue_families;
 };
 
-bool create_device(VkSurfaceKHR surface, Device &device);
-void destroy_device(Device &device);
+bool create_device(VkSurfaceKHR surface);
+void destroy_device();
+
+const Device &get_device();
 
 } // namespace goose::render

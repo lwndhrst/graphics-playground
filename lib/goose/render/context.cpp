@@ -17,13 +17,15 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
         return false;
     }
 
-    if (!create_device(window.surface, ctx.device))
+    // NOTE: The vulkan device is a singleton and will only be created once
+    //       It's created here instead of in goose::init() as it needs a valid window surface (for now anyway)
+    if (!create_device(window.surface))
     {
         LOG_ERROR("Failed to create logical device");
         return false;
     }
 
-    if (!create_swapchain(ctx.device, window.surface, window.extent, ctx.swapchain))
+    if (!create_swapchain(window.surface, window.extent, ctx.swapchain))
     {
         LOG_ERROR("Failed to create swapchain");
         return false;
@@ -31,7 +33,7 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (!create_frame(ctx.device, ctx.frames[i]))
+        if (!create_frame(ctx.frames[i]))
         {
             LOG_ERROR("Failed to create frame data for frame {}", i);
             return false;
@@ -46,26 +48,32 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
 void
 goose::render::destroy_render_context(RenderContext &ctx)
 {
-    vkDeviceWaitIdle(ctx.device.logical);
+    const Device &device = get_device();
+
+    // TODO: Does this make sense when there are potentially multiple render contexts?
+    vkDeviceWaitIdle(device.logical);
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        destroy_frame(ctx.device, ctx.frames[i]);
+        destroy_frame(ctx.frames[i]);
     }
 
-    destroy_swapchain(ctx.device, ctx.swapchain);
-    destroy_device(ctx.device);
+    destroy_swapchain(ctx.swapchain);
+
+    // NOTE: The vulkan device singleton is destroyed when goose::quit() is called
 }
 
 std::pair<VkCommandBuffer, VkImage>
 goose::render::begin_frame(RenderContext &ctx)
 {
+    const Device &device = get_device();
+
     Frame &frame = ctx.frames[ctx.current_frame];
 
-    vkWaitForFences(ctx.device.logical, 1, &frame.in_flight_fence, true, 1000000000);
-    vkResetFences(ctx.device.logical, 1, &frame.in_flight_fence);
+    vkWaitForFences(device.logical, 1, &frame.in_flight_fence, true, 1000000000);
+    vkResetFences(device.logical, 1, &frame.in_flight_fence);
 
-    vkAcquireNextImageKHR(ctx.device.logical, ctx.swapchain.handle, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(device.logical, ctx.swapchain.handle, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
     SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
@@ -78,6 +86,8 @@ goose::render::begin_frame(RenderContext &ctx)
 void
 goose::render::end_frame(RenderContext &ctx)
 {
+    const Device &device = get_device();
+
     Frame &frame = ctx.frames[ctx.current_frame];
     SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
@@ -106,7 +116,7 @@ goose::render::end_frame(RenderContext &ctx)
         .pSignalSemaphoreInfos = &signal_semaphore_submit_info,
     };
 
-    VkResult result = vkQueueSubmit2(ctx.device.queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
+    VkResult result = vkQueueSubmit2(device.queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -120,7 +130,7 @@ goose::render::end_frame(RenderContext &ctx)
         .pImageIndices = &ctx.current_swapchain_image,
     };
 
-    result = vkQueuePresentKHR(ctx.device.queue_families.graphics.queues[0], &present_info);
+    result = vkQueuePresentKHR(device.queue_families.graphics.queues[0], &present_info);
 
     // TODO: Error handling
     VK_ASSERT(result);

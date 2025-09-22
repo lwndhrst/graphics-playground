@@ -10,8 +10,6 @@
 namespace goose::render {
 
 struct RenderContext {
-    Device device;
-
     Swapchain swapchain;
     u32 current_swapchain_image;
 

@@ -21,7 +21,6 @@ goose::create_window(const char *title, u32 width, u32 height, Window &window)
     }
 
     const goose::render::Instance &instance = goose::render::get_instance();
-    ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
 
     if (!SDL_Vulkan_CreateSurface(window.handle, instance.handle, nullptr, &window.surface))
     {
@@ -49,7 +48,6 @@ goose::destroy_window(Window &window)
     }
 
     const goose::render::Instance &instance = goose::render::get_instance();
-    ASSERT(instance.handle != VK_NULL_HANDLE, "Instance is not initialized");
 
     vkDestroySurfaceKHR(instance.handle, window.surface, nullptr);
     SDL_DestroyWindow(window.handle);

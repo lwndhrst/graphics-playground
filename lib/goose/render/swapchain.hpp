@@ -28,7 +28,7 @@ struct Swapchain {
     std::vector<SwapchainImage> images;
 };
 
-bool create_swapchain(const Device &device, VkSurfaceKHR surface, VkExtent2D window_extent, Swapchain &swapchain);
-void destroy_swapchain(const Device &device, Swapchain &swapchain);
+bool create_swapchain(VkSurfaceKHR surface, VkExtent2D window_extent, Swapchain &swapchain);
+void destroy_swapchain(Swapchain &swapchain);
 
 } // namespace goose::render

@@ -6,33 +6,34 @@
 
 #define VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"
 
-static goose::render::Instance s_instance = {
-    .handle = VK_NULL_HANDLE,
-};
+static goose::render::Instance s_instance = {};
+static bool s_initialized = false;
 
 bool
 goose::render::create_instance(const char *app_name, u32 app_version)
 {
-    if (s_instance.handle != VK_NULL_HANDLE)
+    if (s_initialized)
     {
         LOG_INFO("Vulkan instance is already initialized");
         return true;
     }
 
+    Instance instance = {};
+
 #ifdef GOOSE_DEBUG
-    s_instance.layers.push_back(VALIDATION_LAYER_NAME);
-    s_instance.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    instance.layers.push_back(VALIDATION_LAYER_NAME);
+    instance.extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
     u32 sdl_instance_extension_count;
     auto sdl_instance_extensions = SDL_Vulkan_GetInstanceExtensions(&sdl_instance_extension_count);
     for (usize i = 0; i < sdl_instance_extension_count; ++i)
     {
-        s_instance.extensions.push_back(sdl_instance_extensions[i]);
+        instance.extensions.push_back(sdl_instance_extensions[i]);
     }
 
-    s_instance.extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-    s_instance.extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+    instance.extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    instance.extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
 
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -48,18 +49,21 @@ goose::render::create_instance(const char *app_name, u32 app_version)
     VkInstanceCreateInfo instance_create_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &app_info,
-        .enabledLayerCount = static_cast<u32>(s_instance.layers.size()),
-        .ppEnabledLayerNames = s_instance.layers.data(),
-        .enabledExtensionCount = static_cast<u32>(s_instance.extensions.size()),
-        .ppEnabledExtensionNames = s_instance.extensions.data(),
+        .enabledLayerCount = static_cast<u32>(instance.layers.size()),
+        .ppEnabledLayerNames = instance.layers.data(),
+        .enabledExtensionCount = static_cast<u32>(instance.extensions.size()),
+        .ppEnabledExtensionNames = instance.extensions.data(),
     };
 
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &s_instance.handle);
+    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance.handle);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
         return false;
     }
+
+    s_instance = std::move(instance);
+    s_initialized = true;
 
     return true;
 }
@@ -68,15 +72,14 @@ void
 goose::render::destroy_instance()
 {
     vkDestroyInstance(s_instance.handle, nullptr);
+
+    s_instance = {};
+    s_initialized = false;
 }
 
 const goose::render::Instance &
 goose::render::get_instance()
 {
-    if (s_instance.handle == VK_NULL_HANDLE)
-    {
-        LOG_WARN("Vulkan instance is not initialized");
-    }
-
+    ASSERT(s_initialized, "Vulkan instance is not initialized");
     return s_instance;
 }
