@@ -4,14 +4,16 @@
 
 namespace goose::render {
 
-VkCommandPool create_command_pool(VkDevice device, u32 queue_family_index, VkCommandPoolCreateFlags flags = 0);
-
-VkCommandBuffer alloc_command_buffer(VkDevice device, VkCommandPool command_pool, VkCommandBufferLevel buffer_level);
+VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags = 0);
+VkCommandBuffer allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel buffer_level);
 VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer command_buffer);
 
-VkFence create_fence(VkDevice device, VkFenceCreateFlags flags = 0);
+VkDescriptorPool create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes);
+VkDescriptorSet allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescriptorSetLayout descriptor_set_layout);
 
-VkSemaphore create_semaphore(VkDevice device, VkSemaphoreCreateFlags flags = 0);
+VkFence create_fence(VkFenceCreateFlags fence_create_flags = 0);
+
+VkSemaphore create_semaphore(VkSemaphoreCreateFlags semaphore_create_flags = 0);
 VkSemaphoreSubmitInfo make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags);
 
 VkImageCreateInfo make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent);
@@ -19,6 +21,6 @@ VkImageViewCreateInfo make_image_view_create_info(VkFormat format, VkImage image
 VkImageSubresourceRange make_image_subresource_range(VkImageAspectFlags aspect_flags);
 
 void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
-void copy_image_to_image(VkCommandBuffer command_buffer, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size);
+void copy_image_to_image(VkCommandBuffer command_buffer, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
 } // namespace goose::render

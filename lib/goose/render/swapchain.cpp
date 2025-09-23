@@ -93,9 +93,9 @@ choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D
 
 bool
 goose::render::create_swapchain(
+    Swapchain &swapchain,
     VkSurfaceKHR surface,
-    VkExtent2D window_extent,
-    Swapchain &swapchain)
+    VkExtent2D window_extent)
 {
     const Device &device = get_device();
 
@@ -202,7 +202,7 @@ goose::render::create_swapchain(
         swapchain.images[i].view = image_view,
         swapchain.images[i].extent = swapchain_extent;
         swapchain.images[i].format = swapchain_surface_format.format;
-        swapchain.images[i].render_finished_semaphore = create_semaphore(device.logical);
+        swapchain.images[i].render_finished_semaphore = create_semaphore();
     }
 
     swapchain.image_count = swapchain_image_count;

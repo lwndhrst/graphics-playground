@@ -15,7 +15,7 @@ struct Image {
     VmaAllocation allocation;
 };
 
-bool create_image(VkExtent3D extent, VkFormat format, VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_flags, MemoryUsage memory_usage, Image &image);
+bool create_image(Image &image, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_flags, MemoryUsage memory_usage);
 void destroy_image(Image &image);
 
 struct ImageBuilder {

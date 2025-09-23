@@ -10,17 +10,15 @@ goose::render::create_frame(Frame &frame)
     const Device &device = get_device();
 
     frame.command_pool = create_command_pool(
-        device.logical,
         device.queue_families.graphics.index,
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-    frame.command_buffer = alloc_command_buffer(
-        device.logical,
+    frame.command_buffer = allocate_command_buffer(
         frame.command_pool,
         VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-    frame.in_flight_fence = create_fence(device.logical, VK_FENCE_CREATE_SIGNALED_BIT);
-    frame.image_available_semaphore = create_semaphore(device.logical);
+    frame.in_flight_fence = create_fence(VK_FENCE_CREATE_SIGNALED_BIT);
+    frame.image_available_semaphore = create_semaphore();
 
     return true;
 }

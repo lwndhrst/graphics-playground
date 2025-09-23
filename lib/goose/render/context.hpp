@@ -18,7 +18,7 @@ struct RenderContext {
     std::vector<std::function<void()>> cleanup_callbacks;
 };
 
-bool create_render_context(const Window &window, RenderContext &ctx);
+bool create_render_context(RenderContext &ctx, const Window &window);
 void destroy_render_context(RenderContext &ctx);
 
 void add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback);

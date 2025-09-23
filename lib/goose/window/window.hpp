@@ -25,7 +25,7 @@ struct Window {
     WindowEventFlags event_flags;
 };
 
-bool create_window(const char *title, u32 width, u32 height, Window &window, bool resizable = true);
+bool create_window(Window &window, const char *title, u32 width, u32 height, bool resizable = true);
 void destroy_window(Window &window);
 
 Window *get_window_by_id(SDL_WindowID id);

@@ -17,13 +17,13 @@ init()
 {
     goose::init(APP_NAME);
 
-    if (!goose::create_window(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, window))
+    if (!goose::create_window(window, APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT))
     {
         LOG_ERROR("Failed to create window");
         return false;
     }
 
-    if (!goose::render::create_render_context(window, render_context))
+    if (!goose::render::create_render_context(render_context, window))
     {
         LOG_ERROR("Failed to create render context");
         return false;

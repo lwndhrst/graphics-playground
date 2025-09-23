@@ -10,7 +10,7 @@
 #include "vk_mem_alloc.h"
 
 bool
-goose::render::create_render_context(const Window &window, RenderContext &ctx)
+goose::render::create_render_context(RenderContext &ctx, const Window &window)
 {
     // TODO: Allow usage without surface
     if (window.surface == VK_NULL_HANDLE)
@@ -35,7 +35,7 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
         return false;
     }
 
-    if (!create_swapchain(window.surface, window.extent, ctx.swapchain))
+    if (!create_swapchain(ctx.swapchain, window.surface, window.extent))
     {
         LOG_ERROR("Failed to create swapchain");
         return false;
@@ -92,7 +92,7 @@ goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
     vkDeviceWaitIdle(device.logical);
 
     destroy_swapchain(ctx.swapchain);
-    create_swapchain(window.surface, window.extent, ctx.swapchain);
+    create_swapchain(ctx.swapchain, window.surface, window.extent);
 }
 
 std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>

@@ -6,12 +6,12 @@
 
 bool
 goose::render::create_image(
+    Image &image,
     VkExtent3D extent,
     VkFormat format,
     VkImageUsageFlags usage_flags,
     VkImageAspectFlags aspect_flags,
-    MemoryUsage memory_usage,
-    Image &image)
+    MemoryUsage memory_usage)
 {
     const Device &device = get_device();
     const VmaAllocator &allocator = get_allocator();
@@ -137,10 +137,10 @@ bool
 goose::render::ImageBuilder::build(Image &image)
 {
     return create_image(
+        image,
         properties.extent,
         properties.format,
         properties.usage_flags,
         properties.aspect_flags,
-        properties.memory_usage,
-        image);
+        properties.memory_usage);
 }
