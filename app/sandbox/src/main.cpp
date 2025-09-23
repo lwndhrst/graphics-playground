@@ -59,7 +59,7 @@ draw()
     // Start recording commands for the current frame
     auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
 
-    // Transition draw image to a usable
+    // Transition draw image to a usable layout
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
     VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
