@@ -22,12 +22,10 @@ struct ImageBuilder {
     struct {
         VkExtent3D extent;
         VkFormat format;
-
         VkImageUsageFlags usage_flags;
         VkImageAspectFlags aspect_flags;
-
         MemoryUsage memory_usage;
-    } properties;
+    } params;
 
     ImageBuilder();
 

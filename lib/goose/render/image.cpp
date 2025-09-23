@@ -58,7 +58,7 @@ goose::render::destroy_image(Image &image)
 goose::render::ImageBuilder::ImageBuilder()
 {
     // TODO: Reasonable defaults?
-    properties = {
+    params = {
         .extent = {1, 1, 1},
         .format = VK_FORMAT_R8G8B8A8_SRGB,
         .usage_flags = 0,
@@ -70,9 +70,9 @@ goose::render::ImageBuilder::ImageBuilder()
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_extent(const VkExtent2D &extent)
 {
-    properties.extent.width = extent.width;
-    properties.extent.height = extent.width;
-    properties.extent.depth = 1;
+    params.extent.width = extent.width;
+    params.extent.height = extent.width;
+    params.extent.depth = 1;
 
     return *this;
 }
@@ -80,7 +80,7 @@ goose::render::ImageBuilder::set_extent(const VkExtent2D &extent)
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_extent(const VkExtent3D &extent)
 {
-    properties.extent = extent;
+    params.extent = extent;
 
     return *this;
 }
@@ -88,7 +88,7 @@ goose::render::ImageBuilder::set_extent(const VkExtent3D &extent)
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_format(const VkFormat &format)
 {
-    properties.format = format;
+    params.format = format;
 
     return *this;
 }
@@ -96,7 +96,7 @@ goose::render::ImageBuilder::set_format(const VkFormat &format)
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::add_usage_flags(const VkImageUsageFlags &usage_flags)
 {
-    properties.usage_flags |= usage_flags;
+    params.usage_flags |= usage_flags;
 
     return *this;
 }
@@ -104,7 +104,7 @@ goose::render::ImageBuilder::add_usage_flags(const VkImageUsageFlags &usage_flag
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::remove_usage_flags(const VkImageUsageFlags &usage_flags)
 {
-    properties.usage_flags ^= properties.usage_flags & usage_flags;
+    params.usage_flags ^= params.usage_flags & usage_flags;
 
     return *this;
 }
@@ -112,7 +112,7 @@ goose::render::ImageBuilder::remove_usage_flags(const VkImageUsageFlags &usage_f
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::add_aspect_flags(const VkImageAspectFlags &aspect_flags)
 {
-    properties.aspect_flags |= aspect_flags;
+    params.aspect_flags |= aspect_flags;
 
     return *this;
 }
@@ -120,7 +120,7 @@ goose::render::ImageBuilder::add_aspect_flags(const VkImageAspectFlags &aspect_f
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::remove_aspect_flags(const VkImageAspectFlags &aspect_flags)
 {
-    properties.aspect_flags ^= properties.aspect_flags & aspect_flags;
+    params.aspect_flags ^= params.aspect_flags & aspect_flags;
 
     return *this;
 }
@@ -128,7 +128,7 @@ goose::render::ImageBuilder::remove_aspect_flags(const VkImageAspectFlags &aspec
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_memory_usage(const MemoryUsage &memory_usage)
 {
-    properties.memory_usage = memory_usage;
+    params.memory_usage = memory_usage;
 
     return *this;
 }
@@ -138,9 +138,9 @@ goose::render::ImageBuilder::build(Image &image)
 {
     return create_image(
         image,
-        properties.extent,
-        properties.format,
-        properties.usage_flags,
-        properties.aspect_flags,
-        properties.memory_usage);
+        params.extent,
+        params.format,
+        params.usage_flags,
+        params.aspect_flags,
+        params.memory_usage);
 }

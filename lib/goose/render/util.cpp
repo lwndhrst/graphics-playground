@@ -221,7 +221,6 @@ goose::render::transition_image(
 
     VkDependencyInfo dependency_info = {
         .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-
         .imageMemoryBarrierCount = 1,
         .pImageMemoryBarriers = &image_memory_barrier,
     };

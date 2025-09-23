@@ -6,7 +6,7 @@
 goose::render::DescripterSetLayoutBuilder &
 goose::render::DescripterSetLayoutBuilder::add_binding(u32 binding, VkDescriptorType descriptor_type)
 {
-    properties.bindings.push_back({
+    params.bindings.push_back({
         .binding = binding,
         .descriptorType = descriptor_type,
         .descriptorCount = 1,
@@ -23,7 +23,7 @@ goose::render::DescripterSetLayoutBuilder::build(
 {
     const Device &device = get_device();
 
-    for (auto &binding : properties.bindings)
+    for (auto &binding : params.bindings)
     {
         binding.stageFlags |= shader_stage_flags;
     }
@@ -31,8 +31,8 @@ goose::render::DescripterSetLayoutBuilder::build(
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .flags = descriptor_set_layout_create_flags,
-        .bindingCount = static_cast<u32>(properties.bindings.size()),
-        .pBindings = properties.bindings.data(),
+        .bindingCount = static_cast<u32>(params.bindings.size()),
+        .pBindings = params.bindings.data(),
     };
 
     VkResult result = vkCreateDescriptorSetLayout(device.logical, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
