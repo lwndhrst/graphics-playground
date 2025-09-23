@@ -9,9 +9,13 @@
 static std::vector<goose::Window *> s_active_windows = {};
 
 bool
-goose::create_window(const char *title, u32 width, u32 height, Window &window)
+goose::create_window(const char *title, u32 width, u32 height, Window &window, bool resizable)
 {
-    SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
+    SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
+    if (resizable)
+    {
+        window_flags |= SDL_WINDOW_RESIZABLE;
+    }
 
     window.window = SDL_CreateWindow(title, width, height, window_flags);
     if (window.window == nullptr)
