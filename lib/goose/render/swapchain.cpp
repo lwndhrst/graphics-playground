@@ -200,11 +200,11 @@ goose::render::create_swapchain(
 
         swapchain.images[i].image = swapchain_images[i],
         swapchain.images[i].view = image_view,
+        swapchain.images[i].extent = swapchain_extent;
+        swapchain.images[i].format = swapchain_surface_format.format;
         swapchain.images[i].render_finished_semaphore = create_semaphore(device.logical);
     }
 
-    swapchain.extent = swapchain_extent;
-    swapchain.format = swapchain_surface_format.format;
     swapchain.image_count = swapchain_image_count;
 
     return true;
@@ -222,4 +222,6 @@ goose::render::destroy_swapchain(Swapchain &swapchain)
     }
 
     vkDestroySwapchainKHR(device.logical, swapchain.swapchain, nullptr);
+
+    swapchain = {};
 }

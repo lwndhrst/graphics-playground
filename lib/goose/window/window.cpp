@@ -57,6 +57,8 @@ goose::destroy_window(Window &window)
     get_window_by_id(window.id, i);
     s_active_windows[i] = s_active_windows[s_active_windows.size() - 1];
     s_active_windows.pop_back();
+
+    window = {};
 }
 
 goose::Window *

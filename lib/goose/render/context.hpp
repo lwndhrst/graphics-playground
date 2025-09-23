@@ -2,7 +2,6 @@
 
 #include "goose/common/types.hpp"
 #include "goose/render/frame.hpp"
-#include "goose/render/image.hpp"
 #include "goose/render/swapchain.hpp"
 
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -16,14 +15,15 @@ struct RenderContext {
     Frame frames[MAX_FRAMES_IN_FLIGHT];
     u32 current_frame;
 
-    Image draw_image;
-    VkExtent2D draw_extent;
+    std::vector<std::function<void()>> cleanup_callbacks;
 };
 
 bool create_render_context(const Window &window, RenderContext &ctx);
 void destroy_render_context(RenderContext &ctx);
 
-std::pair<VkCommandBuffer, VkImage> begin_frame(RenderContext &ctx);
+void add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback);
+
+std::pair<VkCommandBuffer, const SwapchainImage &> begin_frame(RenderContext &ctx);
 void end_frame(RenderContext &ctx);
 
 } // namespace goose::render

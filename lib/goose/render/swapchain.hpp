@@ -16,15 +16,15 @@ struct SwapchainImage {
     VkImage image;
     VkImageView view;
 
+    VkExtent2D extent;
+    VkFormat format;
+
     // Signaled when the image is ready for presentation, i.e. when rendering is finished
     VkSemaphore render_finished_semaphore;
 };
 
 struct Swapchain {
     VkSwapchainKHR swapchain;
-
-    VkExtent2D extent;
-    VkFormat format;
 
     usize image_count;
     std::vector<SwapchainImage> images;

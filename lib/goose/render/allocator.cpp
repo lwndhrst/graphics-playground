@@ -47,7 +47,7 @@ goose::render::destroy_allocator()
 {
     vmaDestroyAllocator(s_allocator);
 
-    s_allocator = {};
+    s_allocator = nullptr;
     s_initialized = false;
 }
 

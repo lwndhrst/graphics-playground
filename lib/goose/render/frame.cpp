@@ -34,6 +34,8 @@ goose::render::destroy_frame(Frame &frame)
     vkDestroyFence(device.logical, frame.in_flight_fence, nullptr);
 
     vkDestroyCommandPool(device.logical, frame.command_pool, nullptr);
+
+    frame = {};
 }
 
 void

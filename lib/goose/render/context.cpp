@@ -52,14 +52,6 @@ goose::render::create_render_context(const Window &window, RenderContext &ctx)
 
     ctx.current_frame = 0;
 
-    if (!create_draw_image(window.extent, ctx.draw_image))
-    {
-        LOG_ERROR("Failed to create draw image");
-        return false;
-    }
-
-    ctx.draw_extent = window.extent;
-
     return true;
 }
 
@@ -71,7 +63,10 @@ goose::render::destroy_render_context(RenderContext &ctx)
     // TODO: Does this make sense when there are potentially multiple render contexts?
     vkDeviceWaitIdle(device.logical);
 
-    destroy_image(ctx.draw_image);
+    for (const auto &f : ctx.cleanup_callbacks)
+    {
+        f();
+    }
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
@@ -82,13 +77,20 @@ goose::render::destroy_render_context(RenderContext &ctx)
 
     // NOTE: The allocator singleton is destroyed when goose::quit() is called
     // NOTE: The device singleton is destroyed when goose::quit() is called
+
+    ctx = {};
 }
 
-std::pair<VkCommandBuffer, VkImage>
+void
+goose::render::add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback)
+{
+    ctx.cleanup_callbacks.emplace_back(callback);
+}
+
+std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>
 goose::render::begin_frame(RenderContext &ctx)
 {
     const Device &device = get_device();
-
     Frame &frame = ctx.frames[ctx.current_frame];
 
     vkWaitForFences(device.logical, 1, &frame.in_flight_fence, true, 1000000000);
@@ -96,25 +98,20 @@ goose::render::begin_frame(RenderContext &ctx)
 
     vkAcquireNextImageKHR(device.logical, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
+    const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
+
     begin_command_buffer(frame);
 
-    return {frame.command_buffer, ctx.draw_image.image};
+    return {frame.command_buffer, swapchain_image};
 }
 
 void
 goose::render::end_frame(RenderContext &ctx)
 {
     const Device &device = get_device();
-
     Frame &frame = ctx.frames[ctx.current_frame];
-    Image &draw_image = ctx.draw_image;
-    SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    transition_image(frame.command_buffer, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-    copy_image_to_image(frame.command_buffer, draw_image.image, swapchain_image.image, ctx.draw_extent, ctx.swapchain.extent);
-
-    transition_image(frame.command_buffer, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     end_command_buffer(frame);
 

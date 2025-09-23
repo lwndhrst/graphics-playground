@@ -2,7 +2,9 @@
 
 #include "goose/common/log.hpp"
 #include "goose/common/types.hpp"
+#include "goose/render/allocator.hpp"
 #include "goose/render/context.hpp"
+#include "goose/render/image.hpp"
 #include "goose/render/util.hpp"
 #include "goose/window/window.hpp"
 

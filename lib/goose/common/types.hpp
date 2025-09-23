@@ -6,6 +6,7 @@
 #include "vk_mem_alloc.h"
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
