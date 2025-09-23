@@ -23,6 +23,8 @@ void destroy_render_context(RenderContext &ctx);
 
 void add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback);
 
+void resize_swapchain(RenderContext &ctx, const Window &window);
+
 std::pair<VkCommandBuffer, const SwapchainImage &> begin_frame(RenderContext &ctx);
 void end_frame(RenderContext &ctx);
 

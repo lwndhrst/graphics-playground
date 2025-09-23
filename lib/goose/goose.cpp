@@ -53,6 +53,8 @@ bool
 goose::should_run()
 {
     SDL_Event event;
+    Window *window;
+
     while (SDL_PollEvent(&event))
     {
         switch (event.type)
@@ -63,14 +65,19 @@ goose::should_run()
 
         // Window events
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            get_window_by_id(event.window.windowID)->event_flags.close_requested = true;
+            window = get_window_by_id(event.window.windowID);
+            window->event_flags.close_requested = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            get_window_by_id(event.window.windowID)->event_flags.resized = true;
+            window = get_window_by_id(event.window.windowID);
+            window->event_flags.resized = true;
+            window->extent.width = event.window.data1;
+            window->extent.height = event.window.data2;
             break;
         case SDL_EVENT_WINDOW_OCCLUDED:
             // NOTE: Interesting for wayland (switching workspaces, etc.)
-            get_window_by_id(event.window.windowID)->event_flags.occluded = true;
+            window = get_window_by_id(event.window.windowID);
+            window->event_flags.occluded = true;
             break;
         }
     }

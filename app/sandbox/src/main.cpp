@@ -2,6 +2,9 @@
 
 #define APP_NAME "Sandbox"
 
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
+
 static goose::Window window;
 static goose::render::RenderContext render_context;
 
@@ -14,7 +17,7 @@ init()
 {
     goose::init(APP_NAME);
 
-    if (!goose::create_window(APP_NAME, 800, 600, window))
+    if (!goose::create_window(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, window))
     {
         LOG_ERROR("Failed to create window");
         return false;
@@ -41,13 +44,36 @@ init()
         return false;
     }
 
-    draw_extent = window.extent;
-
     goose::render::add_cleanup_callback(render_context, [&]() {
         goose::render::destroy_image(draw_image);
     });
 
+    draw_extent = window.extent;
+
     return true;
+}
+
+void
+draw()
+{
+    // Start recording commands for the current frame
+    auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
+
+    // Transition draw image to a usable
+    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+    VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
+    VkImageSubresourceRange clear_subresource_range = goose::render::make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+    vkCmdClearColorImage(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
+
+    // Copy draw image content to swapchain image
+    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_extent, swapchain_image.extent);
+    goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    // Finish recording commands for the current frame
+    goose::render::end_frame(render_context);
 }
 
 void
@@ -55,24 +81,13 @@ run()
 {
     while (goose::should_run())
     {
-        // Start recording commands for the current frame
-        auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
+        if (window.event_flags.resized)
+        {
+            goose::render::resize_swapchain(render_context, window);
+            window.event_flags.resized = false;
+        }
 
-        // Transition draw image to a usable
-        goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-        VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
-        VkImageSubresourceRange clear_subresource_range = goose::render::make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
-        vkCmdClearColorImage(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
-
-        // Copy draw image content to swapchain image
-        goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_extent, swapchain_image.extent);
-        goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
-        // Finish recording commands for the current frame
-        goose::render::end_frame(render_context);
+        draw();
     }
 }
 

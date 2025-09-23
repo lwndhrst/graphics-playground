@@ -59,8 +59,6 @@ void
 goose::render::destroy_render_context(RenderContext &ctx)
 {
     const Device &device = get_device();
-
-    // TODO: Does this make sense when there are potentially multiple render contexts?
     vkDeviceWaitIdle(device.logical);
 
     for (const auto &f : ctx.cleanup_callbacks)
@@ -85,6 +83,16 @@ void
 goose::render::add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback)
 {
     ctx.cleanup_callbacks.emplace_back(callback);
+}
+
+void
+goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
+{
+    const Device &device = get_device();
+    vkDeviceWaitIdle(device.logical);
+
+    destroy_swapchain(ctx.swapchain);
+    create_swapchain(window.surface, window.extent, ctx.swapchain);
 }
 
 std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>

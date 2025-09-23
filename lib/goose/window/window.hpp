@@ -15,7 +15,7 @@ struct WindowEventFlags {
 };
 
 struct Window {
-    SDL_Window *handle;
+    SDL_Window *window;
     SDL_WindowID id;
     SDL_WindowFlags flags;
 
