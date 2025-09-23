@@ -5,10 +5,14 @@
 namespace goose::render {
 
 VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags = 0);
+void destroy_command_pool(VkCommandPool command_pool);
+
 VkCommandBuffer allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel buffer_level);
 VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer command_buffer);
 
 VkDescriptorPool create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes);
+void destroy_descriptor_pool(VkDescriptorPool descriptor_pool);
+void destroy_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout);
 VkDescriptorSet allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescriptorSetLayout descriptor_set_layout);
 
 VkFence create_fence(VkFenceCreateFlags fence_create_flags = 0);

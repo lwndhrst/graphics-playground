@@ -6,8 +6,6 @@
 VkCommandPool
 goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags)
 {
-    const Device &device = get_device();
-
     VkCommandPoolCreateInfo command_pool_create_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .flags = command_pool_create_flags,
@@ -15,7 +13,7 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
     };
 
     VkCommandPool command_pool;
-    VkResult result = vkCreateCommandPool(device.logical, &command_pool_create_info, nullptr, &command_pool);
+    VkResult result = vkCreateCommandPool(get_device().logical, &command_pool_create_info, nullptr, &command_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -23,11 +21,15 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
     return command_pool;
 }
 
+void
+goose::render::destroy_command_pool(VkCommandPool command_pool)
+{
+    vkDestroyCommandPool(get_device().logical, command_pool, nullptr);
+}
+
 VkCommandBuffer
 goose::render::allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel command_buffer_level)
 {
-    const Device &device = get_device();
-
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = command_pool,
@@ -36,7 +38,7 @@ goose::render::allocate_command_buffer(VkCommandPool command_pool, VkCommandBuff
     };
 
     VkCommandBuffer command_buffer;
-    VkResult result = vkAllocateCommandBuffers(device.logical, &command_buffer_alloc_info, &command_buffer);
+    VkResult result = vkAllocateCommandBuffers(get_device().logical, &command_buffer_alloc_info, &command_buffer);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -56,8 +58,6 @@ goose::render::make_command_buffer_submit_info(VkCommandBuffer command_buffer)
 VkDescriptorPool
 goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes)
 {
-    const Device &device = get_device();
-
     VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .flags = 0,
@@ -67,7 +67,7 @@ goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescr
     };
 
     VkDescriptorPool descriptor_pool;
-    VkResult result = vkCreateDescriptorPool(device.logical, &descriptor_pool_create_info, nullptr, &descriptor_pool);
+    VkResult result = vkCreateDescriptorPool(get_device().logical, &descriptor_pool_create_info, nullptr, &descriptor_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -75,11 +75,21 @@ goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescr
     return descriptor_pool;
 }
 
+void
+goose::render::destroy_descriptor_pool(VkDescriptorPool descriptor_pool)
+{
+    vkDestroyDescriptorPool(get_device().logical, descriptor_pool, nullptr);
+}
+
+void
+goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout)
+{
+    vkDestroyDescriptorSetLayout(get_device().logical, descriptor_set_layout, nullptr);
+}
+
 VkDescriptorSet
 goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescriptorSetLayout descriptor_set_layout)
 {
-    const Device &device = get_device();
-
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
@@ -89,7 +99,7 @@ goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescr
     };
 
     VkDescriptorSet descriptor_set;
-    VkResult result = vkAllocateDescriptorSets(device.logical, &descriptor_set_allocate_info, &descriptor_set);
+    VkResult result = vkAllocateDescriptorSets(get_device().logical, &descriptor_set_allocate_info, &descriptor_set);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -100,15 +110,13 @@ goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescr
 VkFence
 goose::render::create_fence(VkFenceCreateFlags fence_create_flags)
 {
-    const Device &device = get_device();
-
     VkFenceCreateInfo fence_create_info = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .flags = fence_create_flags,
     };
 
     VkFence fence;
-    VkResult result = vkCreateFence(device.logical, &fence_create_info, nullptr, &fence);
+    VkResult result = vkCreateFence(get_device().logical, &fence_create_info, nullptr, &fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -119,15 +127,13 @@ goose::render::create_fence(VkFenceCreateFlags fence_create_flags)
 VkSemaphore
 goose::render::create_semaphore(VkSemaphoreCreateFlags semaphore_create_flags)
 {
-    const Device &device = get_device();
-
     VkSemaphoreCreateInfo semaphore_create_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         .flags = semaphore_create_flags,
     };
 
     VkSemaphore semaphore;
-    VkResult result = vkCreateSemaphore(device.logical, &semaphore_create_info, nullptr, &semaphore);
+    VkResult result = vkCreateSemaphore(get_device().logical, &semaphore_create_info, nullptr, &semaphore);
 
     // TODO: Error handling
     VK_ASSERT(result);

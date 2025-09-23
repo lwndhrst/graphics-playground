@@ -61,9 +61,10 @@ goose::render::destroy_render_context(RenderContext &ctx)
     const Device &device = get_device();
     vkDeviceWaitIdle(device.logical);
 
-    for (const auto &f : ctx.cleanup_callbacks)
+    // Call cleanup callbacks in reverse order of being added
+    for (auto f = ctx.cleanup_callbacks.rbegin(); f != ctx.cleanup_callbacks.rend(); ++f)
     {
-        f();
+        (*f)();
     }
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)

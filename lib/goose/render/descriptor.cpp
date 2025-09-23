@@ -3,8 +3,8 @@
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
 
-goose::render::DescripterSetLayoutBuilder &
-goose::render::DescripterSetLayoutBuilder::add_binding(u32 binding, VkDescriptorType descriptor_type)
+goose::render::DescriptorSetLayoutBuilder &
+goose::render::DescriptorSetLayoutBuilder::add_binding(u32 binding, VkDescriptorType descriptor_type)
 {
     params.bindings.push_back({
         .binding = binding,
@@ -16,7 +16,7 @@ goose::render::DescripterSetLayoutBuilder::add_binding(u32 binding, VkDescriptor
 }
 
 bool
-goose::render::DescripterSetLayoutBuilder::build(
+goose::render::DescriptorSetLayoutBuilder::build(
     VkDescriptorSetLayout &descriptor_set_layout,
     VkShaderStageFlags shader_stage_flags,
     VkDescriptorSetLayoutCreateFlags descriptor_set_layout_create_flags)
