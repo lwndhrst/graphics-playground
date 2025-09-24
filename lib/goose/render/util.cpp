@@ -3,6 +3,8 @@
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
 
+#include <fstream>
+
 VkCommandPool
 goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags)
 {
@@ -198,6 +200,37 @@ goose::render::make_image_subresource_range(VkImageAspectFlags aspect_flags)
     };
 }
 
+VkShaderModule
+goose::render::create_shader_module(const std::string &file_path)
+{
+    std::vector<u32> shader;
+    if (!read_file(shader, file_path))
+    {
+        LOG_ERROR("Failed to read shader file: {}", file_path);
+        return nullptr;
+    }
+
+    VkShaderModuleCreateInfo shader_module_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = shader.size() * sizeof(u32),
+        .pCode = shader.data(),
+    };
+
+    VkShaderModule shader_module;
+    VkResult result = vkCreateShaderModule(Device::get(), &shader_module_create_info, nullptr, &shader_module);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
+
+    return shader_module;
+}
+
+void
+goose::render::destroy_shader_module(VkShaderModule shader_module)
+{
+    vkDestroyShaderModule(Device::get(), shader_module, nullptr);
+}
+
 void
 goose::render::transition_image(
     VkCommandBuffer command_buffer,
@@ -276,4 +309,36 @@ goose::render::copy_image_to_image(
     };
 
     vkCmdBlitImage2(command_buffer, &blit_info);
+}
+
+template <typename T>
+bool
+goose::render::read_file(std::vector<T> &buffer, const std::string &file_path)
+{
+    // Open file with cursor at the end
+    std::ifstream file(file_path, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    // Because the cursor is at the end, it gives the size directly in bytes
+    usize file_size = static_cast<usize>(file.tellg());
+
+    // Pad buffer so its size is a multiple of sizeof(T)
+    usize pad_size = 0;
+    if (usize r = file_size % sizeof(T); r > 0)
+    {
+        pad_size = sizeof(T) - r;
+    }
+
+    buffer.resize((file_size + pad_size) / sizeof(T));
+
+    // Move cursor to start of file and read
+    file.seekg(0);
+    file.read(reinterpret_cast<char *>(buffer.data()), file_size);
+    file.close();
+
+    return true;
 }

@@ -24,7 +24,13 @@ VkImageCreateInfo make_image_create_info(VkFormat format, VkImageUsageFlags usag
 VkImageViewCreateInfo make_image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags);
 VkImageSubresourceRange make_image_subresource_range(VkImageAspectFlags aspect_flags);
 
+VkShaderModule create_shader_module(const std::string &file_path);
+void destroy_shader_module(VkShaderModule shader_module);
+
 void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 void copy_image_to_image(VkCommandBuffer command_buffer, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
+
+template <typename T>
+bool read_file(std::vector<T> &buffer, const std::string &file_path);
 
 } // namespace goose::render

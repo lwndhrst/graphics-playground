@@ -124,6 +124,10 @@ init()
         return false;
     }
 
+    // TODO: Remove this
+    VkShaderModule shader_module = goose::render::create_shader_module(SHADER_PATH "/gradient.comp.spv");
+    goose::render::destroy_shader_module(shader_module);
+
     return true;
 }
 
