@@ -16,6 +16,9 @@ static VkDescriptorPool descriptor_pool;
 static VkDescriptorSet descriptor_set;
 static VkDescriptorSetLayout descriptor_set_layout;
 
+static VkPipeline pipeline;
+static VkPipelineLayout pipeline_layout;
+
 bool
 init_draw_image(VkExtent2D extent)
 {
@@ -49,6 +52,8 @@ bool
 init_descriptors()
 {
     // TODO: Make this nicer to use
+
+    const VkDevice &device = goose::render::Device::get();
 
     u32 max_descriptor_sets = 10;
     std::vector<VkDescriptorPoolSize> descriptor_count_per_type = {
@@ -85,11 +90,55 @@ init_descriptors()
         .pImageInfo = &descriptor_image_info,
     };
 
-    vkUpdateDescriptorSets(goose::render::Device::get(), 1, &write_descriptor_set, 0, nullptr);
+    vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
 
     goose::render::add_cleanup_callback(render_context, [&]() {
         goose::render::destroy_descriptor_set_layout(descriptor_set_layout);
         goose::render::destroy_descriptor_pool(descriptor_pool);
+    });
+
+    return true;
+}
+
+bool
+init_pipeline()
+{
+    // TODO: Make this nicer to use
+
+    const VkDevice &device = goose::render::Device::get();
+
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptor_set_layout,
+    };
+
+    vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
+
+    VkShaderModule shader_module = goose::render::create_shader_module(SHADER_PATH "/gradient.comp.spv");
+
+    VkPipelineShaderStageCreateInfo pipeline_shader_stage_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = shader_module,
+        .pName = "main",
+    };
+
+    VkComputePipelineCreateInfo compute_pipeline_create_info = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .stage = pipeline_shader_stage_create_info,
+        .layout = pipeline_layout,
+    };
+
+    // TODO: Pipeline cache?
+    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, nullptr, &pipeline);
+
+    // Shader module can be destroyed directly
+    goose::render::destroy_shader_module(shader_module);
+
+    goose::render::add_cleanup_callback(render_context, [&]() {
+        vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+        vkDestroyPipeline(device, pipeline, nullptr);
     });
 
     return true;
@@ -124,9 +173,11 @@ init()
         return false;
     }
 
-    // TODO: Remove this
-    VkShaderModule shader_module = goose::render::create_shader_module(SHADER_PATH "/gradient.comp.spv");
-    goose::render::destroy_shader_module(shader_module);
+    if (!init_pipeline())
+    {
+        LOG_ERROR("Failed to create compute pipeline");
+        return false;
+    }
 
     return true;
 }
@@ -140,9 +191,10 @@ draw()
     // Transition draw image to a usable layout
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    VkClearColorValue clear_color_value = {{0.0f, 0.0f, 1.0f, 1.0f}};
-    VkImageSubresourceRange clear_subresource_range = goose::render::make_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
-    vkCmdClearColorImage(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color_value, 1, &clear_subresource_range);
+    // Execute compute pipeline dispatch with 16x16 workgroup size
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+    vkCmdDispatch(cmd, std::ceil(draw_image_extent.width / 16.0), std::ceil(draw_image_extent.height / 16.0), 1);
 
     // Copy draw image content to swapchain image
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
