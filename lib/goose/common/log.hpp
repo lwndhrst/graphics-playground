@@ -41,39 +41,6 @@
 #endif
 
 #ifdef GOOSE_DEBUG
-#define ASSERT(condition, message)                                                                            \
-    do                                                                                                        \
-    {                                                                                                         \
-        if (!(condition))                                                                                     \
-        {                                                                                                     \
-            LOG_ERROR("Assertion '" #condition "' failed in {} at line {}: {}", __FILE__, __LINE__, message); \
-            std::abort();                                                                                     \
-        }                                                                                                     \
-    } while (false)
-
-#else
-#define ASSERT(condition, msg) \
-    DO_NOTHING()
-#endif
-
-#ifdef GOOSE_DEBUG
-#define VK_ASSERT(x)                                                                                                                 \
-    do                                                                                                                               \
-    {                                                                                                                                \
-        VkResult the_sea_of_suffering_has_no_bounds = x;                                                                             \
-        if (the_sea_of_suffering_has_no_bounds != VK_SUCCESS)                                                                        \
-        {                                                                                                                            \
-            LOG_ERROR("Vulkan error in {} at line {}: {}", __FILE__, __LINE__, string_VkResult(the_sea_of_suffering_has_no_bounds)); \
-            std::abort();                                                                                                            \
-        }                                                                                                                            \
-    } while (false)
-
-#else
-#define VK_ASSERT(x) \
-    DO_NOTHING()
-#endif
-
-#ifdef GOOSE_DEBUG
 #define VK_LOG_ERROR(result) \
     LOG_ERROR("Vulkan: {}", string_VkResult(result))
 #else

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "goose/common/log.hpp"
+#include "goose/common/assert.hpp"
 #include "goose/common/types.hpp"
 
 namespace goose::render {

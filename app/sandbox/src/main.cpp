@@ -161,7 +161,7 @@ init()
         return false;
     }
 
-    if (!init_draw_image(window.extent))
+    if (!init_draw_image({1920, 1080}))
     {
         LOG_ERROR("Failed to create draw image");
         return false;
@@ -194,7 +194,7 @@ draw()
     // Execute compute pipeline dispatch with 16x16 workgroup size
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
-    vkCmdDispatch(cmd, std::ceil(draw_image_extent.width / 16.0), std::ceil(draw_image_extent.height / 16.0), 1);
+    vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image_extent.width, 16), UINT_DIV_CEIL(draw_image_extent.height, 16), 1);
 
     // Copy draw image content to swapchain image
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);

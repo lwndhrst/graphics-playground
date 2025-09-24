@@ -1,5 +1,6 @@
 #include "goose/window/window.hpp"
 
+#include "goose/common/assert.hpp"
 #include "goose/common/log.hpp"
 #include "goose/render/instance.hpp"
 

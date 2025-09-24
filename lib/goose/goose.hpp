@@ -1,6 +1,7 @@
 #pragma once
 
 #include "goose/common/log.hpp"
+#include "goose/common/math.hpp"
 #include "goose/common/types.hpp"
 #include "goose/render/allocator.hpp"
 #include "goose/render/context.hpp"
