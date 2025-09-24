@@ -1,11 +1,9 @@
-#include "goose/render/util.hpp"
+#include "goose/render/helpers.hpp"
 
 #include "goose/common/assert.hpp"
 #include "goose/common/log.hpp"
-#include "goose/common/math.hpp"
+#include "goose/common/util.hpp"
 #include "goose/render/device.hpp"
-
-#include <fstream>
 
 VkCommandPool
 goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags)
@@ -311,30 +309,4 @@ goose::render::copy_image_to_image(
     };
 
     vkCmdBlitImage2(command_buffer, &blit_info);
-}
-
-template <typename T>
-bool
-goose::render::read_file(std::vector<T> &buffer, const std::string &file_path)
-{
-    // Open file with cursor at the end
-    std::ifstream file(file_path, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open())
-    {
-        return false;
-    }
-
-    // Because the cursor is at the end, it gives the size directly in bytes
-    usize file_size = static_cast<usize>(file.tellg());
-
-    // Pad buffer so its size is a multiple of sizeof(T)
-    buffer.resize(UINT_DIV_CEIL(file_size, sizeof(T)));
-
-    // Move cursor to start of file and read
-    file.seekg(0);
-    file.read(reinterpret_cast<char *>(buffer.data()), file_size);
-    file.close();
-
-    return true;
 }

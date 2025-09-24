@@ -2,7 +2,7 @@
 
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
-#include "goose/render/util.hpp"
+#include "goose/render/helpers.hpp"
 
 goose::render::SwapchainSupportDetails
 goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface)

@@ -3,7 +3,7 @@
 #include "goose/common/log.hpp"
 #include "goose/render/allocator.hpp"
 #include "goose/render/device.hpp"
-#include "goose/render/util.hpp"
+#include "goose/render/helpers.hpp"
 #include "goose/window/window.hpp"
 
 #define VMA_IMPLEMENTATION

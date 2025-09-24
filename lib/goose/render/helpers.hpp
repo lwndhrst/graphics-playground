@@ -30,7 +30,4 @@ void destroy_shader_module(VkShaderModule shader_module);
 void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 void copy_image_to_image(VkCommandBuffer command_buffer, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
-template <typename T>
-bool read_file(std::vector<T> &buffer, const std::string &file_path);
-
 } // namespace goose::render

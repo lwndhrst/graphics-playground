@@ -2,7 +2,7 @@
 
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
-#include "goose/render/util.hpp"
+#include "goose/render/helpers.hpp"
 
 bool
 goose::render::create_image(
