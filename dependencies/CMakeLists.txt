@@ -69,3 +69,11 @@ add_library(stb_image INTERFACE)
 
 # header-only library
 target_include_directories(stb_image INTERFACE stb_image)
+
+
+
+###########################
+# Tracy Profiler (0.12.2) #
+###########################
+
+add_subdirectory(tracy)

@@ -1,5 +1,7 @@
 #include "goose/goose.hpp"
 
+#include "tracy/Tracy.hpp"
+
 #define APP_NAME "Sandbox"
 
 #define WINDOW_WIDTH 800
@@ -19,6 +21,8 @@ static VkDescriptorSetLayout descriptor_set_layout;
 bool
 init_draw_image(VkExtent2D extent)
 {
+    ZoneScoped;
+
     draw_image_extent = extent;
 
     goose::render::ImageBuilder image_builder;
@@ -48,6 +52,8 @@ init_draw_image(VkExtent2D extent)
 bool
 init_descriptors()
 {
+    ZoneScoped;
+
     // TODO: Make this nicer to use
 
     u32 max_descriptor_sets = 10;
@@ -98,6 +104,8 @@ init_descriptors()
 bool
 init()
 {
+    ZoneScoped;
+
     goose::init(APP_NAME);
 
     if (!goose::create_window(window, APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -130,6 +138,8 @@ init()
 void
 draw()
 {
+    ZoneScoped;
+
     // Start recording commands for the current frame
     auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
 
@@ -153,6 +163,8 @@ draw()
 void
 run()
 {
+    ZoneScoped;
+
     while (goose::should_run())
     {
         if (window.event_flags.resized)
@@ -168,6 +180,8 @@ run()
 void
 cleanup()
 {
+    ZoneScoped;
+
     goose::render::destroy_render_context(render_context);
     goose::destroy_window(window);
     goose::quit();

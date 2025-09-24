@@ -30,6 +30,7 @@ function(compile_shaders TARGET_NAME SHADER_PATH)
     )
 
     foreach(GLSL ${GLSL_SOURCE_FILES})
+        message(STATUS "")
         message(STATUS "FOUND SHADER")
         get_filename_component(FILE_NAME ${GLSL} NAME)
         set(SPIRV "${SHADER_PATH}/${FILE_NAME}.spv")

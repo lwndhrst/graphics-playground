@@ -29,6 +29,7 @@ target_link_libraries(${TARGET_NAME}
         fmt::fmt
         glm
         imgui
+        Tracy::TracyClient
 )
 
 
@@ -44,3 +45,10 @@ target_compile_definitions(${TARGET_NAME}
 
         GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
+
+if (WIN32)
+    target_compile_definitions(${TARGET_NAME}
+        PUBLIC
+            TRACY_IMPORTS
+    )
+endif()

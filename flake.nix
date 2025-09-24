@@ -32,6 +32,9 @@
           wayland
           wayland-protocols
           wayland-scanner
+
+          # additional dependencies for tracy
+          dbus
         ];
 
         shellHook = ''
