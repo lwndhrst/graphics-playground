@@ -2,6 +2,7 @@
 
 #include "goose/common/assert.hpp"
 #include "goose/common/log.hpp"
+#include "goose/common/math.hpp"
 #include "goose/render/device.hpp"
 
 #include <fstream>
@@ -328,13 +329,7 @@ goose::render::read_file(std::vector<T> &buffer, const std::string &file_path)
     usize file_size = static_cast<usize>(file.tellg());
 
     // Pad buffer so its size is a multiple of sizeof(T)
-    usize pad_size = 0;
-    if (usize r = file_size % sizeof(T); r > 0)
-    {
-        pad_size = sizeof(T) - r;
-    }
-
-    buffer.resize((file_size + pad_size) / sizeof(T));
+    buffer.resize(UINT_DIV_CEIL(file_size, sizeof(T)));
 
     // Move cursor to start of file and read
     file.seekg(0);
