@@ -21,8 +21,6 @@ goose::render::DescriptorSetLayoutBuilder::build(
     VkShaderStageFlags shader_stage_flags,
     VkDescriptorSetLayoutCreateFlags descriptor_set_layout_create_flags)
 {
-    const Device &device = get_device();
-
     for (auto &binding : params.bindings)
     {
         binding.stageFlags |= shader_stage_flags;
@@ -35,7 +33,7 @@ goose::render::DescriptorSetLayoutBuilder::build(
         .pBindings = params.bindings.data(),
     };
 
-    VkResult result = vkCreateDescriptorSetLayout(device.logical, &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
+    VkResult result = vkCreateDescriptorSetLayout(Device::get(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);
 
     // TODO: Error handling
     VK_ASSERT(result);

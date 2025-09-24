@@ -7,10 +7,8 @@
 bool
 goose::render::create_frame(Frame &frame)
 {
-    const Device &device = get_device();
-
     frame.command_pool = create_command_pool(
-        device.queue_families.graphics.index,
+        Device::get_queue_families().graphics.index,
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
     frame.command_buffer = allocate_command_buffer(
@@ -26,18 +24,18 @@ goose::render::create_frame(Frame &frame)
 void
 goose::render::destroy_frame(Frame &frame)
 {
-    const Device &device = get_device();
+    const VkDevice &device = Device::get();
 
-    vkDestroySemaphore(device.logical, frame.image_available_semaphore, nullptr);
-    vkDestroyFence(device.logical, frame.in_flight_fence, nullptr);
+    vkDestroySemaphore(device, frame.image_available_semaphore, nullptr);
+    vkDestroyFence(device, frame.in_flight_fence, nullptr);
 
-    vkDestroyCommandPool(device.logical, frame.command_pool, nullptr);
+    vkDestroyCommandPool(device, frame.command_pool, nullptr);
 
     frame = {};
 }
 
 void
-goose::render::begin_command_buffer(Frame &frame)
+goose::render::begin_command_buffer(const Frame &frame)
 {
     vkResetCommandBuffer(frame.command_buffer, 0);
 
@@ -50,7 +48,7 @@ goose::render::begin_command_buffer(Frame &frame)
 }
 
 void
-goose::render::end_command_buffer(Frame &frame)
+goose::render::end_command_buffer(const Frame &frame)
 {
     vkEndCommandBuffer(frame.command_buffer);
 }

@@ -13,9 +13,6 @@ goose::render::create_image(
     VkImageAspectFlags aspect_flags,
     MemoryUsage memory_usage)
 {
-    const Device &device = get_device();
-    const VmaAllocator &allocator = get_allocator();
-
     VkImageCreateInfo image_create_info = make_image_create_info(format, usage_flags, extent);
 
     // TODO: Memory usages
@@ -31,11 +28,11 @@ goose::render::create_image(
         return false;
     }
 
-    vmaCreateImage(allocator, &image_create_info, &image_allocation_info, &image.image, &image.allocation, nullptr);
+    vmaCreateImage(Allocator::get(), &image_create_info, &image_allocation_info, &image.image, &image.allocation, nullptr);
 
     VkImageViewCreateInfo image_view_create_info = make_image_view_create_info(format, image.image, aspect_flags);
 
-    VkResult result = vkCreateImageView(device.logical, &image_view_create_info, nullptr, &image.view);
+    VkResult result = vkCreateImageView(Device::get(), &image_view_create_info, nullptr, &image.view);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -46,11 +43,8 @@ goose::render::create_image(
 void
 goose::render::destroy_image(Image &image)
 {
-    const Device &device = get_device();
-    const VmaAllocator &allocator = get_allocator();
-
-    vkDestroyImageView(device.logical, image.view, nullptr);
-    vmaDestroyImage(allocator, image.image, image.allocation);
+    vkDestroyImageView(Device::get(), image.view, nullptr);
+    vmaDestroyImage(Allocator::get(), image.image, image.allocation);
 
     image = {};
 }

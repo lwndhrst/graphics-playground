@@ -1,5 +1,6 @@
 #pragma once
 
+#include "goose/common/log.hpp"
 #include "goose/common/types.hpp"
 
 namespace goose::render {
@@ -16,17 +17,32 @@ struct QueueFamilies {
 };
 
 struct Device {
-    VkPhysicalDevice physical;
-    VkDevice logical;
-    std::vector<const char *> layers;
-    std::vector<const char *> extensions;
+    inline static bool s_initialized;
 
-    QueueFamilies queue_families;
+    inline static VkPhysicalDevice s_physical_device;
+    inline static VkDevice s_device;
+    inline static QueueFamilies s_queue_families;
+
+    static const VkPhysicalDevice &get_physical()
+    {
+        ASSERT(s_initialized, "Vulkan device is not initialized");
+        return s_physical_device;
+    };
+
+    static const VkDevice &get()
+    {
+        ASSERT(s_initialized, "Vulkan device is not initialized");
+        return s_device;
+    };
+
+    static const QueueFamilies &get_queue_families()
+    {
+        ASSERT(s_initialized, "Vulkan device is not initialized");
+        return s_queue_families;
+    };
 };
 
 bool create_device(VkSurfaceKHR surface);
 void destroy_device();
-
-const Device &get_device();
 
 } // namespace goose::render

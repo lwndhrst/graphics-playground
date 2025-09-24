@@ -13,7 +13,7 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
     };
 
     VkCommandPool command_pool;
-    VkResult result = vkCreateCommandPool(get_device().logical, &command_pool_create_info, nullptr, &command_pool);
+    VkResult result = vkCreateCommandPool(Device::get(), &command_pool_create_info, nullptr, &command_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -24,7 +24,7 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
 void
 goose::render::destroy_command_pool(VkCommandPool command_pool)
 {
-    vkDestroyCommandPool(get_device().logical, command_pool, nullptr);
+    vkDestroyCommandPool(Device::get(), command_pool, nullptr);
 }
 
 VkCommandBuffer
@@ -38,7 +38,7 @@ goose::render::allocate_command_buffer(VkCommandPool command_pool, VkCommandBuff
     };
 
     VkCommandBuffer command_buffer;
-    VkResult result = vkAllocateCommandBuffers(get_device().logical, &command_buffer_alloc_info, &command_buffer);
+    VkResult result = vkAllocateCommandBuffers(Device::get(), &command_buffer_alloc_info, &command_buffer);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -67,7 +67,7 @@ goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescr
     };
 
     VkDescriptorPool descriptor_pool;
-    VkResult result = vkCreateDescriptorPool(get_device().logical, &descriptor_pool_create_info, nullptr, &descriptor_pool);
+    VkResult result = vkCreateDescriptorPool(Device::get(), &descriptor_pool_create_info, nullptr, &descriptor_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -78,13 +78,13 @@ goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescr
 void
 goose::render::destroy_descriptor_pool(VkDescriptorPool descriptor_pool)
 {
-    vkDestroyDescriptorPool(get_device().logical, descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(Device::get(), descriptor_pool, nullptr);
 }
 
 void
 goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout)
 {
-    vkDestroyDescriptorSetLayout(get_device().logical, descriptor_set_layout, nullptr);
+    vkDestroyDescriptorSetLayout(Device::get(), descriptor_set_layout, nullptr);
 }
 
 VkDescriptorSet
@@ -99,7 +99,7 @@ goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescr
     };
 
     VkDescriptorSet descriptor_set;
-    VkResult result = vkAllocateDescriptorSets(get_device().logical, &descriptor_set_allocate_info, &descriptor_set);
+    VkResult result = vkAllocateDescriptorSets(Device::get(), &descriptor_set_allocate_info, &descriptor_set);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -116,7 +116,7 @@ goose::render::create_fence(VkFenceCreateFlags fence_create_flags)
     };
 
     VkFence fence;
-    VkResult result = vkCreateFence(get_device().logical, &fence_create_info, nullptr, &fence);
+    VkResult result = vkCreateFence(Device::get(), &fence_create_info, nullptr, &fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -133,7 +133,7 @@ goose::render::create_semaphore(VkSemaphoreCreateFlags semaphore_create_flags)
     };
 
     VkSemaphore semaphore;
-    VkResult result = vkCreateSemaphore(get_device().logical, &semaphore_create_info, nullptr, &semaphore);
+    VkResult result = vkCreateSemaphore(Device::get(), &semaphore_create_info, nullptr, &semaphore);
 
     // TODO: Error handling
     VK_ASSERT(result);

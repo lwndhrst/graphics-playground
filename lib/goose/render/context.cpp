@@ -58,8 +58,7 @@ goose::render::create_render_context(RenderContext &ctx, const Window &window)
 void
 goose::render::destroy_render_context(RenderContext &ctx)
 {
-    const Device &device = get_device();
-    vkDeviceWaitIdle(device.logical);
+    vkDeviceWaitIdle(Device::get());
 
     // Call cleanup callbacks in reverse order of being added
     for (auto f = ctx.cleanup_callbacks.rbegin(); f != ctx.cleanup_callbacks.rend(); ++f)
@@ -89,8 +88,7 @@ goose::render::add_cleanup_callback(RenderContext &ctx, const std::function<void
 void
 goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
 {
-    const Device &device = get_device();
-    vkDeviceWaitIdle(device.logical);
+    vkDeviceWaitIdle(Device::get());
 
     destroy_swapchain(ctx.swapchain);
     create_swapchain(ctx.swapchain, window.surface, window.extent);
@@ -99,13 +97,13 @@ goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
 std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>
 goose::render::begin_frame(RenderContext &ctx)
 {
-    const Device &device = get_device();
-    Frame &frame = ctx.frames[ctx.current_frame];
+    const VkDevice &device = Device::get();
+    const Frame &frame = ctx.frames[ctx.current_frame];
 
-    vkWaitForFences(device.logical, 1, &frame.in_flight_fence, true, 1000000000);
-    vkResetFences(device.logical, 1, &frame.in_flight_fence);
+    vkWaitForFences(device, 1, &frame.in_flight_fence, true, 1000000000);
+    vkResetFences(device, 1, &frame.in_flight_fence);
 
-    vkAcquireNextImageKHR(device.logical, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
     const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
@@ -117,9 +115,7 @@ goose::render::begin_frame(RenderContext &ctx)
 void
 goose::render::end_frame(RenderContext &ctx)
 {
-    const Device &device = get_device();
-    Frame &frame = ctx.frames[ctx.current_frame];
-
+    const Frame &frame = ctx.frames[ctx.current_frame];
     const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     end_command_buffer(frame);
@@ -146,7 +142,9 @@ goose::render::end_frame(RenderContext &ctx)
         .pSignalSemaphoreInfos = &signal_semaphore_submit_info,
     };
 
-    VkResult result = vkQueueSubmit2(device.queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
+    const QueueFamilies &queue_families = Device::get_queue_families();
+
+    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -160,7 +158,7 @@ goose::render::end_frame(RenderContext &ctx)
         .pImageIndices = &ctx.current_swapchain_image,
     };
 
-    result = vkQueuePresentKHR(device.queue_families.graphics.queues[0], &present_info);
+    result = vkQueuePresentKHR(queue_families.graphics.queues[0], &present_info);
 
     // TODO: Error handling
     VK_ASSERT(result);

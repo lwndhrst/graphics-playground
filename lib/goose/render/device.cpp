@@ -4,9 +4,6 @@
 #include "goose/render/instance.hpp"
 #include "goose/render/swapchain.hpp"
 
-static goose::render::Device s_device = {};
-static bool s_initialized = false;
-
 struct QueueFamilyIndices {
     std::optional<u32> graphics;
     std::optional<u32> present;
@@ -109,10 +106,11 @@ check_extension_support(VkPhysicalDevice gpu, const std::vector<const char *> &e
 
 static VkPhysicalDevice
 get_gpu(
-    VkInstance instance,
     VkSurfaceKHR surface,
     const std::vector<const char *> &extensions)
 {
+    const VkInstance &instance = goose::render::Instance::get();
+
     u32 gpu_count;
     vkEnumeratePhysicalDevices(instance, &gpu_count, nullptr);
 
@@ -166,33 +164,28 @@ get_gpu(
 bool
 goose::render::create_device(VkSurfaceKHR surface)
 {
-    if (s_initialized)
+    if (Device::s_initialized)
     {
         LOG_INFO("Vulkan device is already initialized");
         return true;
     }
 
-    const Instance &instance = get_instance();
+    // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore
 
-    Device device = {};
-
-#ifdef GOOSE_DEBUG
-    // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore.
-    //       This will just be ignored on modern Vulkan versions, but leaving this here anyway.
-    device.layers.insert(device.layers.end(), instance.layers.begin(), instance.layers.end());
-#endif
+    std::vector<const char *> layers;
+    std::vector<const char *> extensions;
 
     // TODO: Which device extensions?
-    device.extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    device.physical = get_gpu(instance.instance, surface, device.extensions);
-    if (device.physical == VK_NULL_HANDLE)
+    VkPhysicalDevice physical_device = get_gpu(surface, extensions);
+    if (physical_device == VK_NULL_HANDLE)
     {
         LOG_ERROR("No suitable GPU found");
         return false;
     }
 
-    QueueFamilyIndices indices = get_queue_family_indices(device.physical, surface);
+    QueueFamilyIndices indices = get_queue_family_indices(physical_device, surface);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<u32> unique_queue_family_indices = {
@@ -241,13 +234,14 @@ goose::render::create_device(VkSurfaceKHR surface)
         .pNext = &device_features_13,
         .queueCreateInfoCount = static_cast<u32>(queue_create_infos.size()),
         .pQueueCreateInfos = queue_create_infos.data(),
-        .enabledLayerCount = static_cast<u32>(device.layers.size()),
-        .ppEnabledLayerNames = device.layers.data(),
-        .enabledExtensionCount = static_cast<u32>(device.extensions.size()),
-        .ppEnabledExtensionNames = device.extensions.data(),
+        .enabledLayerCount = static_cast<u32>(layers.size()),
+        .ppEnabledLayerNames = layers.data(),
+        .enabledExtensionCount = static_cast<u32>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data(),
     };
 
-    VkResult result = vkCreateDevice(device.physical, &device_create_info, nullptr, &device.logical);
+    VkDevice device;
+    VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -257,35 +251,39 @@ goose::render::create_device(VkSurfaceKHR surface)
     // TODO: How many queues and from which families?
     //       Currently only getting one queue per family; families are likely all the same anyway
 
-    device.queue_families.graphics.index = indices.graphics.value();
-    device.queue_families.graphics.queues.resize(queue_count);
+    QueueFamilies queue_families = {};
 
-    device.queue_families.present.index = indices.present.value();
-    device.queue_families.present.queues.resize(queue_count);
+    queue_families.graphics.index = indices.graphics.value();
+    queue_families.graphics.queues.resize(queue_count);
 
-    device.queue_families.compute.index = indices.compute.value();
-    device.queue_families.compute.queues.resize(queue_count);
+    queue_families.present.index = indices.present.value();
+    queue_families.present.queues.resize(queue_count);
+
+    queue_families.compute.index = indices.compute.value();
+    queue_families.compute.queues.resize(queue_count);
 
     for (const auto &queue_family_index : unique_queue_family_indices)
     {
-        if (queue_family_index == device.queue_families.graphics.index)
+        if (queue_family_index == queue_families.graphics.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.graphics.queues[0]);
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.graphics.queues[0]);
         }
 
-        if (queue_family_index == device.queue_families.present.index)
+        if (queue_family_index == queue_families.present.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.present.queues[0]);
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.present.queues[0]);
         }
 
-        if (queue_family_index == device.queue_families.compute.index)
+        if (queue_family_index == queue_families.compute.index)
         {
-            vkGetDeviceQueue(device.logical, queue_family_index, 0, &device.queue_families.compute.queues[0]);
+            vkGetDeviceQueue(device, queue_family_index, 0, &queue_families.compute.queues[0]);
         }
     }
 
-    s_device = std::move(device);
-    s_initialized = true;
+    Device::s_physical_device = physical_device;
+    Device::s_device = device;
+    Device::s_queue_families = std::move(queue_families);
+    Device::s_initialized = true;
 
     return true;
 }
@@ -293,15 +291,10 @@ goose::render::create_device(VkSurfaceKHR surface)
 void
 goose::render::destroy_device()
 {
-    vkDestroyDevice(s_device.logical, nullptr);
+    vkDestroyDevice(Device::s_device, nullptr);
 
-    s_device = {};
-    s_initialized = false;
-}
-
-const goose::render::Device &
-goose::render::get_device()
-{
-    ASSERT(s_initialized, "Vulkan device is not initialized");
-    return s_device;
+    Device::s_physical_device = nullptr;
+    Device::s_device = nullptr;
+    Device::s_queue_families = {};
+    Device::s_initialized = false;
 }

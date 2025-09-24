@@ -4,31 +4,23 @@
 #include "goose/render/device.hpp"
 #include "goose/render/instance.hpp"
 
-// NOTE: VmaAllocator should be thread-safe according to documentation
-static VmaAllocator s_allocator = nullptr;
-static bool s_initialized = false;
-
 bool
 goose::render::create_allocator()
 {
-    if (s_initialized)
+    if (Allocator::s_initialized)
     {
         LOG_INFO("Vulkan memory allocator is already initialized");
         return true;
     }
 
-    VmaAllocator allocator = {};
-
-    const Instance &instance = get_instance();
-    const Device &device = get_device();
-
     VmaAllocatorCreateInfo allocator_create_info = {
         .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
-        .physicalDevice = device.physical,
-        .device = device.logical,
-        .instance = instance.instance,
+        .physicalDevice = Device::get_physical(),
+        .device = Device::get(),
+        .instance = Instance::get(),
     };
 
+    VmaAllocator allocator;
     VkResult result = vmaCreateAllocator(&allocator_create_info, &allocator);
     if (result != VK_SUCCESS)
     {
@@ -36,8 +28,8 @@ goose::render::create_allocator()
         return false;
     }
 
-    s_allocator = allocator;
-    s_initialized = true;
+    Allocator::s_allocator = allocator;
+    Allocator::s_initialized = true;
 
     return true;
 }
@@ -45,15 +37,8 @@ goose::render::create_allocator()
 void
 goose::render::destroy_allocator()
 {
-    vmaDestroyAllocator(s_allocator);
+    vmaDestroyAllocator(Allocator::s_allocator);
 
-    s_allocator = nullptr;
-    s_initialized = false;
-}
-
-const VmaAllocator &
-goose::render::get_allocator()
-{
-    ASSERT(s_initialized, "Vulkan memory allocator is not initialized");
-    return s_allocator;
+    Allocator::s_allocator = nullptr;
+    Allocator::s_initialized = false;
 }

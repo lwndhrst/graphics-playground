@@ -85,7 +85,7 @@ init_descriptors()
         .pImageInfo = &descriptor_image_info,
     };
 
-    vkUpdateDescriptorSets(goose::render::get_device().logical, 1, &write_descriptor_set, 0, nullptr);
+    vkUpdateDescriptorSets(goose::render::Device::get(), 1, &write_descriptor_set, 0, nullptr);
 
     goose::render::add_cleanup_callback(render_context, [&]() {
         goose::render::destroy_descriptor_set_layout(descriptor_set_layout);
