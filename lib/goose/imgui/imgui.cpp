@@ -3,8 +3,12 @@
 #include "goose/common/assert.hpp"
 #include "goose/render/context.hpp"
 #include "goose/render/device.hpp"
+#include "goose/render/helpers.hpp"
 #include "goose/render/instance.hpp"
 #include "goose/window/window.hpp"
+
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_vulkan.h"
 
 static VkDescriptorPool g_imgui_descriptor_pool = VK_NULL_HANDLE;
 static bool g_imgui_initialized = false;
@@ -92,4 +96,18 @@ goose::quit_imgui_internal()
 
     g_imgui_descriptor_pool = nullptr;
     g_imgui_initialized = false;
+}
+
+void
+goose::render::draw_imgui(VkCommandBuffer cmd, VkImageView view, VkExtent2D extent)
+{
+    VkRenderingAttachmentInfo color_attachment =
+        goose::render::make_rendering_attachment_info(view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    VkRenderingInfo rendering_info =
+        goose::render::make_rendering_info(extent, &color_attachment, nullptr);
+
+    vkCmdBeginRendering(cmd, &rendering_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+    vkCmdEndRendering(cmd);
 }

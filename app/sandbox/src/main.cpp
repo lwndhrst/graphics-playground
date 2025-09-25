@@ -205,7 +205,7 @@ draw()
 
     // Draw ImGui directly into swapchain image
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    goose::render::draw_imgui(cmd, swapchain_image.view, swapchain_image.extent, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    goose::render::draw_imgui(cmd, swapchain_image.view, swapchain_image.extent);
 
     // Swapchain image should in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR by the end of the command buffer
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);

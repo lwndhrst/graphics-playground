@@ -8,12 +8,15 @@
 
 #include "SDL3/SDL_init.h"
 
+#include "backends/imgui_impl_sdl3.h"
+#include "backends/imgui_impl_vulkan.h"
+
 struct Data {
     const char *app_name;
     u32 app_version;
-    bool app_is_running;
+    bool app_is_running = false;
 
-    bool imgui_is_enabled;
+    bool imgui_is_enabled = false;
 };
 
 static Data g_data = {};
