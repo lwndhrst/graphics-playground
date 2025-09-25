@@ -4,7 +4,7 @@
 
 namespace goose::render {
 
-struct Frame {
+struct FrameData {
     // TODO: How to deal with multiple pools and buffers for multi-threading?
     //       Additional secondary command buffers?
     VkCommandPool command_pool;
@@ -17,7 +17,7 @@ struct Frame {
     VkSemaphore image_available_semaphore;
 };
 
-bool create_frame(Frame &frame);
-void destroy_frame(Frame &frame);
+bool create_frame(FrameData &frame);
+void destroy_frame(FrameData &frame);
 
 } // namespace goose::render

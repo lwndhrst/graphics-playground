@@ -2,23 +2,25 @@
 
 #include "goose/common/types.hpp"
 
+// TODO: Make this header only for inlining?
+
 namespace goose::render {
 
-VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags = 0);
-void destroy_command_pool(VkCommandPool command_pool);
+VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags create_flags = 0);
+void destroy_command_pool(VkCommandPool pool);
 
-VkCommandBuffer allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel buffer_level);
+VkCommandBuffer allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel level);
 VkCommandBufferBeginInfo make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_flags);
-VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer command_buffer);
+VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer cmd);
 
-VkDescriptorPool create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes);
-void destroy_descriptor_pool(VkDescriptorPool descriptor_pool);
-void destroy_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout);
-VkDescriptorSet allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescriptorSetLayout descriptor_set_layout);
+VkDescriptorPool create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSize> pool_sizes);
+void destroy_descriptor_pool(VkDescriptorPool pool);
+void destroy_descriptor_set_layout(VkDescriptorSetLayout layout);
+VkDescriptorSet allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLayout layout);
 
-VkFence create_fence(VkFenceCreateFlags fence_create_flags = 0);
+VkFence create_fence(VkFenceCreateFlags create_flags = 0);
 
-VkSemaphore create_semaphore(VkSemaphoreCreateFlags semaphore_create_flags = 0);
+VkSemaphore create_semaphore(VkSemaphoreCreateFlags create_flags = 0);
 VkSemaphoreSubmitInfo make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags);
 
 VkImageCreateInfo make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent);
@@ -28,7 +30,7 @@ VkImageSubresourceRange make_image_subresource_range(VkImageAspectFlags aspect_f
 VkShaderModule create_shader_module(const std::string &file_path);
 void destroy_shader_module(VkShaderModule shader_module);
 
-void transition_image(VkCommandBuffer command_buffer, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
-void copy_image_to_image(VkCommandBuffer command_buffer, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
+void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
+void copy_image_to_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
 } // namespace goose::render

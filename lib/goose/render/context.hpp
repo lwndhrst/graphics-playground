@@ -2,6 +2,7 @@
 
 #include "goose/common/types.hpp"
 #include "goose/render/frame.hpp"
+#include "goose/render/immediate.hpp"
 #include "goose/render/swapchain.hpp"
 
 #define MAX_FRAMES_IN_FLIGHT 2
@@ -12,8 +13,10 @@ struct RenderContext {
     Swapchain swapchain;
     u32 current_swapchain_image;
 
-    Frame frames[MAX_FRAMES_IN_FLIGHT];
+    FrameData frames[MAX_FRAMES_IN_FLIGHT];
     u32 current_frame;
+
+    ImmediateData immediate;
 
     std::vector<std::function<void()>> cleanup_callbacks;
 };
@@ -27,5 +30,8 @@ void resize_swapchain(RenderContext &ctx, const Window &window);
 
 std::pair<VkCommandBuffer, const SwapchainImage &> begin_frame(RenderContext &ctx);
 void end_frame(RenderContext &ctx);
+
+VkCommandBuffer begin_immediate(const RenderContext &ctx);
+void end_immediate(const RenderContext &ctx);
 
 } // namespace goose::render

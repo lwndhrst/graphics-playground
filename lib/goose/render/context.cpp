@@ -50,6 +50,12 @@ goose::render::create_render_context(RenderContext &ctx, const Window &window)
         }
     }
 
+    if (!create_immediate(ctx.immediate))
+    {
+        LOG_ERROR("Failed to create immediate submit data");
+        return false;
+    }
+
     ctx.current_frame = 0;
 
     return true;
@@ -65,6 +71,8 @@ goose::render::destroy_render_context(RenderContext &ctx)
     {
         (*f)();
     }
+
+    destroy_immediate(ctx.immediate);
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
@@ -97,8 +105,10 @@ goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
 std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>
 goose::render::begin_frame(RenderContext &ctx)
 {
+    // TODO: Error handling
+
     const VkDevice &device = Device::get();
-    const Frame &frame = ctx.frames[ctx.current_frame];
+    const FrameData &frame = ctx.frames[ctx.current_frame];
 
     vkWaitForFences(device, 1, &frame.in_flight_fence, true, 1000000000);
     vkResetFences(device, 1, &frame.in_flight_fence);
@@ -120,7 +130,9 @@ goose::render::begin_frame(RenderContext &ctx)
 void
 goose::render::end_frame(RenderContext &ctx)
 {
-    const Frame &frame = ctx.frames[ctx.current_frame];
+    // TODO: Error handling
+
+    const FrameData &frame = ctx.frames[ctx.current_frame];
     const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     vkEndCommandBuffer(frame.command_buffer);
@@ -169,4 +181,53 @@ goose::render::end_frame(RenderContext &ctx)
     VK_ASSERT(result);
 
     ctx.current_frame = (ctx.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+VkCommandBuffer
+goose::render::begin_immediate(const RenderContext &ctx)
+{
+    // TODO: Error handling
+
+    const VkDevice &device = Device::get();
+    const ImmediateData &immediate = ctx.immediate;
+
+    vkResetFences(device, 1, &immediate.in_flight_fence);
+
+    vkResetCommandBuffer(immediate.command_buffer, 0);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info =
+        make_command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+    vkBeginCommandBuffer(immediate.command_buffer, &command_buffer_begin_info);
+
+    return immediate.command_buffer;
+}
+
+void
+goose::render::end_immediate(const RenderContext &ctx)
+{
+    // TODO: Error handling
+
+    const VkDevice &device = Device::get();
+    const ImmediateData &immediate = ctx.immediate;
+
+    vkEndCommandBuffer(immediate.command_buffer);
+
+    VkCommandBufferSubmitInfo command_buffer_submit_info =
+        make_command_buffer_submit_info(immediate.command_buffer);
+
+    VkSubmitInfo2 submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &command_buffer_submit_info,
+    };
+
+    const QueueFamilies &queue_families = Device::get_queue_families();
+
+    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, immediate.in_flight_fence);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
+
+    vkWaitForFences(device, 1, &immediate.in_flight_fence, true, 9999999999);
 }

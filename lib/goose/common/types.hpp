@@ -48,6 +48,8 @@ struct RenderContext;
 struct Instance;
 struct Device;
 struct Swapchain;
-struct Frame;
+
+struct FrameData;
+struct ImmediateData;
 
 } // namespace goose::render

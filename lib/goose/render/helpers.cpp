@@ -6,11 +6,11 @@
 #include "goose/render/device.hpp"
 
 VkCommandPool
-goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags command_pool_create_flags)
+goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags create_flags)
 {
     VkCommandPoolCreateInfo command_pool_create_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = command_pool_create_flags,
+        .flags = create_flags,
         .queueFamilyIndex = queue_family_index,
     };
 
@@ -24,18 +24,18 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
 }
 
 void
-goose::render::destroy_command_pool(VkCommandPool command_pool)
+goose::render::destroy_command_pool(VkCommandPool pool)
 {
-    vkDestroyCommandPool(Device::get(), command_pool, nullptr);
+    vkDestroyCommandPool(Device::get(), pool, nullptr);
 }
 
 VkCommandBuffer
-goose::render::allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel command_buffer_level)
+goose::render::allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel level)
 {
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = command_pool,
-        .level = command_buffer_level,
+        .commandPool = pool,
+        .level = level,
         .commandBufferCount = 1,
     };
 
@@ -58,23 +58,23 @@ goose::render::make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_fl
 }
 
 VkCommandBufferSubmitInfo
-goose::render::make_command_buffer_submit_info(VkCommandBuffer command_buffer)
+goose::render::make_command_buffer_submit_info(VkCommandBuffer cmd)
 {
     return {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = command_buffer,
+        .commandBuffer = cmd,
     };
 }
 
 VkDescriptorPool
-goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes)
+goose::render::create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSize> pool_sizes)
 {
     VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .flags = 0,
-        .maxSets = max_descriptor_sets,
-        .poolSizeCount = static_cast<u32>(descriptor_pool_sizes.size()),
-        .pPoolSizes = descriptor_pool_sizes.data(),
+        .maxSets = max_sets,
+        .poolSizeCount = static_cast<u32>(pool_sizes.size()),
+        .pPoolSizes = pool_sizes.data(),
     };
 
     VkDescriptorPool descriptor_pool;
@@ -87,26 +87,26 @@ goose::render::create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescr
 }
 
 void
-goose::render::destroy_descriptor_pool(VkDescriptorPool descriptor_pool)
+goose::render::destroy_descriptor_pool(VkDescriptorPool pool)
 {
-    vkDestroyDescriptorPool(Device::get(), descriptor_pool, nullptr);
+    vkDestroyDescriptorPool(Device::get(), pool, nullptr);
 }
 
 void
-goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout descriptor_set_layout)
+goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout layout)
 {
-    vkDestroyDescriptorSetLayout(Device::get(), descriptor_set_layout, nullptr);
+    vkDestroyDescriptorSetLayout(Device::get(), layout, nullptr);
 }
 
 VkDescriptorSet
-goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescriptorSetLayout descriptor_set_layout)
+goose::render::allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLayout layout)
 {
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .pNext = nullptr,
-        .descriptorPool = descriptor_pool,
+        .descriptorPool = pool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &descriptor_set_layout,
+        .pSetLayouts = &layout,
     };
 
     VkDescriptorSet descriptor_set;
@@ -119,11 +119,11 @@ goose::render::allocate_descriptor_set(VkDescriptorPool descriptor_pool, VkDescr
 }
 
 VkFence
-goose::render::create_fence(VkFenceCreateFlags fence_create_flags)
+goose::render::create_fence(VkFenceCreateFlags create_flags)
 {
     VkFenceCreateInfo fence_create_info = {
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-        .flags = fence_create_flags,
+        .flags = create_flags,
     };
 
     VkFence fence;
@@ -136,11 +136,11 @@ goose::render::create_fence(VkFenceCreateFlags fence_create_flags)
 }
 
 VkSemaphore
-goose::render::create_semaphore(VkSemaphoreCreateFlags semaphore_create_flags)
+goose::render::create_semaphore(VkSemaphoreCreateFlags create_flags)
 {
     VkSemaphoreCreateInfo semaphore_create_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        .flags = semaphore_create_flags,
+        .flags = create_flags,
     };
 
     VkSemaphore semaphore;
@@ -242,7 +242,7 @@ goose::render::destroy_shader_module(VkShaderModule shader_module)
 
 void
 goose::render::transition_image(
-    VkCommandBuffer command_buffer,
+    VkCommandBuffer cmd,
     VkImage image,
     VkImageLayout old_layout,
     VkImageLayout new_layout)
@@ -273,12 +273,12 @@ goose::render::transition_image(
         .pImageMemoryBarriers = &image_memory_barrier,
     };
 
-    vkCmdPipelineBarrier2(command_buffer, &dependency_info);
+    vkCmdPipelineBarrier2(cmd, &dependency_info);
 }
 
 void
 goose::render::copy_image_to_image(
-    VkCommandBuffer command_buffer,
+    VkCommandBuffer cmd,
     VkImage src_image,
     VkImage dst_image,
     VkExtent2D src_extent,
@@ -317,5 +317,5 @@ goose::render::copy_image_to_image(
         .filter = VK_FILTER_LINEAR,
     };
 
-    vkCmdBlitImage2(command_buffer, &blit_info);
+    vkCmdBlitImage2(cmd, &blit_info);
 }
