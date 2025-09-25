@@ -163,6 +163,37 @@ goose::render::make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStage
     };
 }
 
+VkShaderModule
+goose::render::create_shader_module(const std::string &file_path)
+{
+    std::vector<u32> shader;
+    if (!read_file(shader, file_path))
+    {
+        LOG_ERROR("Failed to read shader file: {}", file_path);
+        return nullptr;
+    }
+
+    VkShaderModuleCreateInfo shader_module_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .codeSize = shader.size() * sizeof(u32),
+        .pCode = shader.data(),
+    };
+
+    VkShaderModule shader_module;
+    VkResult result = vkCreateShaderModule(Device::get(), &shader_module_create_info, nullptr, &shader_module);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
+
+    return shader_module;
+}
+
+void
+goose::render::destroy_shader_module(VkShaderModule shader_module)
+{
+    vkDestroyShaderModule(Device::get(), shader_module, nullptr);
+}
+
 VkImageCreateInfo
 goose::render::make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
 {
@@ -209,35 +240,41 @@ goose::render::make_image_subresource_range(VkImageAspectFlags aspect_flags)
     };
 }
 
-VkShaderModule
-goose::render::create_shader_module(const std::string &file_path)
+VkRenderingAttachmentInfo
+goose::render::make_rendering_attachment_info(VkImageView view, VkClearValue *clear_value, VkImageLayout layout)
 {
-    std::vector<u32> shader;
-    if (!read_file(shader, file_path))
-    {
-        LOG_ERROR("Failed to read shader file: {}", file_path);
-        return nullptr;
-    }
-
-    VkShaderModuleCreateInfo shader_module_create_info = {
-        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = shader.size() * sizeof(u32),
-        .pCode = shader.data(),
+    VkRenderingAttachmentInfo rendering_attachment_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = view,
+        .imageLayout = layout,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
     };
 
-    VkShaderModule shader_module;
-    VkResult result = vkCreateShaderModule(Device::get(), &shader_module_create_info, nullptr, &shader_module);
+    if (clear_value != nullptr)
+    {
+        rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        rendering_attachment_info.clearValue = *clear_value;
+    }
+    else
+    {
+        rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    }
 
-    // TODO: Error handling
-    VK_ASSERT(result);
-
-    return shader_module;
+    return rendering_attachment_info;
 }
 
-void
-goose::render::destroy_shader_module(VkShaderModule shader_module)
+VkRenderingInfo
+goose::render::make_rendering_info(VkExtent2D render_extent, VkRenderingAttachmentInfo *color_attachment, VkRenderingAttachmentInfo *depth_attachment)
 {
-    vkDestroyShaderModule(Device::get(), shader_module, nullptr);
+    return {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = VkRect2D{VkOffset2D{0, 0}, render_extent},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = color_attachment,
+        .pDepthAttachment = depth_attachment,
+        .pStencilAttachment = nullptr,
+    };
 }
 
 void

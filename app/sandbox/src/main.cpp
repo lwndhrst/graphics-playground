@@ -1,5 +1,7 @@
 #include "goose/goose.hpp"
 
+#include "goose/imgui/imgui.hpp"
+
 #define APP_NAME "Sandbox"
 
 #define WINDOW_WIDTH 800
@@ -179,6 +181,8 @@ init()
         return false;
     }
 
+    goose::init_imgui(window, render_context);
+
     return true;
 }
 
@@ -188,10 +192,8 @@ draw()
     // Start recording commands for the current frame
     auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
 
-    // Transition draw image to a usable layout
-    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
     // Execute compute pipeline dispatch with 16x16 workgroup size
+    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
     vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image_extent.width, 16), UINT_DIV_CEIL(draw_image_extent.height, 16), 1);
@@ -200,7 +202,13 @@ draw()
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_image_extent, swapchain_image.extent);
-    goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    // Draw ImGui directly into swapchain image
+    goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    goose::render::draw_imgui(cmd, swapchain_image.view, swapchain_image.extent, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    // Swapchain image should in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR by the end of the command buffer
+    goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     // Finish recording commands for the current frame
     goose::render::end_frame(render_context);
@@ -217,6 +225,10 @@ run()
             window.event_flags.resized = false;
         }
 
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+        ImGui::Render();
+
         draw();
     }
 }
@@ -224,6 +236,8 @@ run()
 void
 cleanup()
 {
+    goose::quit_imgui();
+
     goose::render::destroy_render_context(render_context);
     goose::destroy_window(window);
     goose::quit();

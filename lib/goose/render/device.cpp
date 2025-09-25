@@ -66,8 +66,6 @@ score_gpu(const VkPhysicalDeviceProperties &properties, const VkPhysicalDeviceFe
 {
     u32 score = 0;
 
-    LOG_INFO("Checking GPU: {}", properties.deviceName);
-
     // TODO: Figure out proper scoring
 
     switch (properties.deviceType)
@@ -130,6 +128,8 @@ get_gpu(
 
         vkGetPhysicalDeviceProperties2(gpu, &gpu_properties);
 
+        LOG_DEBUG("Found GPU: {}", gpu_properties.properties.deviceName);
+
         VkPhysicalDeviceFeatures2 gpu_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
         };
@@ -155,7 +155,7 @@ get_gpu(
 
     if (chosen_gpu != nullptr)
     {
-        LOG_INFO("Using GPU: {}", chosen_gpu_properties.deviceName);
+        LOG_DEBUG("Using GPU: {}", chosen_gpu_properties.deviceName);
     }
 
     return chosen_gpu;

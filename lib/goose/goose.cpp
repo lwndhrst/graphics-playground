@@ -1,6 +1,7 @@
 #include "goose/goose.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/imgui/imgui.hpp"
 #include "goose/render/allocator.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/instance.hpp"
@@ -11,16 +12,18 @@ struct Data {
     const char *app_name;
     u32 app_version;
     bool app_is_running;
+
+    bool imgui_is_enabled;
 };
 
-static Data s_data = {};
+static Data g_data = {};
 
 bool
 goose::init(const char *app_name)
 {
     // TODO: Make app version configurable
-    s_data.app_name = app_name;
-    s_data.app_version = VK_MAKE_VERSION(0, 1, 0);
+    g_data.app_name = app_name;
+    g_data.app_version = VK_MAKE_VERSION(0, 1, 0);
 
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {
@@ -28,13 +31,13 @@ goose::init(const char *app_name)
         return false;
     }
 
-    if (!goose::render::create_instance(s_data.app_name, s_data.app_version))
+    if (!goose::render::create_instance(g_data.app_name, g_data.app_version))
     {
         LOG_ERROR("Failed to create Vulkan instance");
         return false;
     }
 
-    s_data.app_is_running = true;
+    g_data.app_is_running = true;
 
     return true;
 }
@@ -49,6 +52,27 @@ goose::quit()
     SDL_Quit();
 }
 
+void
+goose::init_imgui(const Window &window, const goose::render::RenderContext &ctx)
+{
+
+    if (!goose::init_imgui_internal(window, ctx))
+    {
+        LOG_ERROR("Failed to initialize imgui");
+        return;
+    }
+
+    g_data.imgui_is_enabled = true;
+}
+
+void
+goose::quit_imgui()
+{
+    goose::quit_imgui_internal();
+
+    g_data.imgui_is_enabled = false;
+}
+
 bool
 goose::should_run()
 {
@@ -60,7 +84,7 @@ goose::should_run()
         switch (event.type)
         {
         case SDL_EVENT_QUIT:
-            s_data.app_is_running = false;
+            g_data.app_is_running = false;
             break;
 
         // Window events
@@ -80,7 +104,18 @@ goose::should_run()
             window->event_flags.occluded = true;
             break;
         }
+
+        if (g_data.imgui_is_enabled)
+        {
+            ImGui_ImplSDL3_ProcessEvent(&event);
+        }
     }
 
-    return s_data.app_is_running;
+    if (g_data.imgui_is_enabled)
+    {
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+    }
+
+    return g_data.app_is_running;
 }

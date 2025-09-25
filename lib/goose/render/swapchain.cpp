@@ -209,6 +209,9 @@ goose::render::create_swapchain(
 
     swapchain.image_count = swapchain_image_count;
 
+    swapchain.image_extent = swapchain_extent;
+    swapchain.image_format = swapchain_surface_format.format;
+
     return true;
 }
 

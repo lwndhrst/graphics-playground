@@ -16,6 +16,7 @@ struct SwapchainImage {
     VkImage image;
     VkImageView view;
 
+    // Identical to swapchain extent and format
     VkExtent2D extent;
     VkFormat format;
 
@@ -25,6 +26,9 @@ struct SwapchainImage {
 
 struct Swapchain {
     VkSwapchainKHR swapchain;
+
+    VkExtent2D image_extent;
+    VkFormat image_format;
 
     usize image_count;
     std::vector<SwapchainImage> images;
