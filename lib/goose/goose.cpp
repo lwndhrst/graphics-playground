@@ -89,18 +89,18 @@ goose::should_run()
 
         // Window events
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            window = get_window_by_id(event.window.windowID);
+            window = Window::get_by_id(event.window.windowID);
             window->event_flags.close_requested = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            window = get_window_by_id(event.window.windowID);
+            window = Window::get_by_id(event.window.windowID);
             window->event_flags.resized = true;
             window->extent.width = event.window.data1;
             window->extent.height = event.window.data2;
             break;
         case SDL_EVENT_WINDOW_OCCLUDED:
             // NOTE: Interesting for wayland (switching workspaces, etc.)
-            window = get_window_by_id(event.window.windowID);
+            window = Window::get_by_id(event.window.windowID);
             window->event_flags.occluded = true;
             break;
         }

@@ -2,6 +2,8 @@
 
 #include "goose/common/types.hpp"
 
+#include "goose/common/assert.hpp"
+
 struct SDL_Window;
 typedef u32 SDL_WindowID;
 typedef u64 SDL_WindowFlags;
@@ -15,6 +17,8 @@ struct WindowEventFlags {
 };
 
 struct Window {
+    inline static std::vector<goose::Window *> s_active_windows;
+
     SDL_Window *window;
     SDL_WindowID id;
     SDL_WindowFlags flags;
@@ -23,12 +27,29 @@ struct Window {
     VkSurfaceKHR surface;
 
     WindowEventFlags event_flags;
+
+    static Window *get_by_id(SDL_WindowID id, usize *index = nullptr)
+    {
+        for (usize i = 0; i < s_active_windows.size(); ++i)
+        {
+            Window *window = s_active_windows[i];
+            if (window->id == id)
+            {
+                if (index != nullptr)
+                {
+                    *index = i;
+                }
+
+                return window;
+            }
+        }
+
+        ASSERT(false, "Couldn't find window matching the given ID");
+        return nullptr;
+    }
 };
 
 bool create_window(Window &window, const char *title, u32 width, u32 height, bool resizable = true);
 void destroy_window(Window &window);
-
-Window *get_window_by_id(SDL_WindowID id);
-Window *get_window_by_id(SDL_WindowID id, usize &index);
 
 }; // namespace goose
