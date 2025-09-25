@@ -107,7 +107,12 @@ goose::render::begin_frame(RenderContext &ctx)
 
     const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    begin_command_buffer(frame);
+    vkResetCommandBuffer(frame.command_buffer, 0);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info =
+        make_command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+    vkBeginCommandBuffer(frame.command_buffer, &command_buffer_begin_info);
 
     return {frame.command_buffer, swapchain_image};
 }
@@ -118,7 +123,7 @@ goose::render::end_frame(RenderContext &ctx)
     const Frame &frame = ctx.frames[ctx.current_frame];
     const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    end_command_buffer(frame);
+    vkEndCommandBuffer(frame.command_buffer);
 
     VkSemaphoreSubmitInfo wait_semaphore_submit_info =
         make_semaphore_submit_info(frame.image_available_semaphore, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);

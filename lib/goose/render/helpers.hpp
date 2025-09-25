@@ -8,6 +8,7 @@ VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFla
 void destroy_command_pool(VkCommandPool command_pool);
 
 VkCommandBuffer allocate_command_buffer(VkCommandPool command_pool, VkCommandBufferLevel buffer_level);
+VkCommandBufferBeginInfo make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_flags);
 VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer command_buffer);
 
 VkDescriptorPool create_descriptor_pool(u32 max_descriptor_sets, std::span<VkDescriptorPoolSize> descriptor_pool_sizes);

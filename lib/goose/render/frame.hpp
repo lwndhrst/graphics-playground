@@ -20,7 +20,4 @@ struct Frame {
 bool create_frame(Frame &frame);
 void destroy_frame(Frame &frame);
 
-void begin_command_buffer(const Frame &frame);
-void end_command_buffer(const Frame &frame);
-
 } // namespace goose::render

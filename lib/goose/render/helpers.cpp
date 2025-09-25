@@ -48,6 +48,15 @@ goose::render::allocate_command_buffer(VkCommandPool command_pool, VkCommandBuff
     return command_buffer;
 }
 
+VkCommandBufferBeginInfo
+goose::render::make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_flags)
+{
+    return {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = usage_flags,
+    };
+}
+
 VkCommandBufferSubmitInfo
 goose::render::make_command_buffer_submit_info(VkCommandBuffer command_buffer)
 {

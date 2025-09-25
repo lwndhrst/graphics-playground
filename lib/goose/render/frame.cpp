@@ -32,22 +32,3 @@ goose::render::destroy_frame(Frame &frame)
 
     frame = {};
 }
-
-void
-goose::render::begin_command_buffer(const Frame &frame)
-{
-    vkResetCommandBuffer(frame.command_buffer, 0);
-
-    VkCommandBufferBeginInfo command_buffer_begin_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
-
-    vkBeginCommandBuffer(frame.command_buffer, &command_buffer_begin_info);
-}
-
-void
-goose::render::end_command_buffer(const Frame &frame)
-{
-    vkEndCommandBuffer(frame.command_buffer);
-}
