@@ -17,7 +17,7 @@ struct FrameData {
     VkSemaphore image_available_semaphore;
 };
 
-bool create_frame(FrameData &frame);
-void destroy_frame(FrameData &frame);
+bool create_frame_data(FrameData &frame);
+void destroy_frame_data(FrameData &frame);
 
 } // namespace goose::render

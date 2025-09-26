@@ -43,14 +43,14 @@ goose::render::create_render_context(RenderContext &ctx, const Window &window)
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        if (!create_frame(ctx.frames[i]))
+        if (!create_frame_data(ctx.frames[i]))
         {
             LOG_ERROR("Failed to create frame data for frame {}", i);
             return false;
         }
     }
 
-    if (!create_immediate(ctx.immediate))
+    if (!create_immediate_data(ctx.immediate))
     {
         LOG_ERROR("Failed to create immediate submit data");
         return false;
@@ -72,11 +72,11 @@ goose::render::destroy_render_context(RenderContext &ctx)
         (*f)();
     }
 
-    destroy_immediate(ctx.immediate);
+    destroy_immediate_data(ctx.immediate);
 
     for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        destroy_frame(ctx.frames[i]);
+        destroy_frame_data(ctx.frames[i]);
     }
 
     destroy_swapchain(ctx.swapchain);
@@ -119,8 +119,10 @@ goose::render::begin_frame(RenderContext &ctx)
 
     vkResetCommandBuffer(frame.command_buffer, 0);
 
-    VkCommandBufferBeginInfo command_buffer_begin_info =
-        make_command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    VkCommandBufferBeginInfo command_buffer_begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
 
     vkBeginCommandBuffer(frame.command_buffer, &command_buffer_begin_info);
 
@@ -137,14 +139,24 @@ goose::render::end_frame(RenderContext &ctx)
 
     vkEndCommandBuffer(frame.command_buffer);
 
-    VkSemaphoreSubmitInfo wait_semaphore_submit_info =
-        make_semaphore_submit_info(frame.image_available_semaphore, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
+    VkCommandBufferSubmitInfo command_buffer_submit_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = frame.command_buffer,
+    };
 
-    VkCommandBufferSubmitInfo command_buffer_submit_info =
-        make_command_buffer_submit_info(frame.command_buffer);
+    VkSemaphoreSubmitInfo wait_semaphore_submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = frame.image_available_semaphore,
+        .value = 1,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
+    };
 
-    VkSemaphoreSubmitInfo signal_semaphore_submit_info =
-        make_semaphore_submit_info(swapchain_image.render_finished_semaphore, VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT);
+    VkSemaphoreSubmitInfo signal_semaphore_submit_info = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = swapchain_image.render_finished_semaphore,
+        .value = 1,
+        .stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT,
+    };
 
     VkSubmitInfo2 submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
@@ -195,8 +207,10 @@ goose::render::begin_immediate(const RenderContext &ctx)
 
     vkResetCommandBuffer(immediate.command_buffer, 0);
 
-    VkCommandBufferBeginInfo command_buffer_begin_info =
-        make_command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+    VkCommandBufferBeginInfo command_buffer_begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
 
     vkBeginCommandBuffer(immediate.command_buffer, &command_buffer_begin_info);
 
@@ -213,8 +227,10 @@ goose::render::end_immediate(const RenderContext &ctx)
 
     vkEndCommandBuffer(immediate.command_buffer);
 
-    VkCommandBufferSubmitInfo command_buffer_submit_info =
-        make_command_buffer_submit_info(immediate.command_buffer);
+    VkCommandBufferSubmitInfo command_buffer_submit_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = immediate.command_buffer,
+    };
 
     VkSubmitInfo2 submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,

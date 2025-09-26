@@ -7,7 +7,7 @@
 goose::render::DescriptorSetLayoutBuilder &
 goose::render::DescriptorSetLayoutBuilder::add_binding(u32 binding, VkDescriptorType descriptor_type)
 {
-    params.bindings.push_back({
+    _bindings.push_back({
         .binding = binding,
         .descriptorType = descriptor_type,
         .descriptorCount = 1,
@@ -22,7 +22,7 @@ goose::render::DescriptorSetLayoutBuilder::build(
     VkShaderStageFlags shader_stage_flags,
     VkDescriptorSetLayoutCreateFlags descriptor_set_layout_create_flags)
 {
-    for (auto &binding : params.bindings)
+    for (auto &binding : _bindings)
     {
         binding.stageFlags |= shader_stage_flags;
     }
@@ -30,8 +30,8 @@ goose::render::DescriptorSetLayoutBuilder::build(
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .flags = descriptor_set_layout_create_flags,
-        .bindingCount = static_cast<u32>(params.bindings.size()),
-        .pBindings = params.bindings.data(),
+        .bindingCount = static_cast<u32>(_bindings.size()),
+        .pBindings = _bindings.data(),
     };
 
     VkResult result = vkCreateDescriptorSetLayout(Device::get(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout);

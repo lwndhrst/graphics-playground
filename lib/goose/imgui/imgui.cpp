@@ -101,11 +101,25 @@ goose::quit_imgui_internal()
 void
 goose::render::draw_imgui(VkCommandBuffer cmd, VkImageView view, VkExtent2D extent)
 {
-    VkRenderingAttachmentInfo color_attachment =
-        goose::render::make_rendering_attachment_info(view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    VkRenderingAttachmentInfo color_attachment = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = view,
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+    };
 
-    VkRenderingInfo rendering_info =
-        goose::render::make_rendering_info(extent, &color_attachment, nullptr);
+    VkRect2D render_area = {
+        .offset = {0, 0},
+        .extent = extent,
+    };
+
+    VkRenderingInfo rendering_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = render_area,
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment,
+    };
 
     vkCmdBeginRendering(cmd, &rendering_info);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);

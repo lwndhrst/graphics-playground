@@ -4,7 +4,7 @@
 #include "goose/render/helpers.hpp"
 
 bool
-goose::render::create_frame(FrameData &frame)
+goose::render::create_frame_data(FrameData &frame)
 {
     frame.command_pool = create_command_pool(
         Device::get_queue_families().graphics.index,
@@ -21,7 +21,7 @@ goose::render::create_frame(FrameData &frame)
 }
 
 void
-goose::render::destroy_frame(FrameData &frame)
+goose::render::destroy_frame_data(FrameData &frame)
 {
     const VkDevice &device = Device::get();
 

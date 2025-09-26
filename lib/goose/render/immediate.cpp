@@ -4,7 +4,7 @@
 #include "goose/render/helpers.hpp"
 
 bool
-goose::render::create_immediate(ImmediateData &immediate)
+goose::render::create_immediate_data(ImmediateData &immediate)
 {
     immediate.command_pool = create_command_pool(
         Device::get_queue_families().graphics.index,
@@ -20,7 +20,7 @@ goose::render::create_immediate(ImmediateData &immediate)
 }
 
 void
-goose::render::destroy_immediate(ImmediateData &immediate)
+goose::render::destroy_immediate_data(ImmediateData &immediate)
 {
     const VkDevice &device = Device::get();
 

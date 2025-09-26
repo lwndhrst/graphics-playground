@@ -26,9 +26,11 @@ init_draw_image(VkExtent2D extent)
 {
     draw_image_extent = extent;
 
-    goose::render::ImageBuilder image_builder;
+    goose::render::ImageBuilder image_builder =
+        goose::render::Image::builder(goose::render::IMAGE_TYPE_2D);
+
     image_builder
-        .set_extent(extent)
+        .set_extent({extent.width, extent.height, 1})
         .set_format(VK_FORMAT_R16G16B16A16_SFLOAT)
         .add_usage_flags(
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |

@@ -48,24 +48,6 @@ goose::render::allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel 
     return command_buffer;
 }
 
-VkCommandBufferBeginInfo
-goose::render::make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_flags)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = usage_flags,
-    };
-}
-
-VkCommandBufferSubmitInfo
-goose::render::make_command_buffer_submit_info(VkCommandBuffer cmd)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = cmd,
-    };
-}
-
 VkDescriptorPool
 goose::render::create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSize> pool_sizes)
 {
@@ -152,17 +134,6 @@ goose::render::create_semaphore(VkSemaphoreCreateFlags create_flags)
     return semaphore;
 }
 
-VkSemaphoreSubmitInfo
-goose::render::make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = semaphore,
-        .value = 1,
-        .stageMask = stage_flags,
-    };
-}
-
 VkShaderModule
 goose::render::create_shader_module(const std::string &file_path)
 {
@@ -194,89 +165,6 @@ goose::render::destroy_shader_module(VkShaderModule shader_module)
     vkDestroyShaderModule(Device::get(), shader_module, nullptr);
 }
 
-VkImageCreateInfo
-goose::render::make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = format,
-        .extent = extent,
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = usage_flags,
-    };
-}
-
-VkImageViewCreateInfo
-goose::render::make_image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .image = image,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = format,
-        .subresourceRange = {
-            .aspectMask = aspect_flags,
-            .baseMipLevel = 0,
-            .levelCount = 1,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-        },
-    };
-}
-
-VkImageSubresourceRange
-goose::render::make_image_subresource_range(VkImageAspectFlags aspect_flags)
-{
-    return {
-        .aspectMask = aspect_flags,
-        .baseMipLevel = 0,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .baseArrayLayer = 0,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-    };
-}
-
-VkRenderingAttachmentInfo
-goose::render::make_rendering_attachment_info(VkImageView view, VkClearValue *clear_value, VkImageLayout layout)
-{
-    VkRenderingAttachmentInfo rendering_attachment_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = view,
-        .imageLayout = layout,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    };
-
-    if (clear_value != nullptr)
-    {
-        rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        rendering_attachment_info.clearValue = *clear_value;
-    }
-    else
-    {
-        rendering_attachment_info.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    }
-
-    return rendering_attachment_info;
-}
-
-VkRenderingInfo
-goose::render::make_rendering_info(VkExtent2D render_extent, VkRenderingAttachmentInfo *color_attachment, VkRenderingAttachmentInfo *depth_attachment)
-{
-    return {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = VkRect2D{VkOffset2D{0, 0}, render_extent},
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = color_attachment,
-        .pDepthAttachment = depth_attachment,
-        .pStencilAttachment = nullptr,
-    };
-}
-
 void
 goose::render::transition_image(
     VkCommandBuffer cmd,
@@ -289,8 +177,13 @@ goose::render::transition_image(
             ? VK_IMAGE_ASPECT_DEPTH_BIT
             : VK_IMAGE_ASPECT_COLOR_BIT;
 
-    VkImageSubresourceRange subresource_range =
-        make_image_subresource_range(aspect_flags);
+    VkImageSubresourceRange subresource_range = {
+        .aspectMask = aspect_flags,
+        .baseMipLevel = 0,
+        .levelCount = VK_REMAINING_MIP_LEVELS,
+        .baseArrayLayer = 0,
+        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+    };
 
     VkImageMemoryBarrier2 image_memory_barrier = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,

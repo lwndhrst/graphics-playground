@@ -5,9 +5,7 @@
 namespace goose::render {
 
 struct DescriptorSetLayoutBuilder {
-    struct {
-        std::vector<VkDescriptorSetLayoutBinding> bindings;
-    } params;
+    std::vector<VkDescriptorSetLayoutBinding> _bindings;
 
     DescriptorSetLayoutBuilder &add_binding(u32 binding, VkDescriptorType descriptor_type);
 

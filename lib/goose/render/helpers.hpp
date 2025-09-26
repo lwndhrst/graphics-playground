@@ -10,8 +10,6 @@ VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFla
 void destroy_command_pool(VkCommandPool pool);
 
 VkCommandBuffer allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel level);
-VkCommandBufferBeginInfo make_command_buffer_begin_info(VkCommandBufferUsageFlags usage_flags);
-VkCommandBufferSubmitInfo make_command_buffer_submit_info(VkCommandBuffer cmd);
 
 VkDescriptorPool create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSize> pool_sizes);
 void destroy_descriptor_pool(VkDescriptorPool pool);
@@ -21,17 +19,9 @@ VkDescriptorSet allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLa
 VkFence create_fence(VkFenceCreateFlags create_flags = 0);
 
 VkSemaphore create_semaphore(VkSemaphoreCreateFlags create_flags = 0);
-VkSemaphoreSubmitInfo make_semaphore_submit_info(VkSemaphore semaphore, VkPipelineStageFlags2 stage_flags);
 
 VkShaderModule create_shader_module(const std::string &file_path);
 void destroy_shader_module(VkShaderModule shader_module);
-
-VkImageCreateInfo make_image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent);
-VkImageViewCreateInfo make_image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags);
-VkImageSubresourceRange make_image_subresource_range(VkImageAspectFlags aspect_flags);
-
-VkRenderingAttachmentInfo make_rendering_attachment_info(VkImageView view, VkClearValue *clear_value, VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-VkRenderingInfo make_rendering_info(VkExtent2D render_extent, VkRenderingAttachmentInfo *color_attachment, VkRenderingAttachmentInfo *depth_attachment);
 
 void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 void copy_image_to_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);

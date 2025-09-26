@@ -5,33 +5,32 @@
 
 namespace goose::render {
 
-struct Image {
-    VkImage image;
-    VkImageView view;
-
-    VkExtent3D extent;
-    VkFormat format;
-
-    VmaAllocation allocation;
+enum ImageType {
+    IMAGE_TYPE_2D,
 };
 
-bool create_image(Image &image, VkExtent3D extent, VkFormat format, VkImageUsageFlags usage_flags, VkImageAspectFlags aspect_flags, MemoryUsage memory_usage);
-void destroy_image(Image &image);
+struct Image;
 
 struct ImageBuilder {
-    struct {
-        VkExtent3D extent;
-        VkFormat format;
-        VkImageUsageFlags usage_flags;
-        VkImageAspectFlags aspect_flags;
-        MemoryUsage memory_usage;
-    } params;
+    VkImageType _image_type;
+    VkImageViewType _image_view_type;
+    VkFormat _format;
+    VkExtent3D _extent;
+    u32 _mip_levels;
+    u32 _array_layers;
+    VkSampleCountFlagBits _samples;
+    VkImageTiling _tiling;
+    VkImageUsageFlags _usage_flags;
+    VkImageAspectFlags _aspect_flags;
+    MemoryUsage _memory_usage;
 
-    ImageBuilder();
-
-    ImageBuilder &set_extent(const VkExtent2D &extent);
-    ImageBuilder &set_extent(const VkExtent3D &extent);
+    ImageBuilder &set_type(const ImageType &type);
     ImageBuilder &set_format(const VkFormat &format);
+    ImageBuilder &set_extent(const VkExtent3D &extent);
+    ImageBuilder &set_mip_levels(const u32 &mip_levels);
+    ImageBuilder &set_array_layers(const u32 &array_layers);
+    ImageBuilder &set_samples(const VkSampleCountFlagBits &samples);
+    ImageBuilder &set_tiling(const VkImageTiling &tiling);
     ImageBuilder &add_usage_flags(const VkImageUsageFlags &usage_flags);
     ImageBuilder &remove_usage_flags(const VkImageUsageFlags &usage_flags);
     ImageBuilder &add_aspect_flags(const VkImageAspectFlags &aspect_flags);
@@ -40,5 +39,19 @@ struct ImageBuilder {
 
     bool build(Image &image);
 };
+
+struct Image {
+    VkImage image;
+    VkImageView view;
+
+    VkFormat format;
+    VkExtent3D extent;
+
+    VmaAllocation allocation;
+
+    static ImageBuilder builder(ImageType type);
+};
+
+void destroy_image(Image &image);
 
 } // namespace goose::render

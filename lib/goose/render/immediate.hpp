@@ -11,7 +11,7 @@ struct ImmediateData {
     VkFence in_flight_fence;
 };
 
-bool create_immediate(ImmediateData &immediate);
-void destroy_immediate(ImmediateData &immediate);
+bool create_immediate_data(ImmediateData &immediate);
+void destroy_immediate_data(ImmediateData &immediate);
 
 } // namespace goose::render
