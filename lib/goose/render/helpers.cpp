@@ -111,6 +111,12 @@ goose::render::create_fence(VkFenceCreateFlags create_flags)
     return fence;
 }
 
+void
+goose::render::destroy_fence(VkFence fence)
+{
+    vkDestroyFence(Device::get(), fence, nullptr);
+}
+
 VkSemaphore
 goose::render::create_semaphore(VkSemaphoreCreateFlags create_flags)
 {
@@ -126,6 +132,12 @@ goose::render::create_semaphore(VkSemaphoreCreateFlags create_flags)
     VK_ASSERT(result);
 
     return semaphore;
+}
+
+void
+goose::render::destroy_semaphore(VkSemaphore semaphore)
+{
+    vkDestroySemaphore(Device::get(), semaphore, nullptr);
 }
 
 VkShaderModule

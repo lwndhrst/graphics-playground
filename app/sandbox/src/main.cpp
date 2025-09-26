@@ -67,7 +67,8 @@ init_descriptors()
         },
     };
 
-    descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, descriptor_count_per_type);
+    descriptor_pool =
+        goose::render::create_descriptor_pool(max_descriptor_sets, descriptor_count_per_type);
 
     goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder;
     descriptor_set_layout_builder
@@ -78,7 +79,8 @@ init_descriptors()
         return false;
     }
 
-    descriptor_set = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
+    descriptor_set =
+        goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
 
     VkDescriptorImageInfo descriptor_image_info = {
         .imageView = draw_image.view,

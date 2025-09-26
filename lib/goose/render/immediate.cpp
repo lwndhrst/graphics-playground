@@ -24,8 +24,8 @@ goose::render::destroy_immediate_data(ImmediateData &immediate)
 {
     const VkDevice &device = Device::get();
 
-    vkDestroyFence(device, immediate.in_flight_fence, nullptr);
-    vkDestroyCommandPool(device, immediate.command_pool, nullptr);
+    destroy_fence(immediate.in_flight_fence);
+    destroy_command_pool(immediate.command_pool);
 
     immediate = {};
 }

@@ -25,9 +25,9 @@ goose::render::destroy_frame_data(FrameData &frame)
 {
     const VkDevice &device = Device::get();
 
-    vkDestroySemaphore(device, frame.image_available_semaphore, nullptr);
-    vkDestroyFence(device, frame.in_flight_fence, nullptr);
-    vkDestroyCommandPool(device, frame.command_pool, nullptr);
+    destroy_semaphore(frame.image_available_semaphore);
+    destroy_fence(frame.in_flight_fence);
+    destroy_command_pool(frame.command_pool);
 
     frame = {};
 }

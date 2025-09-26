@@ -13,8 +13,10 @@ void destroy_descriptor_pool(VkDescriptorPool pool);
 VkDescriptorSet allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLayout layout);
 
 VkFence create_fence(VkFenceCreateFlags create_flags = 0);
+void destroy_fence(VkFence fence);
 
 VkSemaphore create_semaphore(VkSemaphoreCreateFlags create_flags = 0);
+void destroy_semaphore(VkSemaphore semaphore);
 
 VkShaderModule create_shader_module(const std::string &file_path);
 void destroy_shader_module(VkShaderModule shader_module);
