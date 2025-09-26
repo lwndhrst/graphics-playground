@@ -56,7 +56,7 @@ goose::quit()
 }
 
 void
-goose::init_imgui(const Window &window, const goose::render::RenderContext &ctx)
+goose::init_imgui(const WindowInfo &window, const goose::render::RenderContext &ctx)
 {
 
     if (!goose::init_imgui_internal(window, ctx))
@@ -80,7 +80,7 @@ bool
 goose::should_run()
 {
     SDL_Event event;
-    Window *window;
+    WindowInfo *window;
 
     while (SDL_PollEvent(&event))
     {
@@ -92,18 +92,18 @@ goose::should_run()
 
         // Window events
         case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-            window = Window::get_by_id(event.window.windowID);
+            window = WindowInfo::get_by_id(event.window.windowID);
             window->event_flags.close_requested = true;
             break;
         case SDL_EVENT_WINDOW_RESIZED:
-            window = Window::get_by_id(event.window.windowID);
+            window = WindowInfo::get_by_id(event.window.windowID);
             window->event_flags.resized = true;
             window->extent.width = event.window.data1;
             window->extent.height = event.window.data2;
             break;
         case SDL_EVENT_WINDOW_OCCLUDED:
             // NOTE: Interesting for wayland (switching workspaces, etc.)
-            window = Window::get_by_id(event.window.windowID);
+            window = WindowInfo::get_by_id(event.window.windowID);
             window->event_flags.occluded = true;
             break;
         }

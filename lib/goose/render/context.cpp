@@ -10,7 +10,7 @@
 #include "vk_mem_alloc.h"
 
 bool
-goose::render::create_render_context(RenderContext &ctx, const Window &window)
+goose::render::create_render_context(RenderContext &ctx, const WindowInfo &window)
 {
     LOG_INFO("Creating render context");
 
@@ -100,7 +100,7 @@ goose::render::add_cleanup_callback(RenderContext &ctx, const std::function<void
 }
 
 void
-goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
+goose::render::resize_swapchain(RenderContext &ctx, const WindowInfo &window)
 {
     vkDeviceWaitIdle(Device::get());
 
@@ -108,7 +108,7 @@ goose::render::resize_swapchain(RenderContext &ctx, const Window &window)
     create_swapchain(ctx.swapchain, window.surface, window.extent);
 }
 
-std::pair<VkCommandBuffer, const goose::render::SwapchainImage &>
+std::pair<VkCommandBuffer, const goose::render::SwapchainImageInfo &>
 goose::render::begin_frame(RenderContext &ctx)
 {
     // TODO: Error handling
@@ -121,7 +121,7 @@ goose::render::begin_frame(RenderContext &ctx)
 
     vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
-    const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
+    const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     vkResetCommandBuffer(frame.command_buffer, 0);
 
@@ -141,7 +141,7 @@ goose::render::end_frame(RenderContext &ctx)
     // TODO: Error handling
 
     const FrameData &frame = ctx.frames[ctx.current_frame];
-    const SwapchainImage &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
+    const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     vkEndCommandBuffer(frame.command_buffer);
 

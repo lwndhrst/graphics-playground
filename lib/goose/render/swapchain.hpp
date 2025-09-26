@@ -12,7 +12,7 @@ struct SwapchainSupportDetails {
 
 SwapchainSupportDetails get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface);
 
-struct SwapchainImage {
+struct SwapchainImageInfo {
     VkImage image;
     VkImageView view;
 
@@ -24,17 +24,17 @@ struct SwapchainImage {
     VkSemaphore render_finished_semaphore;
 };
 
-struct Swapchain {
+struct SwapchainInfo {
     VkSwapchainKHR swapchain;
 
     VkExtent2D image_extent;
     VkFormat image_format;
 
     usize image_count;
-    std::vector<SwapchainImage> images;
+    std::vector<SwapchainImageInfo> images;
 };
 
-bool create_swapchain(Swapchain &swapchain, VkSurfaceKHR surface, VkExtent2D window_extent);
-void destroy_swapchain(Swapchain &swapchain);
+bool create_swapchain(SwapchainInfo &swapchain, VkSurfaceKHR surface, VkExtent2D window_extent);
+void destroy_swapchain(SwapchainInfo &swapchain);
 
 } // namespace goose::render

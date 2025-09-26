@@ -7,7 +7,7 @@
 #include "SDL3/SDL_vulkan.h"
 
 bool
-goose::create_window(Window &window, const char *title, u32 width, u32 height, bool resizable)
+goose::create_window(WindowInfo &window, const char *title, u32 width, u32 height, bool resizable)
 {
     LOG_INFO("Creating window");
 
@@ -35,7 +35,7 @@ goose::create_window(Window &window, const char *title, u32 width, u32 height, b
     window.extent = {width, height};
 
     // Keep track of active windows internally
-    Window::s_active_windows.push_back(&window);
+    WindowInfo::s_active_windows.push_back(&window);
 
     LOG_INFO("Window created successfully with ID: {}", window.id);
 
@@ -43,7 +43,7 @@ goose::create_window(Window &window, const char *title, u32 width, u32 height, b
 }
 
 void
-goose::destroy_window(Window &window)
+goose::destroy_window(WindowInfo &window)
 {
     LOG_INFO("Destroying window with ID: {}", window.id);
 
@@ -58,9 +58,9 @@ goose::destroy_window(Window &window)
 
     // Remove destroyed window from internal list of active windows and move last entry to the freed position
     usize i;
-    Window::get_by_id(window.id, &i);
-    Window::s_active_windows[i] = Window::s_active_windows[Window::s_active_windows.size() - 1];
-    Window::s_active_windows.pop_back();
+    WindowInfo::get_by_id(window.id, &i);
+    WindowInfo::s_active_windows[i] = WindowInfo::s_active_windows[WindowInfo::s_active_windows.size() - 1];
+    WindowInfo::s_active_windows.pop_back();
 
     window = {};
 }

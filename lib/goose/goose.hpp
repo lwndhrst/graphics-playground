@@ -16,7 +16,7 @@ namespace goose {
 bool init(const char *app_name);
 void quit();
 
-void init_imgui(const Window &window, const goose::render::RenderContext &ctx);
+void init_imgui(const WindowInfo &window, const goose::render::RenderContext &ctx);
 void quit_imgui();
 
 bool should_run();

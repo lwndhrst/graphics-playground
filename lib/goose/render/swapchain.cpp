@@ -93,7 +93,7 @@ choose_swapchain_extent(const VkSurfaceCapabilitiesKHR &capabilities, VkExtent2D
 
 bool
 goose::render::create_swapchain(
-    Swapchain &swapchain,
+    SwapchainInfo &swapchain,
     VkSurfaceKHR surface,
     VkExtent2D window_extent)
 {
@@ -220,13 +220,13 @@ goose::render::create_swapchain(
 }
 
 void
-goose::render::destroy_swapchain(Swapchain &swapchain)
+goose::render::destroy_swapchain(SwapchainInfo &swapchain)
 {
     LOG_INFO("Destroying swapchain");
 
     const VkDevice &device = Device::get();
 
-    for (SwapchainImage &image : swapchain.images)
+    for (SwapchainImageInfo &image : swapchain.images)
     {
         vkDestroySemaphore(device, image.render_finished_semaphore, nullptr);
         vkDestroyImageView(device, image.view, nullptr);

@@ -16,8 +16,8 @@ struct WindowEventFlags {
     bool occluded;
 };
 
-struct Window {
-    inline static std::vector<goose::Window *> s_active_windows;
+struct WindowInfo {
+    inline static std::vector<goose::WindowInfo *> s_active_windows;
 
     SDL_Window *window;
     SDL_WindowID id;
@@ -28,11 +28,11 @@ struct Window {
 
     WindowEventFlags event_flags;
 
-    static Window *get_by_id(SDL_WindowID id, usize *index = nullptr)
+    static WindowInfo *get_by_id(SDL_WindowID id, usize *index = nullptr)
     {
         for (usize i = 0; i < s_active_windows.size(); ++i)
         {
-            Window *window = s_active_windows[i];
+            WindowInfo *window = s_active_windows[i];
             if (window->id == id)
             {
                 if (index != nullptr)
@@ -49,7 +49,7 @@ struct Window {
     }
 };
 
-bool create_window(Window &window, const char *title, u32 width, u32 height, bool resizable = true);
-void destroy_window(Window &window);
+bool create_window(WindowInfo &window, const char *title, u32 width, u32 height, bool resizable = true);
+void destroy_window(WindowInfo &window);
 
 }; // namespace goose

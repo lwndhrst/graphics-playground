@@ -7,11 +7,11 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
-static goose::Window window;
+static goose::WindowInfo window;
 static goose::render::RenderContext render_context;
 
 // Use an extra image as draw target rather than directly drawing into swapchain images
-static goose::render::Image draw_image;
+static goose::render::ImageInfo draw_image;
 static VkExtent2D draw_image_extent;
 
 static VkDescriptorPool descriptor_pool;

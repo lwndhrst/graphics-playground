@@ -16,7 +16,7 @@ static bool g_imgui_initialized = false;
 // TODO: Any way to make this work with multiple windows?
 
 bool
-goose::init_imgui_internal(const Window &window, const goose::render::RenderContext &ctx)
+goose::init_imgui_internal(const WindowInfo &window, const goose::render::RenderContext &ctx)
 {
     if (g_imgui_initialized)
     {

@@ -6,7 +6,7 @@
 
 namespace goose {
 
-bool init_imgui_internal(const Window &window, const goose::render::RenderContext &ctx);
+bool init_imgui_internal(const WindowInfo &window, const goose::render::RenderContext &ctx);
 void quit_imgui_internal();
 
 } // namespace goose

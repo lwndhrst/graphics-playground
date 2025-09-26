@@ -108,7 +108,7 @@ goose::render::ImageBuilder::set_memory_usage(const MemoryUsage &memory_usage)
 }
 
 bool
-goose::render::ImageBuilder::build(Image &image)
+goose::render::ImageBuilder::build(ImageInfo &image)
 {
     VkImageCreateInfo image_create_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -163,7 +163,7 @@ goose::render::ImageBuilder::build(Image &image)
 }
 
 void
-goose::render::destroy_image(Image &image)
+goose::render::destroy_image(ImageInfo &image)
 {
     vkDestroyImageView(Device::get(), image.view, nullptr);
     vmaDestroyImage(Allocator::get(), image.image, image.allocation);

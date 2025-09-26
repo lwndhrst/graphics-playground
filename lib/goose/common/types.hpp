@@ -37,17 +37,18 @@ typedef double f64;
 
 namespace goose {
 
-struct Window;
+struct WindowInfo;
 
 } // namespace goose
 
 namespace goose::render {
 
-struct RenderContext;
-
 struct Instance;
 struct Device;
-struct Swapchain;
+
+struct RenderContext;
+
+struct SwapchainInfo;
 
 struct FrameData;
 struct ImmediateData;

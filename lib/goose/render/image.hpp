@@ -9,7 +9,7 @@ enum ImageType {
     IMAGE_TYPE_2D,
 };
 
-struct Image {
+struct ImageInfo {
     VkImage image;
     VkImageView view;
 
@@ -45,9 +45,9 @@ struct ImageBuilder {
     ImageBuilder &set_aspect_flags(const VkImageAspectFlags &aspect_flags);
     ImageBuilder &set_memory_usage(const MemoryUsage &memory_usage);
 
-    bool build(Image &image);
+    bool build(ImageInfo &image);
 };
 
-void destroy_image(Image &image);
+void destroy_image(ImageInfo &image);
 
 } // namespace goose::render
