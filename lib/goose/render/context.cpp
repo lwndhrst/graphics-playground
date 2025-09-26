@@ -12,6 +12,8 @@
 bool
 goose::render::create_render_context(RenderContext &ctx, const Window &window)
 {
+    LOG_INFO("Creating render context");
+
     // TODO: Allow usage without surface
     if (window.surface == VK_NULL_HANDLE)
     {
@@ -58,12 +60,16 @@ goose::render::create_render_context(RenderContext &ctx, const Window &window)
 
     ctx.current_frame = 0;
 
+    LOG_INFO("Render context created successfully");
+
     return true;
 }
 
 void
 goose::render::destroy_render_context(RenderContext &ctx)
 {
+    LOG_INFO("Destroying render context");
+
     vkDeviceWaitIdle(Device::get());
 
     // Call cleanup callbacks in reverse order of being added

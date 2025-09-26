@@ -9,6 +9,8 @@
 bool
 goose::create_window(Window &window, const char *title, u32 width, u32 height, bool resizable)
 {
+    LOG_INFO("Creating window");
+
     SDL_WindowFlags window_flags = SDL_WINDOW_VULKAN;
     if (resizable)
     {
@@ -35,12 +37,16 @@ goose::create_window(Window &window, const char *title, u32 width, u32 height, b
     // Keep track of active windows internally
     Window::s_active_windows.push_back(&window);
 
+    LOG_INFO("Window created successfully with ID: {}", window.id);
+
     return true;
 }
 
 void
 goose::destroy_window(Window &window)
 {
+    LOG_INFO("Destroying window with ID: {}", window.id);
+
     if (window.window == nullptr)
     {
         LOG_WARN("Window can't be destroyed due to invalid SDL window handle");

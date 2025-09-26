@@ -128,7 +128,7 @@ get_gpu(
 
         vkGetPhysicalDeviceProperties2(gpu, &gpu_properties);
 
-        LOG_DEBUG("Found GPU: {}", gpu_properties.properties.deviceName);
+        LOG_INFO("Found GPU: {}", gpu_properties.properties.deviceName);
 
         VkPhysicalDeviceFeatures2 gpu_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
@@ -155,7 +155,7 @@ get_gpu(
 
     if (chosen_gpu != nullptr)
     {
-        LOG_DEBUG("Using GPU: {}", chosen_gpu_properties.deviceName);
+        LOG_INFO("Using GPU: {}", chosen_gpu_properties.deviceName);
     }
 
     return chosen_gpu;
@@ -164,6 +164,8 @@ get_gpu(
 bool
 goose::render::create_device(VkSurfaceKHR surface)
 {
+    LOG_INFO("Creating vulkan device");
+
     if (Device::s_initialized)
     {
         LOG_INFO("Vulkan device is already initialized");
@@ -171,12 +173,19 @@ goose::render::create_device(VkSurfaceKHR surface)
     }
 
     // NOTE: Modern Vulkan doesn't seem to distinguish between instance and device layers anymore
-
-    std::vector<const char *> layers;
     std::vector<const char *> extensions;
 
     // TODO: Which device extensions?
     extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    if (!extensions.empty())
+    {
+        LOG_INFO("Requested vulkan device extensions:");
+        for (const auto &e : extensions)
+        {
+            LOG_INFO("- {}", e);
+        }
+    }
 
     VkPhysicalDevice physical_device = get_gpu(surface, extensions);
     if (physical_device == VK_NULL_HANDLE)
@@ -234,8 +243,6 @@ goose::render::create_device(VkSurfaceKHR surface)
         .pNext = &device_features_13,
         .queueCreateInfoCount = static_cast<u32>(queue_create_infos.size()),
         .pQueueCreateInfos = queue_create_infos.data(),
-        .enabledLayerCount = static_cast<u32>(layers.size()),
-        .ppEnabledLayerNames = layers.data(),
         .enabledExtensionCount = static_cast<u32>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
     };
@@ -285,12 +292,16 @@ goose::render::create_device(VkSurfaceKHR surface)
     Device::s_queue_families = std::move(queue_families);
     Device::s_initialized = true;
 
+    LOG_INFO("Vulkan device created successfully");
+
     return true;
 }
 
 void
 goose::render::destroy_device()
 {
+    LOG_INFO("Destroying vulkan device");
+
     vkDestroyDevice(Device::s_device, nullptr);
 
     Device::s_physical_device = nullptr;

@@ -9,6 +9,8 @@
 bool
 goose::render::create_instance(const char *app_name, u32 app_version)
 {
+    LOG_INFO("Creating vulkan instance");
+
     if (Instance::s_initialized)
     {
         LOG_INFO("Vulkan instance is already initialized");
@@ -32,6 +34,24 @@ goose::render::create_instance(const char *app_name, u32 app_version)
 
     extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
     extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+
+    if (!layers.empty())
+    {
+        LOG_INFO("Requested vulkan instance layers:");
+        for (const auto &l : layers)
+        {
+            LOG_INFO("- {}", l);
+        }
+    }
+
+    if (!extensions.empty())
+    {
+        LOG_INFO("Requested vulkan instance extensions:");
+        for (const auto &e : extensions)
+        {
+            LOG_INFO("- {}", e);
+        }
+    }
 
     VkApplicationInfo app_info = {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -64,12 +84,16 @@ goose::render::create_instance(const char *app_name, u32 app_version)
     Instance::s_instance = instance;
     Instance::s_initialized = true;
 
+    LOG_INFO("Vulkan instance created successfully");
+
     return true;
 }
 
 void
 goose::render::destroy_instance()
 {
+    LOG_INFO("Destroying vulkan instance");
+
     vkDestroyInstance(Instance::s_instance, nullptr);
 
     Instance::s_instance = nullptr;

@@ -97,6 +97,8 @@ goose::render::create_swapchain(
     VkSurfaceKHR surface,
     VkExtent2D window_extent)
 {
+    LOG_INFO("Creating swapchain");
+
     // Create swapchain
 
     SwapchainSupportDetails swapchain_support = get_swapchain_support_details(Device::get_physical(), surface);
@@ -124,7 +126,7 @@ goose::render::create_swapchain(
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
         .presentMode = swapchain_present_mode,
         .clipped = VK_TRUE,
-        .oldSwapchain = VK_NULL_HANDLE,
+        .oldSwapchain = swapchain.swapchain,
     };
 
     const QueueFamilies &queue_families = Device::get_queue_families();
@@ -212,12 +214,16 @@ goose::render::create_swapchain(
     swapchain.image_extent = swapchain_extent;
     swapchain.image_format = swapchain_surface_format.format;
 
+    LOG_INFO("Swapchain created successfully");
+
     return true;
 }
 
 void
 goose::render::destroy_swapchain(Swapchain &swapchain)
 {
+    LOG_INFO("Destroying swapchain");
+
     const VkDevice &device = Device::get();
 
     for (SwapchainImage &image : swapchain.images)
