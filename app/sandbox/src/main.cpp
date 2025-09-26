@@ -26,18 +26,17 @@ init_draw_image(VkExtent2D extent)
 {
     draw_image_extent = extent;
 
-    goose::render::ImageBuilder image_builder =
-        goose::render::Image::builder(goose::render::IMAGE_TYPE_2D);
+    goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
 
     image_builder
         .set_extent({extent.width, extent.height, 1})
         .set_format(VK_FORMAT_R16G16B16A16_SFLOAT)
-        .add_usage_flags(
+        .set_usage_flags(
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
             VK_IMAGE_USAGE_TRANSFER_DST_BIT |
             VK_IMAGE_USAGE_STORAGE_BIT |
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-        .add_aspect_flags(VK_IMAGE_ASPECT_COLOR_BIT)
+        .set_aspect_flags(VK_IMAGE_ASPECT_COLOR_BIT)
         .set_memory_usage(goose::render::MEMORY_USAGE_GPU_ONLY);
 
     if (!image_builder.build(draw_image))
@@ -60,27 +59,26 @@ init_descriptors()
     const VkDevice &device = goose::render::Device::get();
 
     u32 max_descriptor_sets = 10;
-    std::vector<VkDescriptorPoolSize> descriptor_count_per_type = {
+    std::vector<VkDescriptorPoolSize> max_descriptor_count_per_type = {
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
             .descriptorCount = max_descriptor_sets,
         },
     };
 
-    descriptor_pool =
-        goose::render::create_descriptor_pool(max_descriptor_sets, descriptor_count_per_type);
+    descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, max_descriptor_count_per_type);
 
     goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder;
     descriptor_set_layout_builder
-        .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+        .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+        .set_stage_flags(VK_SHADER_STAGE_COMPUTE_BIT);
 
-    if (!descriptor_set_layout_builder.build(descriptor_set_layout, VK_SHADER_STAGE_COMPUTE_BIT))
+    if (!descriptor_set_layout_builder.build(descriptor_set_layout))
     {
         return false;
     }
 
-    descriptor_set =
-        goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
+    descriptor_set = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
 
     VkDescriptorImageInfo descriptor_image_info = {
         .imageView = draw_image.view,

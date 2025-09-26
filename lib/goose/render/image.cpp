@@ -3,6 +3,21 @@
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
 
+goose::render::ImageBuilder::ImageBuilder(const ImageType &type)
+{
+    // TODO: Reasonable defaults?
+    set_type(type);
+    _format = VK_FORMAT_R8G8B8A8_SRGB;
+    _extent = {1, 1, 1};
+    _mip_levels = 1;
+    _array_layers = 1;
+    _samples = VK_SAMPLE_COUNT_1_BIT;
+    _tiling = VK_IMAGE_TILING_OPTIMAL;
+    _usage_flags = 0;
+    _aspect_flags = 0;
+    _memory_usage = MEMORY_USAGE_GPU_ONLY;
+}
+
 goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_type(const ImageType &type)
 {
@@ -69,33 +84,17 @@ goose::render::ImageBuilder::set_tiling(const VkImageTiling &tiling)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::add_usage_flags(const VkImageUsageFlags &usage_flags)
+goose::render::ImageBuilder::set_usage_flags(const VkImageUsageFlags &usage_flags)
 {
-    _usage_flags |= usage_flags;
+    _usage_flags = usage_flags;
 
     return *this;
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::remove_usage_flags(const VkImageUsageFlags &usage_flags)
+goose::render::ImageBuilder::set_aspect_flags(const VkImageAspectFlags &aspect_flags)
 {
-    _usage_flags ^= _usage_flags & usage_flags;
-
-    return *this;
-}
-
-goose::render::ImageBuilder &
-goose::render::ImageBuilder::add_aspect_flags(const VkImageAspectFlags &aspect_flags)
-{
-    _aspect_flags |= aspect_flags;
-
-    return *this;
-}
-
-goose::render::ImageBuilder &
-goose::render::ImageBuilder::remove_aspect_flags(const VkImageAspectFlags &aspect_flags)
-{
-    _aspect_flags ^= _aspect_flags & aspect_flags;
+    _aspect_flags = aspect_flags;
 
     return *this;
 }
@@ -161,27 +160,6 @@ goose::render::ImageBuilder::build(Image &image)
     image.extent = _extent;
 
     return true;
-}
-
-goose::render::ImageBuilder
-goose::render::Image::builder(ImageType type)
-{
-    // TODO: Reasonable defaults?
-    ImageBuilder builder = {
-        ._format = VK_FORMAT_R8G8B8A8_SRGB,
-        ._extent = {1, 1, 1},
-        ._mip_levels = 1,
-        ._array_layers = 1,
-        ._samples = VK_SAMPLE_COUNT_1_BIT,
-        ._tiling = VK_IMAGE_TILING_OPTIMAL,
-        ._usage_flags = 0,
-        ._aspect_flags = 0,
-        ._memory_usage = MEMORY_USAGE_GPU_ONLY,
-    };
-
-    builder.set_type(type);
-
-    return builder;
 }
 
 void
