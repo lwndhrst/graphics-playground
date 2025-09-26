@@ -217,8 +217,8 @@ goose::render::copy_image_to_image(
     VkCommandBuffer cmd,
     VkImage src_image,
     VkImage dst_image,
-    VkExtent2D src_extent,
-    VkExtent2D dst_extent)
+    VkExtent3D src_extent,
+    VkExtent3D dst_extent)
 {
     VkImageBlit2 blit_region = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
@@ -226,11 +226,11 @@ goose::render::copy_image_to_image(
 
     blit_region.srcOffsets[1].x = src_extent.width;
     blit_region.srcOffsets[1].y = src_extent.height;
-    blit_region.srcOffsets[1].z = 1;
+    blit_region.srcOffsets[1].z = src_extent.depth;
 
     blit_region.dstOffsets[1].x = dst_extent.width;
     blit_region.dstOffsets[1].y = dst_extent.height;
-    blit_region.dstOffsets[1].z = 1;
+    blit_region.dstOffsets[1].z = dst_extent.depth;
 
     blit_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     blit_region.srcSubresource.baseArrayLayer = 0;
@@ -254,4 +254,15 @@ goose::render::copy_image_to_image(
     };
 
     vkCmdBlitImage2(cmd, &blit_info);
+}
+
+void
+goose::render::copy_image_to_image(
+    VkCommandBuffer cmd,
+    VkImage src_image,
+    VkImage dst_image,
+    VkExtent2D src_extent,
+    VkExtent2D dst_extent)
+{
+    copy_image_to_image(cmd, src_image, dst_image, {src_extent.width, src_extent.height, 1}, {dst_extent.width, dst_extent.height, 1});
 }

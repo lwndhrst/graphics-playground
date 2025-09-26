@@ -22,6 +22,7 @@ VkShaderModule create_shader_module(const std::string &file_path);
 void destroy_shader_module(VkShaderModule shader_module);
 
 void transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
+void copy_image_to_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent3D src_extent, VkExtent3D dst_extent);
 void copy_image_to_image(VkCommandBuffer cmd, VkImage src_image, VkImage dst_image, VkExtent2D src_extent, VkExtent2D dst_extent);
 
 } // namespace goose::render
