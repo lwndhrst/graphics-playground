@@ -1,4 +1,4 @@
-#include "goose/render/descriptor.hpp"
+#include "goose/render/descriptors.hpp"
 
 #include "goose/common/assert.hpp"
 #include "goose/common/log.hpp"
