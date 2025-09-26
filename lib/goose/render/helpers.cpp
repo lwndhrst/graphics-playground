@@ -74,12 +74,6 @@ goose::render::destroy_descriptor_pool(VkDescriptorPool pool)
     vkDestroyDescriptorPool(Device::get(), pool, nullptr);
 }
 
-void
-goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout layout)
-{
-    vkDestroyDescriptorSetLayout(Device::get(), layout, nullptr);
-}
-
 VkDescriptorSet
 goose::render::allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLayout layout)
 {

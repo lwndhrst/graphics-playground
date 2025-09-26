@@ -2,18 +2,14 @@
 
 #include "goose/common/types.hpp"
 
-// TODO: Make this header only for inlining?
-
 namespace goose::render {
 
 VkCommandPool create_command_pool(u32 queue_family_index, VkCommandPoolCreateFlags create_flags = 0);
 void destroy_command_pool(VkCommandPool pool);
-
 VkCommandBuffer allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel level);
 
 VkDescriptorPool create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSize> pool_sizes);
 void destroy_descriptor_pool(VkDescriptorPool pool);
-void destroy_descriptor_set_layout(VkDescriptorSetLayout layout);
 VkDescriptorSet allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLayout layout);
 
 VkFence create_fence(VkFenceCreateFlags create_flags = 0);

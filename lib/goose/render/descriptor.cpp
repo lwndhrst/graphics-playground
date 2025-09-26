@@ -41,3 +41,9 @@ goose::render::DescriptorSetLayoutBuilder::build(
 
     return true;
 }
+
+void
+goose::render::destroy_descriptor_set_layout(VkDescriptorSetLayout layout)
+{
+    vkDestroyDescriptorSetLayout(Device::get(), layout, nullptr);
+}
