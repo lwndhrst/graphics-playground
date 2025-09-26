@@ -58,11 +58,11 @@ init_descriptors()
 
     const VkDevice &device = goose::render::Device::get();
 
-    u32 max_descriptor_sets = 10;
+    u32 max_descriptor_sets = 1;
     std::vector<VkDescriptorPoolSize> max_descriptor_count_per_type = {
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = max_descriptor_sets,
+            .descriptorCount = 1,
         },
     };
 
