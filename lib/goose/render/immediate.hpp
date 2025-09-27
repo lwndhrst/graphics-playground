@@ -8,6 +8,7 @@ struct ImmediateData {
     VkCommandPool command_pool;
     VkCommandBuffer command_buffer;
 
+    // Signaled when the immediate queue submit call is finished
     VkFence in_flight_fence;
 };
 

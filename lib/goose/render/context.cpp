@@ -43,22 +43,21 @@ goose::render::create_render_context(RenderContext &ctx, const WindowInfo &windo
         return false;
     }
 
-    for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    FrameCreateInfo frame_create_info = {
+        .max_frames_in_flight = 2,
+    };
+
+    if (!create_frame_data(ctx.frame_data, frame_create_info))
     {
-        if (!create_frame_data(ctx.frames[i]))
-        {
-            LOG_ERROR("Failed to create frame data for frame {}", i);
-            return false;
-        }
+        LOG_ERROR("Failed to create frame data");
+        return false;
     }
 
-    if (!create_immediate_data(ctx.immediate))
+    if (!create_immediate_data(ctx.immediate_data))
     {
         LOG_ERROR("Failed to create immediate submit data");
         return false;
     }
-
-    ctx.current_frame = 0;
 
     LOG_INFO("Render context created successfully");
 
@@ -78,17 +77,12 @@ goose::render::destroy_render_context(RenderContext &ctx)
         (*f)();
     }
 
-    destroy_immediate_data(ctx.immediate);
-
-    for (usize i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-    {
-        destroy_frame_data(ctx.frames[i]);
-    }
-
+    destroy_immediate_data(ctx.immediate_data);
+    destroy_frame_data(ctx.frame_data);
     destroy_swapchain(ctx.swapchain);
 
-    // NOTE: The allocator singleton is destroyed when goose::quit() is called
-    // NOTE: The device singleton is destroyed when goose::quit() is called
+    // NOTE: The allocator is cleaned up when goose::quit() is called
+    // NOTE: The device is cleaned up when goose::quit() is called
 
     ctx = {};
 }
@@ -114,25 +108,21 @@ goose::render::begin_frame(RenderContext &ctx)
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
-    const FrameData &frame = ctx.frames[ctx.current_frame];
 
-    vkWaitForFences(device, 1, &frame.in_flight_fence, true, 1000000000);
-    vkResetFences(device, 1, &frame.in_flight_fence);
+    const usize &current_frame_index = ctx.frame_data.current_frame_index;
 
-    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    const VkCommandBuffer &main_command_buffer = ctx.frame_data.main_command_buffers[current_frame_index];
+    const VkFence &in_flight_fence = ctx.frame_data.in_flight_fences[current_frame_index];
+    const VkSemaphore &image_available_semaphore = ctx.frame_data.image_available_semaphores[current_frame_index];
+
+    vkWaitForFences(device, 1, &in_flight_fence, true, 1000000000);
+    vkResetFences(device, 1, &in_flight_fence);
+
+    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
     const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    vkResetCommandBuffer(frame.command_buffer, 0);
-
-    VkCommandBufferBeginInfo command_buffer_begin_info = {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
-
-    vkBeginCommandBuffer(frame.command_buffer, &command_buffer_begin_info);
-
-    return {frame.command_buffer, swapchain_image};
+    return {main_command_buffer, swapchain_image};
 }
 
 void
@@ -140,19 +130,22 @@ goose::render::end_frame(RenderContext &ctx)
 {
     // TODO: Error handling
 
-    const FrameData &frame = ctx.frames[ctx.current_frame];
-    const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
+    const usize &current_frame_index = ctx.frame_data.current_frame_index;
 
-    vkEndCommandBuffer(frame.command_buffer);
+    const VkCommandBuffer &main_command_buffer = ctx.frame_data.main_command_buffers[current_frame_index];
+    const VkFence &in_flight_fence = ctx.frame_data.in_flight_fences[current_frame_index];
+    const VkSemaphore &image_available_semaphore = ctx.frame_data.image_available_semaphores[current_frame_index];
+
+    const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     VkCommandBufferSubmitInfo command_buffer_submit_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = frame.command_buffer,
+        .commandBuffer = main_command_buffer,
     };
 
     VkSemaphoreSubmitInfo wait_semaphore_submit_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = frame.image_available_semaphore,
+        .semaphore = image_available_semaphore,
         .value = 1,
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
     };
@@ -179,7 +172,7 @@ goose::render::end_frame(RenderContext &ctx)
 
     const QueueFamilies &queue_families = Device::get_queue_families();
 
-    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
+    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, in_flight_fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -198,7 +191,7 @@ goose::render::end_frame(RenderContext &ctx)
     // TODO: Error handling
     VK_ASSERT(result);
 
-    ctx.current_frame = (ctx.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+    ctx.frame_data.current_frame_index = (ctx.frame_data.current_frame_index + 1) % ctx.frame_data.max_frames_in_flight;
 }
 
 VkCommandBuffer
@@ -207,7 +200,7 @@ goose::render::begin_immediate(const RenderContext &ctx)
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
-    const ImmediateData &immediate = ctx.immediate;
+    const ImmediateData &immediate = ctx.immediate_data;
 
     vkResetFences(device, 1, &immediate.in_flight_fence);
 
@@ -229,7 +222,7 @@ goose::render::end_immediate(const RenderContext &ctx)
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
-    const ImmediateData &immediate = ctx.immediate;
+    const ImmediateData &immediate = ctx.immediate_data;
 
     vkEndCommandBuffer(immediate.command_buffer);
 

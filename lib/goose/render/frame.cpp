@@ -4,30 +4,44 @@
 #include "goose/render/helpers.hpp"
 
 bool
-goose::render::create_frame_data(FrameData &frame)
+goose::render::create_frame_data(FrameData &frame_data, const FrameCreateInfo &create_info)
 {
-    frame.command_pool = create_command_pool(
+    frame_data.command_pool = create_command_pool(
         Device::get_queue_families().graphics.index,
         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-    frame.command_buffer = allocate_command_buffer(
-        frame.command_pool,
-        VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+    frame_data.main_command_buffers.resize(create_info.max_frames_in_flight);
+    frame_data.in_flight_fences.resize(create_info.max_frames_in_flight);
+    frame_data.image_available_semaphores.resize(create_info.max_frames_in_flight);
 
-    frame.in_flight_fence = create_fence(VK_FENCE_CREATE_SIGNALED_BIT);
-    frame.image_available_semaphore = create_semaphore();
+    for (usize i = 0; i < create_info.max_frames_in_flight; ++i)
+    {
+        frame_data.main_command_buffers[i] = allocate_command_buffer(
+            frame_data.command_pool,
+            VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
+        frame_data.in_flight_fences[i] = create_fence(VK_FENCE_CREATE_SIGNALED_BIT);
+        frame_data.image_available_semaphores[i] = create_semaphore();
+    }
+
+    frame_data.max_frames_in_flight = create_info.max_frames_in_flight;
+    frame_data.current_frame_index = 0;
 
     return true;
 }
 
 void
-goose::render::destroy_frame_data(FrameData &frame)
+goose::render::destroy_frame_data(FrameData &frame_data)
 {
     const VkDevice &device = Device::get();
 
-    destroy_semaphore(frame.image_available_semaphore);
-    destroy_fence(frame.in_flight_fence);
-    destroy_command_pool(frame.command_pool);
+    for (usize i = 0; i < frame_data.max_frames_in_flight; ++i)
+    {
+        destroy_semaphore(frame_data.image_available_semaphores[i]);
+        destroy_fence(frame_data.in_flight_fences[i]);
+    }
 
-    frame = {};
+    destroy_command_pool(frame_data.command_pool);
+
+    frame_data = {};
 }

@@ -5,18 +5,15 @@
 #include "goose/render/immediate.hpp"
 #include "goose/render/swapchain.hpp"
 
-#define MAX_FRAMES_IN_FLIGHT 2
-
 namespace goose::render {
 
 struct RenderContext {
     SwapchainInfo swapchain;
     u32 current_swapchain_image;
 
-    FrameData frames[MAX_FRAMES_IN_FLIGHT];
-    u32 current_frame;
+    FrameData frame_data;
 
-    ImmediateData immediate;
+    ImmediateData immediate_data;
 
     std::vector<std::function<void()>> cleanup_callbacks;
 };

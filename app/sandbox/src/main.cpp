@@ -194,6 +194,15 @@ draw()
     // Start recording commands for the current frame
     auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
 
+    vkResetCommandBuffer(cmd, 0);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+
+    vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
+
     // Execute compute pipeline dispatch with 16x16 workgroup size
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
@@ -211,6 +220,8 @@ draw()
 
     // Swapchain image should in VK_IMAGE_LAYOUT_PRESENT_SRC_KHR by the end of the command buffer
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    vkEndCommandBuffer(cmd);
 
     // Finish recording commands for the current frame
     goose::render::end_frame(render_context);
