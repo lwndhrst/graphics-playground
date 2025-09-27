@@ -7,6 +7,8 @@
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 
+#define MAX_FRAMES_IN_FLIGHT 2
+
 static goose::WindowInfo window;
 static goose::render::RenderContext render_context;
 
@@ -159,7 +161,11 @@ init()
         return false;
     }
 
-    if (!goose::render::create_render_context(render_context, window))
+    goose::render::FrameCreateInfo frame_create_info = {
+        .max_frames_in_flight = MAX_FRAMES_IN_FLIGHT,
+    };
+
+    if (!goose::render::create_render_context(render_context, window, frame_create_info))
     {
         LOG_ERROR("Failed to create render context");
         return false;
@@ -191,9 +197,10 @@ init()
 void
 draw()
 {
-    // Start recording commands for the current frame
-    auto [cmd, swapchain_image] = goose::render::begin_frame(render_context);
+    auto [frame, swapchain_image] = goose::render::begin_frame(render_context);
 
+    // Start recording commands for the current frame
+    VkCommandBuffer cmd = frame.main_command_buffer;
     vkResetCommandBuffer(cmd, 0);
 
     VkCommandBufferBeginInfo command_buffer_begin_info = {

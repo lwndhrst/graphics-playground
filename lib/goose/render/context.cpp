@@ -10,7 +10,7 @@
 #include "vk_mem_alloc.h"
 
 bool
-goose::render::create_render_context(RenderContext &ctx, const WindowInfo &window)
+goose::render::create_render_context(RenderContext &ctx, const WindowInfo &window, const FrameCreateInfo &frame_create_info)
 {
     LOG_INFO("Creating render context");
 
@@ -42,10 +42,6 @@ goose::render::create_render_context(RenderContext &ctx, const WindowInfo &windo
         LOG_ERROR("Failed to create swapchain");
         return false;
     }
-
-    FrameCreateInfo frame_create_info = {
-        .max_frames_in_flight = 2,
-    };
 
     if (!create_frame_data(ctx.frame_data, frame_create_info))
     {
@@ -102,27 +98,23 @@ goose::render::resize_swapchain(RenderContext &ctx, const WindowInfo &window)
     create_swapchain(ctx.swapchain, window.surface, window.extent);
 }
 
-std::pair<VkCommandBuffer, const goose::render::SwapchainImageInfo &>
+std::pair<const goose::render::Frame &, const goose::render::SwapchainImageInfo &>
 goose::render::begin_frame(RenderContext &ctx)
 {
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
 
-    const usize &current_frame_index = ctx.frame_data.current_frame_index;
+    const Frame &frame = get_current_frame(ctx.frame_data);
 
-    const VkCommandBuffer &main_command_buffer = ctx.frame_data.main_command_buffers[current_frame_index];
-    const VkFence &in_flight_fence = ctx.frame_data.in_flight_fences[current_frame_index];
-    const VkSemaphore &image_available_semaphore = ctx.frame_data.image_available_semaphores[current_frame_index];
+    vkWaitForFences(device, 1, &frame.in_flight_fence, true, 1000000000);
+    vkResetFences(device, 1, &frame.in_flight_fence);
 
-    vkWaitForFences(device, 1, &in_flight_fence, true, 1000000000);
-    vkResetFences(device, 1, &in_flight_fence);
-
-    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
 
     const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
-    return {main_command_buffer, swapchain_image};
+    return {frame, swapchain_image};
 }
 
 void
@@ -130,22 +122,18 @@ goose::render::end_frame(RenderContext &ctx)
 {
     // TODO: Error handling
 
-    const usize &current_frame_index = ctx.frame_data.current_frame_index;
-
-    const VkCommandBuffer &main_command_buffer = ctx.frame_data.main_command_buffers[current_frame_index];
-    const VkFence &in_flight_fence = ctx.frame_data.in_flight_fences[current_frame_index];
-    const VkSemaphore &image_available_semaphore = ctx.frame_data.image_available_semaphores[current_frame_index];
+    const Frame &frame = get_current_frame(ctx.frame_data);
 
     const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
     VkCommandBufferSubmitInfo command_buffer_submit_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
-        .commandBuffer = main_command_buffer,
+        .commandBuffer = frame.main_command_buffer,
     };
 
     VkSemaphoreSubmitInfo wait_semaphore_submit_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
-        .semaphore = image_available_semaphore,
+        .semaphore = frame.image_available_semaphore,
         .value = 1,
         .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR,
     };
@@ -172,7 +160,7 @@ goose::render::end_frame(RenderContext &ctx)
 
     const QueueFamilies &queue_families = Device::get_queue_families();
 
-    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, in_flight_fence);
+    VkResult result = vkQueueSubmit2(queue_families.graphics.queues[0], 1, &submit_info, frame.in_flight_fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -200,6 +188,7 @@ goose::render::begin_immediate(const RenderContext &ctx)
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
+
     const ImmediateData &immediate = ctx.immediate_data;
 
     vkResetFences(device, 1, &immediate.in_flight_fence);
