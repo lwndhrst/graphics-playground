@@ -85,6 +85,22 @@ init_descriptors()
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
         descriptor_sets[i] = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
+
+        VkDescriptorImageInfo descriptor_image_info = {
+            .imageView = draw_images[i].view,
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        };
+
+        VkWriteDescriptorSet write_descriptor_set = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = descriptor_sets[i],
+            .dstBinding = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &descriptor_image_info,
+        };
+
+        vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
     }
 
     goose::render::add_cleanup_callback(render_context, []() {
@@ -202,23 +218,6 @@ draw()
     };
 
     vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
-
-    // Update descriptors before binding the pipeline
-    VkDescriptorImageInfo descriptor_image_info = {
-        .imageView = draw_image.view,
-        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    };
-
-    VkWriteDescriptorSet write_descriptor_set = {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_sets[frame.index],
-        .dstBinding = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        .pImageInfo = &descriptor_image_info,
-    };
-
-    vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
 
     // Execute compute pipeline dispatch with 16x16 workgroup size
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
