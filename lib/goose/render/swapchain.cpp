@@ -190,7 +190,7 @@ goose::render::create_swapchain(
     };
 
     swapchain.images.resize(swapchain_image_count);
-    for (usize i = 0; i < swapchain_image_count; ++i)
+    for (u32 i = 0; i < swapchain_image_count; ++i)
     {
         image_view_create_info.image = swapchain_images[i];
 

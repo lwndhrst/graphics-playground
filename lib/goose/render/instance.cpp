@@ -27,7 +27,7 @@ goose::render::create_instance(const char *app_name, u32 app_version)
 
     u32 sdl_instance_extension_count;
     auto sdl_instance_extensions = SDL_Vulkan_GetInstanceExtensions(&sdl_instance_extension_count);
-    for (usize i = 0; i < sdl_instance_extension_count; ++i)
+    for (u32 i = 0; i < sdl_instance_extension_count; ++i)
     {
         extensions.push_back(sdl_instance_extensions[i]);
     }

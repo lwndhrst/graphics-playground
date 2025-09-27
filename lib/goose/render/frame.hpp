@@ -4,26 +4,8 @@
 
 namespace goose::render {
 
-struct FrameCommandInfo {
-    u32 queue_family_index;
-    VkCommandPoolCreateFlags pool_create_flags;
-    u32 secondary_buffer_count;
-};
-
-struct FrameDescriptorInfo {
-    // TODO
-};
-
-struct FrameImageInfo {
-    // TODO
-};
-
-struct FrameCreateInfo {
+struct FrameDataCreateInfo {
     u32 max_frames_in_flight;
-
-    FrameCommandInfo *command_info;
-    FrameDescriptorInfo *descriptor_info;
-    FrameImageInfo *image_info;
 };
 
 struct FrameData {
@@ -33,10 +15,6 @@ struct FrameData {
     VkCommandPool command_pool;
     std::vector<VkCommandBuffer> main_command_buffers;
 
-    VkDescriptorPool descriptor_pool;
-    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
-    std::vector<VkDescriptorSet> descriptor_sets;
-
     // Signaled when the previous queue submit call of the current frame is finished
     std::vector<VkFence> in_flight_fences;
 
@@ -44,18 +22,20 @@ struct FrameData {
     std::vector<VkSemaphore> image_available_semaphores;
 };
 
-bool create_frame_data(FrameData &frame_data, const FrameCreateInfo &create_info);
+bool create_frame_data(FrameData &frame_data, const FrameDataCreateInfo &create_info);
 void destroy_frame_data(FrameData &frame_data);
 
+inline void
+increment_frame_index(FrameData &frame_data)
+{
+    frame_data.current_frame_index = (frame_data.current_frame_index + 1) % frame_data.max_frames_in_flight;
+}
+
 struct Frame {
-    // Always available
+    u32 index;
     VkCommandBuffer main_command_buffer;
     VkFence in_flight_fence;
     VkSemaphore image_available_semaphore;
-
-    // Optional
-    VkDescriptorSetLayout descriptor_set_layout;
-    VkDescriptorSet descriptor_set;
 };
 
 inline Frame
@@ -64,6 +44,7 @@ get_current_frame(const FrameData &frame_data)
     const u32 &i = frame_data.current_frame_index;
 
     return {
+        .index = i,
         .main_command_buffer = frame_data.main_command_buffers[i],
         .in_flight_fence = frame_data.in_flight_fences[i],
         .image_available_semaphore = frame_data.image_available_semaphores[i],

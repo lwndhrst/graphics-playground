@@ -28,9 +28,9 @@ struct WindowInfo {
 
     WindowEventFlags event_flags;
 
-    static WindowInfo *get_by_id(SDL_WindowID id, usize *index = nullptr)
+    static WindowInfo *get_by_id(SDL_WindowID id, u32 *index = nullptr)
     {
-        for (usize i = 0; i < s_active_windows.size(); ++i)
+        for (u32 i = 0; i < s_active_windows.size(); ++i)
         {
             WindowInfo *window = s_active_windows[i];
             if (window->id == id)

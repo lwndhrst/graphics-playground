@@ -20,7 +20,7 @@ struct SwapchainImageInfo {
     VkExtent2D extent;
     VkFormat format;
 
-    // Signaled when the image is ready for presentation, i.e. when rendering is finished
+    // Signaled when the image is ready for presentation, i.e. when all submitted work is done
     VkSemaphore render_finished_semaphore;
 };
 
@@ -30,7 +30,7 @@ struct SwapchainInfo {
     VkExtent2D image_extent;
     VkFormat image_format;
 
-    usize image_count;
+    u32 image_count;
     std::vector<SwapchainImageInfo> images;
 };
 

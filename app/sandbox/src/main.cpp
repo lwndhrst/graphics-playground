@@ -13,23 +13,22 @@ static goose::WindowInfo window;
 static goose::render::RenderContext render_context;
 
 // Use an extra image as draw target rather than directly drawing into swapchain images
-static goose::render::ImageInfo draw_image;
+static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
 static VkExtent2D draw_image_extent;
 
 static VkDescriptorPool descriptor_pool;
-static VkDescriptorSet descriptor_set;
 static VkDescriptorSetLayout descriptor_set_layout;
+static VkDescriptorSet descriptor_sets[MAX_FRAMES_IN_FLIGHT];
 
 static VkPipeline pipeline;
 static VkPipelineLayout pipeline_layout;
 
 bool
-init_draw_image(VkExtent2D extent)
+init_draw_images(VkExtent2D extent)
 {
     draw_image_extent = extent;
 
     goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
-
     image_builder
         .set_extent({extent.width, extent.height, 1})
         .set_format(VK_FORMAT_R16G16B16A16_SFLOAT)
@@ -41,14 +40,17 @@ init_draw_image(VkExtent2D extent)
         .set_aspect_flags(VK_IMAGE_ASPECT_COLOR_BIT)
         .set_memory_usage(goose::render::MEMORY_USAGE_GPU_ONLY);
 
-    if (!image_builder.build(draw_image))
+    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
-        return false;
-    }
+        if (!image_builder.build(draw_images[i]))
+        {
+            return false;
+        }
 
-    goose::render::add_cleanup_callback(render_context, [&]() {
-        goose::render::destroy_image(draw_image);
-    });
+        goose::render::add_cleanup_callback(render_context, [i]() {
+            goose::render::destroy_image(draw_images[i]);
+        });
+    }
 
     return true;
 }
@@ -60,17 +62,17 @@ init_descriptors()
 
     const VkDevice &device = goose::render::Device::get();
 
-    u32 max_descriptor_sets = 1;
+    u32 max_descriptor_sets = MAX_FRAMES_IN_FLIGHT;
     std::vector<VkDescriptorPoolSize> max_descriptor_count_per_type = {
         {
             .type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .descriptorCount = 1,
+            .descriptorCount = MAX_FRAMES_IN_FLIGHT,
         },
     };
 
     descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, max_descriptor_count_per_type);
 
-    goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder;
+    goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder = {};
     descriptor_set_layout_builder
         .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
         .set_stage_flags(VK_SHADER_STAGE_COMPUTE_BIT);
@@ -80,25 +82,12 @@ init_descriptors()
         return false;
     }
 
-    descriptor_set = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
+    for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        descriptor_sets[i] = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
+    }
 
-    VkDescriptorImageInfo descriptor_image_info = {
-        .imageView = draw_image.view,
-        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-    };
-
-    VkWriteDescriptorSet write_descriptor_set = {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = descriptor_set,
-        .dstBinding = 0,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        .pImageInfo = &descriptor_image_info,
-    };
-
-    vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
-
-    goose::render::add_cleanup_callback(render_context, [&]() {
+    goose::render::add_cleanup_callback(render_context, []() {
         goose::render::destroy_descriptor_set_layout(descriptor_set_layout);
         goose::render::destroy_descriptor_pool(descriptor_pool);
     });
@@ -161,17 +150,17 @@ init()
         return false;
     }
 
-    goose::render::FrameCreateInfo frame_create_info = {
+    goose::render::FrameDataCreateInfo frame_data_create_info = {
         .max_frames_in_flight = MAX_FRAMES_IN_FLIGHT,
     };
 
-    if (!goose::render::create_render_context(render_context, window, frame_create_info))
+    if (!goose::render::create_render_context(render_context, window, frame_data_create_info))
     {
         LOG_ERROR("Failed to create render context");
         return false;
     }
 
-    if (!init_draw_image({1920, 1080}))
+    if (!init_draw_images({1920, 1080}))
     {
         LOG_ERROR("Failed to create draw image");
         return false;
@@ -197,7 +186,11 @@ init()
 void
 draw()
 {
+    const VkDevice &device = goose::render::Device::get();
+
     auto [frame, swapchain_image] = goose::render::begin_frame(render_context);
+
+    const goose::render::ImageInfo &draw_image = draw_images[frame.index];
 
     // Start recording commands for the current frame
     VkCommandBuffer cmd = frame.main_command_buffer;
@@ -210,10 +203,27 @@ draw()
 
     vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
 
+    // Update descriptors before binding the pipeline
+    VkDescriptorImageInfo descriptor_image_info = {
+        .imageView = draw_image.view,
+        .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+    };
+
+    VkWriteDescriptorSet write_descriptor_set = {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptor_sets[frame.index],
+        .dstBinding = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        .pImageInfo = &descriptor_image_info,
+    };
+
+    vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
+
     // Execute compute pipeline dispatch with 16x16 workgroup size
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_sets[frame.index], 0, nullptr);
     vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image_extent.width, 16), UINT_DIV_CEIL(draw_image_extent.height, 16), 1);
 
     // Copy draw image content to swapchain image

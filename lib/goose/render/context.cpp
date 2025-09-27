@@ -3,14 +3,16 @@
 #include "goose/common/log.hpp"
 #include "goose/render/allocator.hpp"
 #include "goose/render/device.hpp"
-#include "goose/render/helpers.hpp"
 #include "goose/window/window.hpp"
 
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
 bool
-goose::render::create_render_context(RenderContext &ctx, const WindowInfo &window, const FrameCreateInfo &frame_create_info)
+goose::render::create_render_context(
+    RenderContext &ctx,
+    const WindowInfo &window,
+    const FrameDataCreateInfo &frame_data_create_info)
 {
     LOG_INFO("Creating render context");
 
@@ -43,7 +45,7 @@ goose::render::create_render_context(RenderContext &ctx, const WindowInfo &windo
         return false;
     }
 
-    if (!create_frame_data(ctx.frame_data, frame_create_info))
+    if (!create_frame_data(ctx.frame_data, frame_data_create_info))
     {
         LOG_ERROR("Failed to create frame data");
         return false;
@@ -98,23 +100,27 @@ goose::render::resize_swapchain(RenderContext &ctx, const WindowInfo &window)
     create_swapchain(ctx.swapchain, window.surface, window.extent);
 }
 
-std::pair<const goose::render::Frame &, const goose::render::SwapchainImageInfo &>
+std::pair<const goose::render::Frame, const goose::render::SwapchainImageInfo &>
 goose::render::begin_frame(RenderContext &ctx)
 {
     // TODO: Error handling
 
     const VkDevice &device = Device::get();
 
-    const Frame &frame = get_current_frame(ctx.frame_data);
+    const Frame frame = get_current_frame(ctx.frame_data);
 
     vkWaitForFences(device, 1, &frame.in_flight_fence, true, 1000000000);
     vkResetFences(device, 1, &frame.in_flight_fence);
 
-    vkAcquireNextImageKHR(device, ctx.swapchain.swapchain, 1000000000, frame.image_available_semaphore, nullptr, &ctx.current_swapchain_image);
+    vkAcquireNextImageKHR(
+        device,
+        ctx.swapchain.swapchain,
+        1000000000,
+        frame.image_available_semaphore,
+        nullptr,
+        &ctx.current_swapchain_image);
 
-    const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
-
-    return {frame, swapchain_image};
+    return {frame, ctx.swapchain.images[ctx.current_swapchain_image]};
 }
 
 void
@@ -122,7 +128,7 @@ goose::render::end_frame(RenderContext &ctx)
 {
     // TODO: Error handling
 
-    const Frame &frame = get_current_frame(ctx.frame_data);
+    const Frame frame = get_current_frame(ctx.frame_data);
 
     const SwapchainImageInfo &swapchain_image = ctx.swapchain.images[ctx.current_swapchain_image];
 
@@ -179,7 +185,7 @@ goose::render::end_frame(RenderContext &ctx)
     // TODO: Error handling
     VK_ASSERT(result);
 
-    ctx.frame_data.current_frame_index = (ctx.frame_data.current_frame_index + 1) % ctx.frame_data.max_frames_in_flight;
+    increment_frame_index(ctx.frame_data);
 }
 
 VkCommandBuffer

@@ -57,7 +57,7 @@ goose::destroy_window(WindowInfo &window)
     SDL_DestroyWindow(window.window);
 
     // Remove destroyed window from internal list of active windows and move last entry to the freed position
-    usize i;
+    u32 i;
     WindowInfo::get_by_id(window.id, &i);
     WindowInfo::s_active_windows[i] = WindowInfo::s_active_windows[WindowInfo::s_active_windows.size() - 1];
     WindowInfo::s_active_windows.pop_back();
