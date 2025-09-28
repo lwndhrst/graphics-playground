@@ -58,10 +58,6 @@ init_draw_images(VkExtent2D extent)
 bool
 init_descriptors()
 {
-    // TODO: Make this nicer to use
-
-    const VkDevice &device = goose::render::Device::get();
-
     u32 max_descriptor_sets = MAX_FRAMES_IN_FLIGHT;
     std::vector<VkDescriptorPoolSize> max_descriptor_count_per_type = {
         {
@@ -83,6 +79,8 @@ init_descriptors()
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
+        // TODO: Make writing descriptors nicer somehow
+
         descriptor_sets[i] = goose::render::allocate_descriptor_set(descriptor_pool, descriptor_set_layout);
 
         VkDescriptorImageInfo descriptor_image_info = {
@@ -99,7 +97,7 @@ init_descriptors()
             .pImageInfo = &descriptor_image_info,
         };
 
-        vkUpdateDescriptorSets(device, 1, &write_descriptor_set, 0, nullptr);
+        vkUpdateDescriptorSets(goose::render::Device::get(), 1, &write_descriptor_set, 0, nullptr);
     }
 
     goose::render::add_cleanup_callback(render_context, []() {
@@ -113,10 +111,6 @@ init_descriptors()
 bool
 init_pipeline()
 {
-    // TODO: Make this nicer to use
-
-    const VkDevice &device = goose::render::Device::get();
-
     goose::render::PipelineLayoutBuilder pipeline_layout_builder = {};
     pipeline_layout_builder
         .add_descriptor_set_layout(descriptor_set_layout);
@@ -138,8 +132,8 @@ init_pipeline()
     }
 
     goose::render::add_cleanup_callback(render_context, [&]() {
-        vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-        vkDestroyPipeline(device, pipeline, nullptr);
+        goose::render::destroy_pipeline(pipeline);
+        goose::render::destroy_pipeline_layout(pipeline_layout);
     });
 
     return true;
