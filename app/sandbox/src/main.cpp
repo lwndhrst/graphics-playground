@@ -14,7 +14,6 @@ static goose::render::RenderContext render_context;
 
 // Use an extra image as draw target rather than directly drawing into swapchain images
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
-// static VkExtent2D draw_image_extent;
 
 static VkDescriptorPool descriptor_pool;
 static VkDescriptorSetLayout descriptor_set_layout;
@@ -26,8 +25,6 @@ static VkPipelineLayout pipeline_layout;
 bool
 init_draw_images(VkExtent2D extent)
 {
-    // draw_image_extent = extent;
-
     goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
     image_builder
         .set_extent(extent)
