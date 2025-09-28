@@ -18,19 +18,30 @@ goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR 
         .sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_2_KHR,
     };
 
-    vkGetPhysicalDeviceSurfaceCapabilities2KHR(gpu, &surface_info, &surface_capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilities2KHR(
+        gpu,
+        &surface_info,
+        &surface_capabilities);
 
     details.capabilities = surface_capabilities.surfaceCapabilities;
 
     u32 surface_format_count;
-    vkGetPhysicalDeviceSurfaceFormats2KHR(gpu, &surface_info, &surface_format_count, nullptr);
+    vkGetPhysicalDeviceSurfaceFormats2KHR(
+        gpu,
+        &surface_info,
+        &surface_format_count,
+        nullptr);
 
     VkSurfaceFormat2KHR surface_format = {
         .sType = VK_STRUCTURE_TYPE_SURFACE_FORMAT_2_KHR,
     };
 
     std::vector<VkSurfaceFormat2KHR> surface_formats(surface_format_count, surface_format);
-    vkGetPhysicalDeviceSurfaceFormats2KHR(gpu, &surface_info, &surface_format_count, surface_formats.data());
+    vkGetPhysicalDeviceSurfaceFormats2KHR(
+        gpu,
+        &surface_info,
+        &surface_format_count,
+        surface_formats.data());
 
     details.formats.resize(surface_format_count);
     for (const auto &format : surface_formats)
@@ -39,10 +50,18 @@ goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR 
     }
 
     u32 surface_present_mode_count;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &surface_present_mode_count, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        gpu,
+        surface,
+        &surface_present_mode_count,
+        nullptr);
 
     details.present_modes.resize(surface_present_mode_count);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(gpu, surface, &surface_present_mode_count, details.present_modes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(
+        gpu,
+        surface,
+        &surface_present_mode_count,
+        details.present_modes.data());
 
     return details;
 }
@@ -154,7 +173,12 @@ goose::render::create_swapchain(
 
     const VkDevice &device = Device::get();
 
-    VkResult result = vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, &swapchain.swapchain);
+    VkResult result = vkCreateSwapchainKHR(
+        device,
+        &swapchain_create_info,
+        nullptr,
+        &swapchain.swapchain);
+
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
@@ -163,10 +187,18 @@ goose::render::create_swapchain(
 
     // Get swapchain images
 
-    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain_image_count, nullptr);
+    vkGetSwapchainImagesKHR(
+        device,
+        swapchain.swapchain,
+        &swapchain_image_count,
+        nullptr);
 
     std::vector<VkImage> swapchain_images(swapchain_image_count);
-    vkGetSwapchainImagesKHR(device, swapchain.swapchain, &swapchain_image_count, swapchain_images.data());
+    vkGetSwapchainImagesKHR(
+        device,
+        swapchain.swapchain,
+        &swapchain_image_count,
+        swapchain_images.data());
 
     // Create swapchain image views
 
@@ -195,7 +227,12 @@ goose::render::create_swapchain(
         image_view_create_info.image = swapchain_images[i];
 
         VkImageView image_view;
-        VkResult result = vkCreateImageView(device, &image_view_create_info, nullptr, &image_view);
+        VkResult result = vkCreateImageView(
+            device,
+            &image_view_create_info,
+            nullptr,
+            &image_view);
+
         if (result != VK_SUCCESS)
         {
             VK_LOG_ERROR(result);

@@ -248,7 +248,12 @@ goose::render::create_device(VkSurfaceKHR surface)
     };
 
     VkDevice device;
-    VkResult result = vkCreateDevice(physical_device, &device_create_info, nullptr, &device);
+    VkResult result = vkCreateDevice(
+        physical_device,
+        &device_create_info,
+        nullptr,
+        &device);
+
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);

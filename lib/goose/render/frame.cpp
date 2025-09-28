@@ -19,7 +19,10 @@ goose::render::create_frame_data(FrameData &frame_data, const FrameDataCreateInf
 
     for (u32 i = 0; i < create_info.max_frames_in_flight; ++i)
     {
-        frame_data.main_command_buffers[i] = allocate_command_buffer(frame_data.command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+        frame_data.main_command_buffers[i] = allocate_command_buffer(
+            frame_data.command_pool,
+            VK_COMMAND_BUFFER_LEVEL_PRIMARY);
+
         frame_data.in_flight_fences[i] = create_fence(VK_FENCE_CREATE_SIGNALED_BIT);
         frame_data.image_available_semaphores[i] = create_semaphore();
     }

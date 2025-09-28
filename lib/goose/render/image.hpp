@@ -7,6 +7,7 @@ namespace goose::render {
 
 enum ImageType {
     IMAGE_TYPE_2D,
+    IMAGE_TYPE_3D,
 };
 
 struct ImageInfo {
@@ -14,7 +15,11 @@ struct ImageInfo {
     VkImageView view;
 
     VkFormat format;
-    VkExtent3D extent;
+
+    union {
+        VkExtent3D extent;
+        VkExtent2D extent_2d;
+    };
 
     VmaAllocation allocation;
 };
@@ -36,6 +41,7 @@ struct ImageBuilder {
 
     ImageBuilder &set_type(const ImageType &type);
     ImageBuilder &set_format(const VkFormat &format);
+    ImageBuilder &set_extent(const VkExtent2D &extent);
     ImageBuilder &set_extent(const VkExtent3D &extent);
     ImageBuilder &set_mip_levels(const u32 &mip_levels);
     ImageBuilder &set_array_layers(const u32 &array_layers);

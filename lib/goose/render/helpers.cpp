@@ -15,7 +15,11 @@ goose::render::create_command_pool(u32 queue_family_index, VkCommandPoolCreateFl
     };
 
     VkCommandPool command_pool;
-    VkResult result = vkCreateCommandPool(Device::get(), &command_pool_create_info, nullptr, &command_pool);
+    VkResult result = vkCreateCommandPool(
+        Device::get(),
+        &command_pool_create_info,
+        nullptr,
+        &command_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -40,7 +44,10 @@ goose::render::allocate_command_buffer(VkCommandPool pool, VkCommandBufferLevel 
     };
 
     VkCommandBuffer command_buffer;
-    VkResult result = vkAllocateCommandBuffers(Device::get(), &command_buffer_alloc_info, &command_buffer);
+    VkResult result = vkAllocateCommandBuffers(
+        Device::get(),
+        &command_buffer_alloc_info,
+        &command_buffer);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -60,7 +67,11 @@ goose::render::create_descriptor_pool(u32 max_sets, std::span<VkDescriptorPoolSi
     };
 
     VkDescriptorPool descriptor_pool;
-    VkResult result = vkCreateDescriptorPool(Device::get(), &descriptor_pool_create_info, nullptr, &descriptor_pool);
+    VkResult result = vkCreateDescriptorPool(
+        Device::get(),
+        &descriptor_pool_create_info,
+        nullptr,
+        &descriptor_pool);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -86,7 +97,10 @@ goose::render::allocate_descriptor_set(VkDescriptorPool pool, VkDescriptorSetLay
     };
 
     VkDescriptorSet descriptor_set;
-    VkResult result = vkAllocateDescriptorSets(Device::get(), &descriptor_set_allocate_info, &descriptor_set);
+    VkResult result = vkAllocateDescriptorSets(
+        Device::get(),
+        &descriptor_set_allocate_info,
+        &descriptor_set);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -103,7 +117,11 @@ goose::render::create_fence(VkFenceCreateFlags create_flags)
     };
 
     VkFence fence;
-    VkResult result = vkCreateFence(Device::get(), &fence_create_info, nullptr, &fence);
+    VkResult result = vkCreateFence(
+        Device::get(),
+        &fence_create_info,
+        nullptr,
+        &fence);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -126,7 +144,11 @@ goose::render::create_semaphore(VkSemaphoreCreateFlags create_flags)
     };
 
     VkSemaphore semaphore;
-    VkResult result = vkCreateSemaphore(Device::get(), &semaphore_create_info, nullptr, &semaphore);
+    VkResult result = vkCreateSemaphore(
+        Device::get(),
+        &semaphore_create_info,
+        nullptr,
+        &semaphore);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -157,7 +179,11 @@ goose::render::create_shader_module(const std::string &file_path)
     };
 
     VkShaderModule shader_module;
-    VkResult result = vkCreateShaderModule(Device::get(), &shader_module_create_info, nullptr, &shader_module);
+    VkResult result = vkCreateShaderModule(
+        Device::get(),
+        &shader_module_create_info,
+        nullptr,
+        &shader_module);
 
     // TODO: Error handling
     VK_ASSERT(result);
@@ -264,5 +290,10 @@ goose::render::copy_image_to_image(
     VkExtent2D src_extent,
     VkExtent2D dst_extent)
 {
-    copy_image_to_image(cmd, src_image, dst_image, {src_extent.width, src_extent.height, 1}, {dst_extent.width, dst_extent.height, 1});
+    copy_image_to_image(
+        cmd,
+        src_image,
+        dst_image,
+        {src_extent.width, src_extent.height, 1},
+        {dst_extent.width, dst_extent.height, 1});
 }

@@ -14,7 +14,7 @@ static goose::render::RenderContext render_context;
 
 // Use an extra image as draw target rather than directly drawing into swapchain images
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
-static VkExtent2D draw_image_extent;
+// static VkExtent2D draw_image_extent;
 
 static VkDescriptorPool descriptor_pool;
 static VkDescriptorSetLayout descriptor_set_layout;
@@ -26,11 +26,11 @@ static VkPipelineLayout pipeline_layout;
 bool
 init_draw_images(VkExtent2D extent)
 {
-    draw_image_extent = extent;
+    // draw_image_extent = extent;
 
     goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
     image_builder
-        .set_extent({extent.width, extent.height, 1})
+        .set_extent(extent)
         .set_format(VK_FORMAT_R16G16B16A16_SFLOAT)
         .set_usage_flags(
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
@@ -74,10 +74,9 @@ init_descriptors()
 
     goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder = {};
     descriptor_set_layout_builder
-        .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-        .set_stage_flags(VK_SHADER_STAGE_COMPUTE_BIT);
+        .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-    if (!descriptor_set_layout_builder.build(descriptor_set_layout))
+    if (!descriptor_set_layout_builder.build(descriptor_set_layout, VK_SHADER_STAGE_COMPUTE_BIT))
     {
         return false;
     }
@@ -178,7 +177,7 @@ init()
 
     if (!init_draw_images({1920, 1080}))
     {
-        LOG_ERROR("Failed to create draw image");
+        LOG_ERROR("Failed to create draw images");
         return false;
     }
 
@@ -223,12 +222,12 @@ draw()
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_sets[frame.index], 0, nullptr);
-    vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image_extent.width, 16), UINT_DIV_CEIL(draw_image_extent.height, 16), 1);
+    vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image.extent.width, 16), UINT_DIV_CEIL(draw_image.extent.height, 16), 1);
 
     // Copy draw image content to swapchain image
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-    goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_image_extent, swapchain_image.extent);
+    goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_image.extent_2d, swapchain_image.extent);
 
     // Draw ImGui directly into swapchain image
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

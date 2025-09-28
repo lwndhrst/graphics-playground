@@ -27,6 +27,10 @@ goose::render::ImageBuilder::set_type(const ImageType &type)
         _image_type = VK_IMAGE_TYPE_2D;
         _image_view_type = VK_IMAGE_VIEW_TYPE_2D;
         break;
+    case goose::render::IMAGE_TYPE_3D:
+        _image_type = VK_IMAGE_TYPE_3D;
+        _image_view_type = VK_IMAGE_VIEW_TYPE_3D;
+        break;
     default:
         LOG_ERROR("Unsupported image type");
         break;
@@ -39,6 +43,14 @@ goose::render::ImageBuilder &
 goose::render::ImageBuilder::set_format(const VkFormat &format)
 {
     _format = format;
+
+    return *this;
+}
+
+goose::render::ImageBuilder &
+goose::render::ImageBuilder::set_extent(const VkExtent2D &extent)
+{
+    _extent = {extent.width, extent.height, 1};
 
     return *this;
 }
@@ -135,7 +147,16 @@ goose::render::ImageBuilder::build(ImageInfo &image)
         return false;
     }
 
-    vmaCreateImage(Allocator::get(), &image_create_info, &image_allocation_info, &image.image, &image.allocation, nullptr);
+    VkResult result = vmaCreateImage(
+        Allocator::get(),
+        &image_create_info,
+        &image_allocation_info,
+        &image.image,
+        &image.allocation,
+        nullptr);
+
+    // TODO: Error handling
+    VK_ASSERT(result);
 
     VkImageViewCreateInfo image_view_create_info = {
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -151,12 +172,18 @@ goose::render::ImageBuilder::build(ImageInfo &image)
         },
     };
 
-    VkResult result = vkCreateImageView(Device::get(), &image_view_create_info, nullptr, &image.view);
+    result = vkCreateImageView(
+        Device::get(),
+        &image_view_create_info,
+        nullptr,
+        &image.view);
 
     // TODO: Error handling
     VK_ASSERT(result);
 
     image.format = _format;
+
+    // TODO: Does this setup with union work?
     image.extent = _extent;
 
     return true;

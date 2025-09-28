@@ -74,7 +74,11 @@ goose::render::create_instance(const char *app_name, u32 app_version)
     };
 
     VkInstance instance;
-    VkResult result = vkCreateInstance(&instance_create_info, nullptr, &instance);
+    VkResult result = vkCreateInstance(
+        &instance_create_info,
+        nullptr,
+        &instance);
+
     if (result != VK_SUCCESS)
     {
         VK_LOG_ERROR(result);
