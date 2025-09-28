@@ -4,6 +4,10 @@
 
 namespace goose::render {
 
+enum PipelineType {
+    PIPELINE_TYPE_COMPUTE,
+};
+
 struct PipelineLayoutBuilder {
     std::vector<VkDescriptorSetLayout> _descriptor_set_layouts;
 
@@ -15,11 +19,15 @@ struct PipelineLayoutBuilder {
 void destroy_pipeline_layout(VkPipelineLayout layout);
 
 struct PipelineBuilder {
-    std::vector<VkShaderModule> _shader_modules;
+    PipelineType _type;
 
-    PipelineBuilder &add_shader_module(const std::string &file_path);
+    std::vector<VkPipelineShaderStageCreateInfo> _shader_stages;
 
-    bool build(VkPipeline &pipeline);
+    PipelineBuilder(const PipelineType &type);
+
+    PipelineBuilder &add_shader(const std::string &file_path, VkShaderStageFlagBits shader_stage, const std::string &entry_point = "main");
+
+    bool build(VkPipeline &pipeline, VkPipelineLayout layout);
 };
 
 void destroy_pipeline(VkPipeline pipeline);

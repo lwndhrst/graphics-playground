@@ -117,34 +117,25 @@ init_pipeline()
 
     const VkDevice &device = goose::render::Device::get();
 
-    VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &descriptor_set_layout,
-    };
+    goose::render::PipelineLayoutBuilder pipeline_layout_builder = {};
+    pipeline_layout_builder
+        .add_descriptor_set_layout(descriptor_set_layout);
 
-    vkCreatePipelineLayout(device, &pipeline_layout_create_info, nullptr, &pipeline_layout);
+    if (!pipeline_layout_builder.build(pipeline_layout))
+    {
+        LOG_ERROR("Failed to create pipeline layout");
+        return false;
+    }
 
-    VkShaderModule shader_module = goose::render::create_shader_module(SHADER_PATH "/gradient.comp.spv");
+    goose::render::PipelineBuilder pipeline_builder(goose::render::PIPELINE_TYPE_COMPUTE);
+    pipeline_builder
+        .add_shader(SHADER_PATH "/gradient.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
-    VkPipelineShaderStageCreateInfo pipeline_shader_stage_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = shader_module,
-        .pName = "main",
-    };
-
-    VkComputePipelineCreateInfo compute_pipeline_create_info = {
-        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-        .stage = pipeline_shader_stage_create_info,
-        .layout = pipeline_layout,
-    };
-
-    // TODO: Pipeline cache?
-    vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, nullptr, &pipeline);
-
-    // Shader module can be destroyed directly
-    goose::render::destroy_shader_module(shader_module);
+    if (!pipeline_builder.build(pipeline, pipeline_layout))
+    {
+        LOG_ERROR("Failed to create pipeline");
+        return false;
+    }
 
     goose::render::add_cleanup_callback(render_context, [&]() {
         vkDestroyPipelineLayout(device, pipeline_layout, nullptr);

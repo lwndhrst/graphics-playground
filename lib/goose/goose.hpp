@@ -9,6 +9,7 @@
 #include "goose/render/device.hpp"
 #include "goose/render/helpers.hpp"
 #include "goose/render/image.hpp"
+#include "goose/render/pipeline.hpp"
 #include "goose/window/window.hpp"
 
 namespace goose {
