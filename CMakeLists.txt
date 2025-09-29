@@ -68,4 +68,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 add_subdirectory(lib/goose)
+
 add_subdirectory(app/sandbox)
+
+add_subdirectory(app/samples/simple_compute_example)

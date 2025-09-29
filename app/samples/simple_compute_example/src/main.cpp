@@ -15,6 +15,17 @@ static goose::render::RenderContext render_context;
 // Use an extra image as draw target rather than directly drawing into swapchain images
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
 
+// Gradient parameters for the shader
+struct PushConstants {
+    glm::vec4 color_a;
+    glm::vec4 color_b;
+};
+
+static PushConstants push_constants = {
+    .color_a = {1.0f, 0.25f, 0.0f, 1.0f},
+    .color_b = {0.0f, 0.25f, 1.0f, 1.0f},
+};
+
 static VkDescriptorPool descriptor_pool;
 static VkDescriptorSetLayout descriptor_set_layout;
 static VkDescriptorSet descriptor_sets[MAX_FRAMES_IN_FLIGHT];
@@ -110,7 +121,8 @@ init_pipeline()
 {
     goose::render::PipelineLayoutBuilder pipeline_layout_builder = {};
     pipeline_layout_builder
-        .add_descriptor_set_layout(descriptor_set_layout);
+        .add_descriptor_set_layout(descriptor_set_layout)
+        .add_push_constant(0, sizeof(PushConstants), VK_SHADER_STAGE_COMPUTE_BIT);
 
     if (!pipeline_layout_builder.build(pipeline_layout))
     {
@@ -118,18 +130,9 @@ init_pipeline()
         return false;
     }
 
-    goose::render::PipelineBuilder pipeline_builder(goose::render::PIPELINE_TYPE_GRAPHICS);
+    goose::render::PipelineBuilder pipeline_builder(goose::render::PIPELINE_TYPE_COMPUTE);
     pipeline_builder
-        .add_shader(SHADER_PATH "/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
-        .add_shader(SHADER_PATH "/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .set_input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .set_polygon_mode(VK_POLYGON_MODE_FILL)
-        .set_cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-        .disable_multisampling()
-        .disable_blending()
-        .disable_depth_test()
-        .set_color_attachment_format(draw_images[0].format)
-        .set_depth_attachment_format(VK_FORMAT_UNDEFINED);
+        .add_shader(SHADER_PATH "/gradient.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
 
     if (!pipeline_builder.build(pipeline, pipeline_layout))
     {
@@ -207,55 +210,15 @@ draw()
 
     vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
 
-    VkRenderingAttachmentInfo color_attachment = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = draw_image.view,
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .clearValue = {
-            .color = {0.0f, 0.0f, 0.0f, 1.0f},
-        },
-    };
-
-    VkRenderingInfo rendering_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = {
-            .offset = {0, 0},
-            .extent = draw_image.extent_2d,
-        },
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment,
-    };
-
-    VkViewport viewport = {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<f32>(draw_image.extent.width),
-        .height = static_cast<f32>(draw_image.extent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-
-    VkRect2D scissor = {
-        scissor.offset.x = 0,
-        scissor.offset.y = 0,
-        scissor.extent.width = draw_image.extent.width,
-        scissor.extent.height = draw_image.extent.height,
-    };
-
-    // Begin render pass
-    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    vkCmdBeginRendering(cmd, &rendering_info);
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
-    vkCmdEndRendering(cmd);
+    // Execute compute pipeline dispatch with 16x16 workgroup size
+    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_sets[frame.index], 0, nullptr);
+    vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstants), &push_constants);
+    vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image.extent.width, 16), UINT_DIV_CEIL(draw_image.extent.height, 16), 1);
 
     // Copy draw image content to swapchain image
-    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     goose::render::transition_image(cmd, swapchain_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     goose::render::copy_image_to_image(cmd, draw_image.image, swapchain_image.image, draw_image.extent_2d, swapchain_image.extent);
 
@@ -284,7 +247,14 @@ run()
         }
 
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
+
+        if (ImGui::Begin("Gradient Parameters"))
+        {
+            ImGui::ColorEdit4("Color A", reinterpret_cast<float *>(&push_constants.color_a));
+            ImGui::ColorEdit4("Color B", reinterpret_cast<float *>(&push_constants.color_b));
+            ImGui::End();
+        }
+
         ImGui::Render();
 
         draw();
