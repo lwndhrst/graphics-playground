@@ -30,12 +30,9 @@ function(compile_shaders TARGET_NAME SHADER_PATH)
     )
 
     foreach(GLSL ${GLSL_SOURCE_FILES})
-        message(STATUS "")
-        message(STATUS "FOUND SHADER")
         get_filename_component(FILE_NAME ${GLSL} NAME)
         set(SPIRV "${SHADER_PATH}/${FILE_NAME}.spv")
-        message(STATUS ${GLSL})
-        message(STATUS "")
+        message(STATUS "Found shader: ${GLSL}")
         add_custom_command(
             OUTPUT ${SPIRV}
             COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
@@ -71,4 +68,5 @@ add_subdirectory(lib/goose)
 
 add_subdirectory(app/sandbox)
 
-add_subdirectory(app/samples/simple_compute_example)
+add_subdirectory(app/samples/hello_triangle)
+add_subdirectory(app/samples/simple_compute)

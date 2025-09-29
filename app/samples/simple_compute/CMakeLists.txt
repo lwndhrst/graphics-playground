@@ -1,4 +1,4 @@
-set(TARGET_NAME simple-compute-example)
+set(TARGET_NAME simple-compute)
 
 file(GLOB_RECURSE SOURCES *.cpp)
 file(GLOB_RECURSE HEADERS *.hpp)
