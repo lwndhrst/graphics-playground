@@ -57,11 +57,27 @@ goose::render::PipelineBuilder::PipelineBuilder(const PipelineType &type)
 {
     _type = type;
 
-    _input_assembly_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-    _rasterization_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
-    _multisample_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
-    _depth_stencil_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
-    _render_info = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+    if (type == PIPELINE_TYPE_GRAPHICS)
+    {
+        _input_assembly_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+        _rasterization_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+        _multisample_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+        _depth_stencil_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+        _render_info = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+
+        // TODO: Reasonable defaults?
+
+        set_input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+        set_polygon_mode(VK_POLYGON_MODE_FILL);
+        set_cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
+
+        disable_multisampling();
+        disable_blending();
+        disable_depth_test();
+
+        set_color_attachment_format(VK_FORMAT_UNDEFINED);
+        set_depth_attachment_format(VK_FORMAT_UNDEFINED);
+    }
 }
 
 goose::render::PipelineBuilder &

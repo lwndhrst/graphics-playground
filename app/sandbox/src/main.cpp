@@ -13,6 +13,7 @@ static goose::WindowInfo window;
 static goose::render::RenderContext render_context;
 
 // Use an extra image as draw target rather than directly drawing into swapchain images
+VkFormat draw_image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
 
 static VkDescriptorPool descriptor_pool;
@@ -28,7 +29,7 @@ init_draw_images(VkExtent2D extent)
     goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
     image_builder
         .set_extent(extent)
-        .set_format(VK_FORMAT_R16G16B16A16_SFLOAT)
+        .set_format(draw_image_format)
         .set_usage_flags(
             VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
             VK_IMAGE_USAGE_TRANSFER_DST_BIT |
@@ -122,14 +123,7 @@ init_pipeline()
     pipeline_builder
         .add_shader(SHADER_PATH "/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
         .add_shader(SHADER_PATH "/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
-        .set_input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-        .set_polygon_mode(VK_POLYGON_MODE_FILL)
-        .set_cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-        .disable_multisampling()
-        .disable_blending()
-        .disable_depth_test()
-        .set_color_attachment_format(draw_images[0].format)
-        .set_depth_attachment_format(VK_FORMAT_UNDEFINED);
+        .set_color_attachment_format(draw_image_format);
 
     if (!pipeline_builder.build(pipeline, pipeline_layout))
     {
