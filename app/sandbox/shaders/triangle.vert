@@ -1,6 +1,6 @@
 #version 450
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 out_color;
 
 void main()
 {
@@ -17,5 +17,5 @@ void main()
     );
 
     gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
-    outColor = colors[gl_VertexIndex];
+    out_color = colors[gl_VertexIndex];
 }
