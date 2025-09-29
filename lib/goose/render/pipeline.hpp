@@ -10,8 +10,10 @@ enum PipelineType {
 
 struct PipelineLayoutBuilder {
     std::vector<VkDescriptorSetLayout> _descriptor_set_layouts;
+    std::vector<VkPushConstantRange> _push_constants;
 
     PipelineLayoutBuilder &add_descriptor_set_layout(VkDescriptorSetLayout layout);
+    PipelineLayoutBuilder &add_push_constant(u32 offset, u32 size, VkShaderStageFlagBits shader_stage);
 
     bool build(VkPipelineLayout &layout);
 };

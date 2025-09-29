@@ -12,6 +12,18 @@ goose::render::PipelineLayoutBuilder::add_descriptor_set_layout(VkDescriptorSetL
     return *this;
 }
 
+goose::render::PipelineLayoutBuilder &
+goose::render::PipelineLayoutBuilder::add_push_constant(u32 offset, u32 size, VkShaderStageFlagBits shader_stage)
+{
+    _push_constants.push_back({
+        .stageFlags = shader_stage,
+        .offset = offset,
+        .size = size,
+    });
+
+    return *this;
+}
+
 bool
 goose::render::PipelineLayoutBuilder::build(VkPipelineLayout &layout)
 {
@@ -19,6 +31,8 @@ goose::render::PipelineLayoutBuilder::build(VkPipelineLayout &layout)
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = static_cast<u32>(_descriptor_set_layouts.size()),
         .pSetLayouts = _descriptor_set_layouts.data(),
+        .pushConstantRangeCount = static_cast<u32>(_push_constants.size()),
+        .pPushConstantRanges = _push_constants.data(),
     };
 
     VkResult result = vkCreatePipelineLayout(

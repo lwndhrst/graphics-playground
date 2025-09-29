@@ -5,7 +5,11 @@
 
 #include "vk_mem_alloc.h"
 
+#include "glm/mat4x4.hpp"
+#include "glm/vec4.hpp"
+
 #include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -15,8 +19,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <cstdint>
 
 typedef uint8_t u8;
 typedef uint16_t u16;

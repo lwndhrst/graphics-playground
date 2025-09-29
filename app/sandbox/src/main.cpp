@@ -15,6 +15,17 @@ static goose::render::RenderContext render_context;
 // Use an extra image as draw target rather than directly drawing into swapchain images
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
 
+// Gradient parameters for the shader
+struct PushConstants {
+    glm::vec4 color_a;
+    glm::vec4 color_b;
+};
+
+static PushConstants push_constants = {
+    .color_a = {1.0f, 0.25f, 0.0f, 1.0f},
+    .color_b = {0.0f, 0.25f, 1.0f, 1.0f},
+};
+
 static VkDescriptorPool descriptor_pool;
 static VkDescriptorSetLayout descriptor_set_layout;
 static VkDescriptorSet descriptor_sets[MAX_FRAMES_IN_FLIGHT];
@@ -110,7 +121,8 @@ init_pipeline()
 {
     goose::render::PipelineLayoutBuilder pipeline_layout_builder = {};
     pipeline_layout_builder
-        .add_descriptor_set_layout(descriptor_set_layout);
+        .add_descriptor_set_layout(descriptor_set_layout)
+        .add_push_constant(0, sizeof(PushConstants), VK_SHADER_STAGE_COMPUTE_BIT);
 
     if (!pipeline_layout_builder.build(pipeline_layout))
     {
@@ -204,6 +216,7 @@ draw()
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_sets[frame.index], 0, nullptr);
+    vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(PushConstants), &push_constants);
     vkCmdDispatch(cmd, UINT_DIV_CEIL(draw_image.extent.width, 16), UINT_DIV_CEIL(draw_image.extent.height, 16), 1);
 
     // Copy draw image content to swapchain image
@@ -236,7 +249,14 @@ run()
         }
 
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
+
+        if (ImGui::Begin("Gradient Parameters"))
+        {
+            ImGui::ColorEdit4("Color A", reinterpret_cast<float *>(&push_constants.color_a));
+            ImGui::ColorEdit4("Color B", reinterpret_cast<float *>(&push_constants.color_b));
+            ImGui::End();
+        }
+
         ImGui::Render();
 
         draw();
