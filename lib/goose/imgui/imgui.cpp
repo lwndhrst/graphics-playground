@@ -16,7 +16,7 @@ static bool g_imgui_initialized = false;
 // TODO: Any way to make this work with multiple windows?
 
 bool
-goose::init_imgui_internal(const WindowInfo &window, const goose::render::RenderContext &ctx)
+goose::imgui::init_imgui(const WindowInfo &window, const goose::render::RenderContext &ctx)
 {
     if (g_imgui_initialized)
     {
@@ -83,7 +83,7 @@ goose::init_imgui_internal(const WindowInfo &window, const goose::render::Render
 }
 
 void
-goose::quit_imgui_internal()
+goose::imgui::quit_imgui()
 {
     const VkDevice &device = goose::render::Device::get();
     vkDeviceWaitIdle(device);
@@ -99,7 +99,7 @@ goose::quit_imgui_internal()
 }
 
 void
-goose::render::draw_imgui(VkCommandBuffer cmd, VkImageView view, VkExtent2D extent)
+goose::imgui::draw_imgui(VkCommandBuffer cmd, VkImageView view, VkExtent2D extent)
 {
     VkRenderingAttachmentInfo color_attachment = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,

@@ -48,6 +48,11 @@ goose::init(const char *app_name)
 void
 goose::quit()
 {
+    if (g_data.imgui_is_enabled)
+    {
+        goose::imgui::quit_imgui();
+    }
+
     goose::render::destroy_allocator();
     goose::render::destroy_device();
     goose::render::destroy_instance();
@@ -56,24 +61,16 @@ goose::quit()
 }
 
 void
-goose::init_imgui(const WindowInfo &window, const goose::render::RenderContext &ctx)
+goose::enable_imgui(const WindowInfo &window, const goose::render::RenderContext &ctx)
 {
 
-    if (!goose::init_imgui_internal(window, ctx))
+    if (!goose::imgui::init_imgui(window, ctx))
     {
         LOG_ERROR("Failed to initialize imgui");
         return;
     }
 
     g_data.imgui_is_enabled = true;
-}
-
-void
-goose::quit_imgui()
-{
-    goose::quit_imgui_internal();
-
-    g_data.imgui_is_enabled = false;
 }
 
 bool
