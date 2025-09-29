@@ -56,6 +56,12 @@ goose::render::destroy_pipeline_layout(VkPipelineLayout layout)
 goose::render::PipelineBuilder::PipelineBuilder(const PipelineType &type)
 {
     _type = type;
+
+    _input_assembly_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+    _rasterization_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+    _multisample_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+    _depth_stencil_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+    _render_info = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
 }
 
 goose::render::PipelineBuilder &
@@ -78,6 +84,96 @@ cleanup_shader_modules(std::vector<VkPipelineShaderStageCreateInfo> &shader_stag
     {
         goose::render::destroy_shader_module(shader_stages[i].module);
     }
+
+    shader_stages.clear();
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::set_input_topology(VkPrimitiveTopology topology, bool enable_primitive_restart)
+{
+    _input_assembly_state.topology = topology;
+    _input_assembly_state.primitiveRestartEnable = enable_primitive_restart;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::set_polygon_mode(VkPolygonMode polygon_mode)
+{
+    _rasterization_state.polygonMode = polygon_mode;
+    _rasterization_state.lineWidth = 1.0f;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::set_cull_mode(VkCullModeFlags cull_mode, VkFrontFace front_face)
+{
+    _rasterization_state.cullMode = cull_mode;
+    _rasterization_state.frontFace = front_face;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::disable_multisampling()
+{
+    _multisample_state.sampleShadingEnable = VK_FALSE;
+    _multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    _multisample_state.minSampleShading = 1.0f;
+    _multisample_state.pSampleMask = nullptr;
+    _multisample_state.alphaToCoverageEnable = VK_FALSE;
+    _multisample_state.alphaToOneEnable = VK_FALSE;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::disable_blending()
+{
+    _color_blend_attachment_state.blendEnable = VK_FALSE;
+    _color_blend_attachment_state.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT |
+        VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT |
+        VK_COLOR_COMPONENT_A_BIT;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::disable_depth_test()
+{
+    _depth_stencil_state.depthTestEnable = VK_FALSE;
+    _depth_stencil_state.depthWriteEnable = VK_FALSE;
+    _depth_stencil_state.depthCompareOp = VK_COMPARE_OP_NEVER;
+    _depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+    _depth_stencil_state.stencilTestEnable = VK_FALSE;
+    _depth_stencil_state.front = {};
+    _depth_stencil_state.back = {};
+    _depth_stencil_state.minDepthBounds = 0.f;
+    _depth_stencil_state.maxDepthBounds = 1.f;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::set_color_attachment_format(VkFormat format)
+{
+    _color_attachment_format = format;
+
+    _render_info.colorAttachmentCount = 1;
+    _render_info.pColorAttachmentFormats = &_color_attachment_format;
+
+    return *this;
+}
+
+goose::render::PipelineBuilder &
+goose::render::PipelineBuilder::set_depth_attachment_format(VkFormat format)
+{
+    _render_info.depthAttachmentFormat = format;
+
+    return *this;
 }
 
 bool
@@ -101,7 +197,7 @@ goose::render::PipelineBuilder::build(VkPipeline &pipeline, VkPipelineLayout lay
             return false;
         }
 
-        VkComputePipelineCreateInfo compute_pipeline_create_info = {
+        VkComputePipelineCreateInfo pipeline_create_info = {
             .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
             .stage = _shader_stages[0], // NOTE: Only one shader stage for compute
             .layout = layout,
@@ -111,12 +207,75 @@ goose::render::PipelineBuilder::build(VkPipeline &pipeline, VkPipelineLayout lay
             Device::get(),
             VK_NULL_HANDLE,
             1,
-            &compute_pipeline_create_info,
+            &pipeline_create_info,
             nullptr,
             &pipeline);
 
         // TODO: Error handling
         VK_ASSERT(result);
+    }
+
+    else if (_type == PIPELINE_TYPE_GRAPHICS)
+    {
+        // TODO: More configuration options?
+
+        VkPipelineViewportStateCreateInfo viewport_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+            .viewportCount = 1,
+            .scissorCount = 1,
+        };
+
+        VkPipelineColorBlendStateCreateInfo color_blend_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+            .logicOpEnable = VK_FALSE,
+            .logicOp = VK_LOGIC_OP_COPY,
+            .attachmentCount = 1,
+            .pAttachments = &_color_blend_attachment_state,
+        };
+
+        VkPipelineVertexInputStateCreateInfo vertex_input_state = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        };
+
+        VkDynamicState dynamic_state[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+        VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+            .dynamicStateCount = 2,
+            .pDynamicStates = &dynamic_state[0],
+        };
+
+        VkGraphicsPipelineCreateInfo pipeline_create_info = {
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = &_render_info,
+            .stageCount = static_cast<u32>(_shader_stages.size()),
+            .pStages = _shader_stages.data(),
+            .pVertexInputState = &vertex_input_state,
+            .pInputAssemblyState = &_input_assembly_state,
+            .pViewportState = &viewport_state,
+            .pRasterizationState = &_rasterization_state,
+            .pMultisampleState = &_multisample_state,
+            .pDepthStencilState = &_depth_stencil_state,
+            .pColorBlendState = &color_blend_state,
+            .pDynamicState = &dynamic_state_create_info,
+            .layout = layout,
+        };
+
+        VkResult result = vkCreateGraphicsPipelines(
+            Device::get(),
+            VK_NULL_HANDLE,
+            1,
+            &pipeline_create_info,
+            nullptr,
+            &pipeline);
+
+        // TODO: Error handling
+        VK_ASSERT(result);
+    }
+
+    else
+    {
+        ASSERT(false, "Invalid pipeline type");
     }
 
     cleanup_shader_modules(_shader_stages);

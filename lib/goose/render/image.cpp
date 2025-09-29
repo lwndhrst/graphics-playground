@@ -5,22 +5,6 @@
 
 goose::render::ImageBuilder::ImageBuilder(const ImageType &type)
 {
-    // TODO: Reasonable defaults?
-    set_type(type);
-    _format = VK_FORMAT_R8G8B8A8_SRGB;
-    _extent = {1, 1, 1};
-    _mip_levels = 1;
-    _array_layers = 1;
-    _samples = VK_SAMPLE_COUNT_1_BIT;
-    _tiling = VK_IMAGE_TILING_OPTIMAL;
-    _usage_flags = 0;
-    _aspect_flags = 0;
-    _memory_usage = MEMORY_USAGE_GPU_ONLY;
-}
-
-goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_type(const ImageType &type)
-{
     switch (type)
     {
     case goose::render::IMAGE_TYPE_2D:
@@ -36,7 +20,16 @@ goose::render::ImageBuilder::set_type(const ImageType &type)
         break;
     }
 
-    return *this;
+    // TODO: Reasonable defaults?
+    _format = VK_FORMAT_R8G8B8A8_SRGB;
+    _extent = {1, 1, 1};
+    _mip_levels = 1;
+    _array_layers = 1;
+    _samples = VK_SAMPLE_COUNT_1_BIT;
+    _tiling = VK_IMAGE_TILING_OPTIMAL;
+    _usage_flags = 0;
+    _aspect_flags = 0;
+    _memory_usage = MEMORY_USAGE_GPU_ONLY;
 }
 
 goose::render::ImageBuilder &

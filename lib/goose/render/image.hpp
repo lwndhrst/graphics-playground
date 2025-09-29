@@ -39,7 +39,6 @@ struct ImageBuilder {
 
     ImageBuilder(const ImageType &type);
 
-    ImageBuilder &set_type(const ImageType &type);
     ImageBuilder &set_format(const VkFormat &format);
     ImageBuilder &set_extent(const VkExtent2D &extent);
     ImageBuilder &set_extent(const VkExtent3D &extent);
