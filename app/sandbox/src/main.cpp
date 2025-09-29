@@ -195,8 +195,6 @@ init()
 void
 draw()
 {
-    const VkDevice &device = goose::render::Device::get();
-
     auto [frame, swapchain_image] = goose::render::begin_frame(render_context);
 
     const goose::render::ImageInfo &draw_image = draw_images[frame.index];
