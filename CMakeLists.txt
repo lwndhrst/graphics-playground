@@ -70,3 +70,4 @@ add_subdirectory(app/sandbox)
 
 add_subdirectory(app/samples/hello_triangle)
 add_subdirectory(app/samples/simple_compute)
+add_subdirectory(app/samples/simple_mesh)
