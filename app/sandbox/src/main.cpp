@@ -12,6 +12,24 @@
 static goose::WindowInfo window;
 static goose::render::RenderContext render_context;
 
+struct Vertex {
+    glm::vec3 position;
+    f32 uv_x;
+    glm::vec3 normal;
+    f32 uv_y;
+    glm::vec4 color;
+};
+
+static goose::render::BufferInfo vertex_buffer;
+static goose::render::BufferInfo index_buffer;
+
+struct PushConstants {
+    glm::mat4 world_matrix;
+    VkDeviceAddress vertex_buffer;
+};
+
+static PushConstants push_constants;
+
 // Use an extra image as draw target rather than directly drawing into swapchain images
 VkFormat draw_image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
 static goose::render::ImageInfo draw_images[MAX_FRAMES_IN_FLIGHT];
@@ -28,6 +46,7 @@ init_draw_images(VkExtent2D extent)
 {
     goose::render::ImageBuilder image_builder(goose::render::IMAGE_TYPE_2D);
     image_builder
+        .set_memory_usage(goose::render::MEMORY_USAGE_GPU_ONLY)
         .set_extent(extent)
         .set_format(draw_image_format)
         .set_usage_flags(
@@ -35,8 +54,7 @@ init_draw_images(VkExtent2D extent)
             VK_IMAGE_USAGE_TRANSFER_DST_BIT |
             VK_IMAGE_USAGE_STORAGE_BIT |
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-        .set_aspect_flags(VK_IMAGE_ASPECT_COLOR_BIT)
-        .set_memory_usage(goose::render::MEMORY_USAGE_GPU_ONLY);
+        .set_aspect_flags(VK_IMAGE_ASPECT_COLOR_BIT);
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
@@ -54,6 +72,86 @@ init_draw_images(VkExtent2D extent)
 }
 
 bool
+init_geometry_buffers(std::span<Vertex> vertices, std::span<u32> indices)
+{
+    u32 vertex_buffer_size = vertices.size() * sizeof(Vertex);
+    u32 index_buffer_size = indices.size() * sizeof(u32);
+
+    goose::render::BufferBuilder buffer_builder;
+    buffer_builder
+        .set_memory_usage(goose::render::MEMORY_USAGE_GPU_ONLY)
+        .enable_device_address()
+        .set_usage_flags(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+    if (!buffer_builder.build(vertex_buffer, vertex_buffer_size))
+    {
+        LOG_DEBUG("Successfully create vertex buffer");
+        return false;
+    }
+
+    goose::render::add_cleanup_callback(render_context, []() {
+        goose::render::destroy_buffer(vertex_buffer);
+    });
+
+    buffer_builder
+        .disable_device_address()
+        .set_usage_flags(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+
+    if (!buffer_builder.build(index_buffer, index_buffer_size))
+    {
+        LOG_DEBUG("Successfully create index buffer");
+        return false;
+    }
+
+    goose::render::add_cleanup_callback(render_context, []() {
+        goose::render::destroy_buffer(index_buffer);
+    });
+
+    goose::render::BufferInfo staging_buffer;
+    buffer_builder
+        .set_memory_usage(goose::render::MEMORY_USAGE_CPU_ONLY)
+        .set_usage_flags(VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+    if (!buffer_builder.build(staging_buffer, vertex_buffer_size + index_buffer_size))
+    {
+        return false;
+    }
+
+    void *data = goose::render::get_mapped_data(staging_buffer);
+
+    // Copy vertex data into staging buffer
+    memcpy(data, vertices.data(), vertex_buffer_size);
+
+    // Copy index data into staging buffer
+    memcpy(static_cast<char *>(data) + vertex_buffer_size, indices.data(), index_buffer_size);
+
+    // Copy staging data to GPU buffers
+    VkCommandBuffer cmd = goose::render::begin_immediate(render_context);
+
+    VkBufferCopy vertex_buffer_copy{
+        .srcOffset = 0,
+        .dstOffset = 0,
+        .size = vertex_buffer_size,
+    };
+
+    vkCmdCopyBuffer(cmd, staging_buffer.buffer, vertex_buffer.buffer, 1, &vertex_buffer_copy);
+
+    VkBufferCopy index_buffer_copy = {
+        .srcOffset = vertex_buffer_size,
+        .dstOffset = 0,
+        .size = index_buffer_size,
+    };
+
+    vkCmdCopyBuffer(cmd, staging_buffer.buffer, index_buffer.buffer, 1, &index_buffer_copy);
+
+    goose::render::end_immediate(render_context);
+
+    destroy_buffer(staging_buffer);
+
+    return true;
+}
+
+bool
 init_descriptors()
 {
     u32 max_descriptor_sets = MAX_FRAMES_IN_FLIGHT;
@@ -66,7 +164,7 @@ init_descriptors()
 
     descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, max_descriptor_count_per_type);
 
-    goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder = {};
+    goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder;
     descriptor_set_layout_builder
         .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
@@ -109,9 +207,10 @@ init_descriptors()
 bool
 init_pipeline()
 {
-    goose::render::PipelineLayoutBuilder pipeline_layout_builder = {};
+    goose::render::PipelineLayoutBuilder pipeline_layout_builder;
     pipeline_layout_builder
-        .add_descriptor_set_layout(descriptor_set_layout);
+        .add_descriptor_set_layout(descriptor_set_layout)
+        .add_push_constant(0, sizeof(PushConstants), VK_SHADER_STAGE_VERTEX_BIT);
 
     if (!pipeline_layout_builder.build(pipeline_layout))
     {
@@ -121,8 +220,8 @@ init_pipeline()
 
     goose::render::PipelineBuilder pipeline_builder(goose::render::PIPELINE_TYPE_GRAPHICS);
     pipeline_builder
-        .add_shader(SHADER_PATH "/triangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
-        .add_shader(SHADER_PATH "/triangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
+        .add_shader(SHADER_PATH "/rectangle.vert.spv", VK_SHADER_STAGE_VERTEX_BIT)
+        .add_shader(SHADER_PATH "/rectangle.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT)
         .set_color_attachment_format(draw_image_format);
 
     if (!pipeline_builder.build(pipeline, pipeline_layout))
@@ -163,6 +262,24 @@ init()
     if (!init_draw_images({1920, 1080}))
     {
         LOG_ERROR("Failed to create draw images");
+        return false;
+    }
+
+    std::array<Vertex, 4> vertices;
+    vertices[0].position = glm::vec3(0.5f, 0.5f, 0.0f);
+    vertices[1].position = glm::vec3(0.5f, -0.5f, 0.0f);
+    vertices[2].position = glm::vec3(-0.5f, -0.5f, 0.0f);
+    vertices[3].position = glm::vec3(-0.5f, 0.5f, 0.0f);
+    vertices[0].color = glm::vec4(0.5f, 0.5f, 0.0f, 1.0f);
+    vertices[1].color = glm::vec4(0.0f, 0.5f, 0.5f, 1.0f);
+    vertices[2].color = glm::vec4(1.0f, 0.0f, 5.0f, 1.0f);
+    vertices[3].color = glm::vec4(0.5f, 0.0f, 1.0f, 1.0f);
+
+    std::array<u32, 6> indices = {0, 1, 2, 2, 3, 0};
+
+    if (!init_geometry_buffers(vertices, indices))
+    {
+        LOG_ERROR("Failed to create geometry buffers");
         return false;
     }
 
@@ -239,13 +356,18 @@ draw()
         scissor.extent.height = draw_image.extent.height,
     };
 
+    push_constants.world_matrix = glm::mat4{1.0f};
+    push_constants.vertex_buffer = vertex_buffer.device_address.value();
+
     // Begin render pass
     goose::render::transition_image(cmd, draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     vkCmdBeginRendering(cmd, &rendering_info);
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+    vkCmdPushConstants(cmd, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &push_constants);
+    vkCmdBindIndexBuffer(cmd, index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
     vkCmdEndRendering(cmd);
 
     // Copy draw image content to swapchain image

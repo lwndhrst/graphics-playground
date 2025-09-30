@@ -3,7 +3,7 @@
 #include "goose/common/log.hpp"
 #include "goose/render/device.hpp"
 
-goose::render::ImageBuilder::ImageBuilder(const ImageType &type)
+goose::render::ImageBuilder::ImageBuilder(ImageType type)
 {
     switch (type)
     {
@@ -33,7 +33,7 @@ goose::render::ImageBuilder::ImageBuilder(const ImageType &type)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_format(const VkFormat &format)
+goose::render::ImageBuilder::set_format(VkFormat format)
 {
     _format = format;
 
@@ -41,7 +41,7 @@ goose::render::ImageBuilder::set_format(const VkFormat &format)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_extent(const VkExtent2D &extent)
+goose::render::ImageBuilder::set_extent(VkExtent2D extent)
 {
     _extent = {extent.width, extent.height, 1};
 
@@ -49,7 +49,7 @@ goose::render::ImageBuilder::set_extent(const VkExtent2D &extent)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_extent(const VkExtent3D &extent)
+goose::render::ImageBuilder::set_extent(VkExtent3D extent)
 {
     _extent = extent;
 
@@ -57,7 +57,7 @@ goose::render::ImageBuilder::set_extent(const VkExtent3D &extent)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_mip_levels(const u32 &mip_levels)
+goose::render::ImageBuilder::set_mip_levels(u32 mip_levels)
 {
     _mip_levels = mip_levels;
 
@@ -65,7 +65,7 @@ goose::render::ImageBuilder::set_mip_levels(const u32 &mip_levels)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_array_layers(const u32 &array_layers)
+goose::render::ImageBuilder::set_array_layers(u32 array_layers)
 {
     _array_layers = array_layers;
 
@@ -73,7 +73,7 @@ goose::render::ImageBuilder::set_array_layers(const u32 &array_layers)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_samples(const VkSampleCountFlagBits &samples)
+goose::render::ImageBuilder::set_samples(VkSampleCountFlagBits samples)
 {
     _samples = samples;
 
@@ -81,7 +81,7 @@ goose::render::ImageBuilder::set_samples(const VkSampleCountFlagBits &samples)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_tiling(const VkImageTiling &tiling)
+goose::render::ImageBuilder::set_tiling(VkImageTiling tiling)
 {
     _tiling = tiling;
 
@@ -89,7 +89,7 @@ goose::render::ImageBuilder::set_tiling(const VkImageTiling &tiling)
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_usage_flags(const VkImageUsageFlags &usage_flags)
+goose::render::ImageBuilder::set_usage_flags(VkImageUsageFlags usage_flags)
 {
     _usage_flags = usage_flags;
 
@@ -97,7 +97,7 @@ goose::render::ImageBuilder::set_usage_flags(const VkImageUsageFlags &usage_flag
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_aspect_flags(const VkImageAspectFlags &aspect_flags)
+goose::render::ImageBuilder::set_aspect_flags(VkImageAspectFlags aspect_flags)
 {
     _aspect_flags = aspect_flags;
 
@@ -105,7 +105,7 @@ goose::render::ImageBuilder::set_aspect_flags(const VkImageAspectFlags &aspect_f
 }
 
 goose::render::ImageBuilder &
-goose::render::ImageBuilder::set_memory_usage(const MemoryUsage &memory_usage)
+goose::render::ImageBuilder::set_memory_usage(MemoryUsage memory_usage)
 {
     _memory_usage = memory_usage;
 
@@ -135,8 +135,17 @@ goose::render::ImageBuilder::build(ImageInfo &image)
         image_allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
         image_allocation_info.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
         break;
+    case MEMORY_USAGE_CPU_ONLY:
+        image_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+        break;
+    case MEMORY_USAGE_CPU_TO_GPU:
+        image_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        break;
+    case MEMORY_USAGE_GPU_TO_CPU:
+        image_allocation_info.usage = VMA_MEMORY_USAGE_GPU_TO_CPU;
+        break;
     default:
-        LOG_ERROR("Missing or unsupported memory usage flags");
+        LOG_ERROR("Missing or invalid memory usage flags");
         return false;
     }
 

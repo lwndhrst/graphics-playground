@@ -5,9 +5,6 @@
 #include "goose/render/device.hpp"
 #include "goose/window/window.hpp"
 
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
-
 bool
 goose::render::create_render_context(
     RenderContext &ctx,

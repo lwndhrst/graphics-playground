@@ -1,8 +1,12 @@
 #include "goose/render/allocator.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/render/buffer.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/instance.hpp"
+
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 bool
 goose::render::create_allocator()
@@ -41,4 +45,10 @@ goose::render::destroy_allocator()
 
     Allocator::s_allocator = nullptr;
     Allocator::s_initialized = false;
+}
+
+void *
+goose::render::get_mapped_data(BufferInfo &buffer)
+{
+    return buffer.allocation->GetMappedData();
 }

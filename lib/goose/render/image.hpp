@@ -37,18 +37,18 @@ struct ImageBuilder {
     VkImageAspectFlags _aspect_flags;
     MemoryUsage _memory_usage;
 
-    ImageBuilder(const ImageType &type);
+    ImageBuilder(ImageType type);
 
-    ImageBuilder &set_format(const VkFormat &format);
-    ImageBuilder &set_extent(const VkExtent2D &extent);
-    ImageBuilder &set_extent(const VkExtent3D &extent);
-    ImageBuilder &set_mip_levels(const u32 &mip_levels);
-    ImageBuilder &set_array_layers(const u32 &array_layers);
-    ImageBuilder &set_samples(const VkSampleCountFlagBits &samples);
-    ImageBuilder &set_tiling(const VkImageTiling &tiling);
-    ImageBuilder &set_usage_flags(const VkImageUsageFlags &usage_flags);
-    ImageBuilder &set_aspect_flags(const VkImageAspectFlags &aspect_flags);
-    ImageBuilder &set_memory_usage(const MemoryUsage &memory_usage);
+    ImageBuilder &set_format(VkFormat format);
+    ImageBuilder &set_extent(VkExtent2D extent);
+    ImageBuilder &set_extent(VkExtent3D extent);
+    ImageBuilder &set_mip_levels(u32 mip_levels);
+    ImageBuilder &set_array_layers(u32 array_layers);
+    ImageBuilder &set_samples(VkSampleCountFlagBits samples);
+    ImageBuilder &set_tiling(VkImageTiling tiling);
+    ImageBuilder &set_usage_flags(VkImageUsageFlags usage_flags);
+    ImageBuilder &set_aspect_flags(VkImageAspectFlags aspect_flags);
+    ImageBuilder &set_memory_usage(MemoryUsage memory_usage);
 
     bool build(ImageInfo &image);
 };

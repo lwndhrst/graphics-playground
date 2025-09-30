@@ -7,6 +7,9 @@ namespace goose::render {
 
 enum MemoryUsage {
     MEMORY_USAGE_GPU_ONLY,
+    MEMORY_USAGE_CPU_ONLY,
+    MEMORY_USAGE_CPU_TO_GPU,
+    MEMORY_USAGE_GPU_TO_CPU,
 };
 
 struct Allocator {
@@ -23,5 +26,7 @@ struct Allocator {
 
 bool create_allocator();
 void destroy_allocator();
+
+void *get_mapped_data(BufferInfo &buffer);
 
 } // namespace goose::render

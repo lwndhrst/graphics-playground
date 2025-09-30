@@ -62,4 +62,7 @@ struct ImmediateData;
 struct ImageInfo;
 struct ImageBuilder;
 
+struct BufferInfo;
+struct BufferBuilder;
+
 } // namespace goose::render
