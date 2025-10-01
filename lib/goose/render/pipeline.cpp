@@ -81,13 +81,13 @@ goose::render::PipelineBuilder::PipelineBuilder(const PipelineType &type)
 }
 
 goose::render::PipelineBuilder &
-goose::render::PipelineBuilder::add_shader(const std::string &file_path, VkShaderStageFlagBits shader_stage, const std::string &entry_point)
+goose::render::PipelineBuilder::add_shader(const std::string &file_path, VkShaderStageFlagBits shader_stage, const char *entry_point)
 {
     _shader_stages.push_back({
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = shader_stage,
         .module = create_shader_module(file_path),
-        .pName = entry_point.c_str(),
+        .pName = entry_point,
     });
 
     return *this;

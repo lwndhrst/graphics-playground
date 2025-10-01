@@ -35,7 +35,7 @@ struct PipelineBuilder {
 
     PipelineBuilder(const PipelineType &type);
 
-    PipelineBuilder &add_shader(const std::string &file_path, VkShaderStageFlagBits shader_stage, const std::string &entry_point = "main");
+    PipelineBuilder &add_shader(const std::string &file_path, VkShaderStageFlagBits shader_stage, const char *entry_point = "main");
 
     // Only relevant for graphics pipelines
     PipelineBuilder &set_input_topology(VkPrimitiveTopology topology, bool enable_primitive_restart = false);
