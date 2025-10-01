@@ -85,6 +85,8 @@ goose::render::create_instance(const char *app_name, u32 app_version)
         return false;
     }
 
+    volkLoadInstanceOnly(instance);
+
     Instance::s_instance = instance;
     Instance::s_initialized = true;
 

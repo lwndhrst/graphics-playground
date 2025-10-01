@@ -28,6 +28,8 @@ goose::init(const char *app_name)
     g_data.app_name = app_name;
     g_data.app_version = VK_MAKE_VERSION(0, 1, 0);
 
+    VK_ASSERT(volkInitialize());
+
     if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO))
     {
         LOG_ERROR("{}", SDL_GetError());

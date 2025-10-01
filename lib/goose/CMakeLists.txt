@@ -24,7 +24,7 @@ target_link_libraries(${TARGET_NAME}
         SDL3::SDL3
 
     PUBLIC
-        Vulkan::Vulkan
+        volk::volk
         vma
         fmt::fmt
         glm
@@ -42,6 +42,9 @@ target_compile_definitions(${TARGET_NAME}
     PUBLIC
         $<$<CONFIG:Debug>:GOOSE_DEBUG>
         $<$<CONFIG:RelWithDebInfo>:GOOSE_DEBUG>
+
+        # NOTE: For volk
+        VK_NO_PROTOTYPES
 
         GLM_FORCE_DEPTH_ZERO_TO_ONE
 )

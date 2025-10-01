@@ -40,6 +40,7 @@
         shellHook = ''
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.libxkbcommon}/lib
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.wayland}/lib
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.vulkan-loader}/lib
         '';
       };
     };

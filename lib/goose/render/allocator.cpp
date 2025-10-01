@@ -17,10 +17,17 @@ goose::render::create_allocator()
         return true;
     }
 
+    // NOTE: Pass volk-loaded function pointers to vma
+    VmaVulkanFunctions vulkan_functions = {
+        .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
+        .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
+    };
+
     VmaAllocatorCreateInfo allocator_create_info = {
         .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
         .physicalDevice = Device::get_physical(),
         .device = Device::get(),
+        .pVulkanFunctions = &vulkan_functions,
         .instance = Instance::get(),
     };
 

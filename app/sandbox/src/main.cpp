@@ -85,7 +85,6 @@ init_geometry_buffers(std::span<Vertex> vertices, std::span<u32> indices)
 
     if (!buffer_builder.build(vertex_buffer, vertex_buffer_size))
     {
-        LOG_DEBUG("Successfully create vertex buffer");
         return false;
     }
 
@@ -99,7 +98,6 @@ init_geometry_buffers(std::span<Vertex> vertices, std::span<u32> indices)
 
     if (!buffer_builder.build(index_buffer, index_buffer_size))
     {
-        LOG_DEBUG("Successfully create index buffer");
         return false;
     }
 

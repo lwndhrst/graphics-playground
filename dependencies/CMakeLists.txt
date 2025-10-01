@@ -46,7 +46,13 @@ target_sources(imgui PRIVATE
     imgui/backends/imgui_impl_vulkan.cpp
 )
 
-target_link_libraries(imgui PUBLIC Vulkan::Vulkan SDL3::SDL3)
+target_link_libraries(imgui PRIVATE SDL3::SDL3 volk::volk)
+
+target_compile_definitions(imgui
+    PRIVATE
+        IMGUI_IMPL_VULKAN_NO_PROTOTYPES
+        IMGUI_IMPL_VULKAN_USE_VOLK
+)
 
 
 
@@ -77,3 +83,18 @@ target_include_directories(stb_image INTERFACE stb_image)
 ###########################
 
 add_subdirectory(tracy)
+
+
+
+##################
+# volk (1.4.304) #
+##################
+
+if (WIN32)
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+else()
+    # TODO: Other platforms?
+    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WAYLAND_KHR)
+endif()
+
+add_subdirectory(volk)

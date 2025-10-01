@@ -260,6 +260,8 @@ goose::render::create_device(VkSurfaceKHR surface)
         return false;
     }
 
+    volkLoadDevice(device);
+
     // TODO: How many queues and from which families?
     //       Currently only getting one queue per family; families are likely all the same anyway
 
