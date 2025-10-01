@@ -263,7 +263,7 @@ init()
         return false;
     }
 
-    std::array<Vertex, 4> vertices;
+    std::vector<Vertex> vertices(4);
     vertices[0].position = glm::vec3(0.5f, 0.5f, 0.0f);
     vertices[1].position = glm::vec3(0.5f, -0.5f, 0.0f);
     vertices[2].position = glm::vec3(-0.5f, -0.5f, 0.0f);
@@ -273,7 +273,7 @@ init()
     vertices[2].color = glm::vec4(1.0f, 0.0f, 5.0f, 1.0f);
     vertices[3].color = glm::vec4(0.5f, 0.0f, 1.0f, 1.0f);
 
-    std::array<u32, 6> indices = {0, 1, 2, 2, 3, 0};
+    std::vector<u32> indices = {0, 1, 2, 2, 3, 0};
 
     if (!init_geometry_buffers(vertices, indices))
     {

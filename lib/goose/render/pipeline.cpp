@@ -16,7 +16,7 @@ goose::render::PipelineLayoutBuilder &
 goose::render::PipelineLayoutBuilder::add_push_constant(u32 offset, u32 size, VkShaderStageFlagBits shader_stage)
 {
     _push_constants.push_back({
-        .stageFlags = shader_stage,
+        .stageFlags = static_cast<VkShaderStageFlags>(shader_stage),
         .offset = offset,
         .size = size,
     });
