@@ -19,6 +19,7 @@
           clang-tools
           gdb
           glsl_analyzer
+          valgrind
 
           vulkan-headers
           vulkan-loader

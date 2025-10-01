@@ -64,6 +64,7 @@ goose::render::PipelineBuilder::PipelineBuilder(const PipelineType &type)
         _multisample_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
         _depth_stencil_state = {.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
         _render_info = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+        _color_blend_attachment_state = {};
 
         // TODO: Reasonable defaults?
 
