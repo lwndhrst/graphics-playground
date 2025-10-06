@@ -48,6 +48,6 @@ target_compile_definitions(${TARGET_NAME} PRIVATE SHADER_PATH="${SHADER_PATH}")
 # WINDOWS #
 ###########
 
-if (WIN32)
+if(WIN32)
     copy_runtime_dlls(${TARGET_NAME})
 endif()
