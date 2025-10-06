@@ -64,7 +64,7 @@ init_draw_images(VkExtent2D extent)
         }
 
         render_context.cleanup_queue.push({
-            .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_IMAGE,
+            .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_IMAGE,
             .image = &draw_images[i],
         });
     }
@@ -90,7 +90,7 @@ init_geometry_buffers(std::span<Vertex> vertices, std::span<u32> indices)
     }
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_BUFFER,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_BUFFER,
         .buffer = &vertex_buffer,
     });
 
@@ -104,7 +104,7 @@ init_geometry_buffers(std::span<Vertex> vertices, std::span<u32> indices)
     }
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_BUFFER,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_BUFFER,
         .buffer = &index_buffer,
     });
 
@@ -166,7 +166,7 @@ init_descriptors()
     descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, max_descriptor_count_per_type);
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_POOL,
         .descriptor_pool = descriptor_pool,
     });
 
@@ -180,7 +180,7 @@ init_descriptors()
     }
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_SET_LAYOUT,
         .descriptor_set_layout = descriptor_set_layout,
     });
 
@@ -225,7 +225,7 @@ init_pipeline()
     }
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE_LAYOUT,
         .pipeline_layout = pipeline_layout,
     });
 
@@ -242,7 +242,7 @@ init_pipeline()
     }
 
     render_context.cleanup_queue.push({
-        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_PIPELINE,
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE,
         .pipeline = pipeline,
     });
 

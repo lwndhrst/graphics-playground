@@ -10,12 +10,12 @@
 namespace goose::render {
 
 enum CleanupQueueItemType {
-    CLEANUP_QUEUE_ITEM_TYPE_IMAGE,
-    CLEANUP_QUEUE_ITEM_TYPE_BUFFER,
-    CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL,
-    CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT,
-    CLEANUP_QUEUE_ITEM_TYPE_PIPELINE,
-    CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_IMAGE,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_BUFFER,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_POOL,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_SET_LAYOUT,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE,
+    CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE_LAYOUT,
 };
 
 struct CleanupQueueItem {
@@ -50,22 +50,22 @@ CleanupQueue::clear(bool reverse)
     const auto &cleanup = [](CleanupQueueItem &item) {
         switch (item.type)
         {
-        case CLEANUP_QUEUE_ITEM_TYPE_IMAGE:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_IMAGE:
             destroy_image(*item.image);
             break;
-        case CLEANUP_QUEUE_ITEM_TYPE_BUFFER:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_BUFFER:
             destroy_buffer(*item.buffer);
             break;
-        case CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_POOL:
             destroy_descriptor_pool(item.descriptor_pool);
             break;
-        case CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_DESCRIPTOR_SET_LAYOUT:
             destroy_descriptor_set_layout(item.descriptor_set_layout);
             break;
-        case CLEANUP_QUEUE_ITEM_TYPE_PIPELINE:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE:
             destroy_pipeline(item.pipeline);
             break;
-        case CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESTROY_PIPELINE_LAYOUT:
             destroy_pipeline_layout(item.pipeline_layout);
             break;
         default:
