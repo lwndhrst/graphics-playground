@@ -323,7 +323,7 @@ draw()
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue = {
-            .color = {0.0f, 0.0f, 0.0f, 1.0f},
+            .color = {{0.0f, 0.0f, 0.0f, 1.0f}},
         },
     };
 
@@ -348,10 +348,8 @@ draw()
     };
 
     VkRect2D scissor = {
-        scissor.offset.x = 0,
-        scissor.offset.y = 0,
-        scissor.extent.width = draw_image.extent.width,
-        scissor.extent.height = draw_image.extent.height,
+        .offset = {0, 0},
+        .extent = draw_image.extent_2d,
     };
 
     push_constants.world_matrix = glm::mat4{1.0f};
