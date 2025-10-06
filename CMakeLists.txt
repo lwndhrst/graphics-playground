@@ -4,8 +4,22 @@ project("graphics-playground")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fno-omit-frame-pointer -fsanitize=address")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -fno-omit-frame-pointer -fsanitize=address")
+message(STATUS "Graphics Playground")
+message(STATUS)
+message(STATUS "Enabled:")
+
+if(ENABLE_ASAN)
+    message(STATUS "  ASan")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -fno-omit-frame-pointer -fsanitize=address")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
+if(ENABLE_TRACY)
+    message(STATUS "  Tracy")
+    set(TRACY_ENABLE ON)
+endif()
+
+message(STATUS)
 
 
 
