@@ -1,6 +1,7 @@
 #pragma once
 
 #include "goose/common/types.hpp"
+#include "goose/render/cleanup_queue.hpp"
 #include "goose/render/frame.hpp"
 #include "goose/render/immediate.hpp"
 #include "goose/render/swapchain.hpp"
@@ -15,15 +16,12 @@ struct RenderContext {
 
     ImmediateData immediate_data;
 
-    std::vector<std::function<void()>> cleanup_callbacks;
+    // Cleaned up in reverse order when render context is destroyed
+    CleanupQueue cleanup_queue;
 };
 
 bool create_render_context(RenderContext &ctx, const WindowInfo &window, const FrameDataCreateInfo &frame_data_create_info);
 void destroy_render_context(RenderContext &ctx);
-
-void add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback);
-
-void resize_swapchain(RenderContext &ctx, const WindowInfo &window);
 
 std::pair<const Frame, const SwapchainImageInfo &> begin_frame(RenderContext &ctx);
 void end_frame(RenderContext &ctx);

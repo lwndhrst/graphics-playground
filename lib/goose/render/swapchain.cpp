@@ -1,8 +1,10 @@
 #include "goose/render/swapchain.hpp"
 
 #include "goose/common/log.hpp"
+#include "goose/render/context.hpp"
 #include "goose/render/device.hpp"
 #include "goose/render/helpers.hpp"
+#include "goose/window/window.hpp"
 
 goose::render::SwapchainSupportDetails
 goose::render::get_swapchain_support_details(VkPhysicalDevice gpu, VkSurfaceKHR surface)
@@ -272,4 +274,13 @@ goose::render::destroy_swapchain(SwapchainInfo &swapchain)
     vkDestroySwapchainKHR(device, swapchain.swapchain, nullptr);
 
     swapchain = {};
+}
+
+void
+goose::render::resize_swapchain(RenderContext &ctx, const WindowInfo &window)
+{
+    vkDeviceWaitIdle(Device::get());
+
+    destroy_swapchain(ctx.swapchain);
+    create_swapchain(ctx.swapchain, window.surface, window.extent);
 }

@@ -5,6 +5,7 @@
 #include "goose/common/util.hpp"
 #include "goose/render/allocator.hpp"
 #include "goose/render/buffer.hpp"
+#include "goose/render/cleanup_queue.hpp"
 #include "goose/render/context.hpp"
 #include "goose/render/descriptors.hpp"
 #include "goose/render/device.hpp"

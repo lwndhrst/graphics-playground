@@ -37,4 +37,6 @@ struct SwapchainInfo {
 bool create_swapchain(SwapchainInfo &swapchain, VkSurfaceKHR surface, VkExtent2D window_extent);
 void destroy_swapchain(SwapchainInfo &swapchain);
 
+void resize_swapchain(RenderContext &ctx, const WindowInfo &window);
+
 } // namespace goose::render

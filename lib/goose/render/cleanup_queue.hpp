@@ -9,17 +9,17 @@
 
 namespace goose::render {
 
-enum DeletionQueueItemType {
-    DELETION_QUEUE_ITEM_TYPE_IMAGE,
-    DELETION_QUEUE_ITEM_TYPE_BUFFER,
-    DELETION_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL,
-    DELETION_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT,
-    DELETION_QUEUE_ITEM_TYPE_PIPELINE,
-    DELETION_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT,
+enum CleanupQueueItemType {
+    CLEANUP_QUEUE_ITEM_TYPE_IMAGE,
+    CLEANUP_QUEUE_ITEM_TYPE_BUFFER,
+    CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL,
+    CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT,
+    CLEANUP_QUEUE_ITEM_TYPE_PIPELINE,
+    CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT,
 };
 
-struct DeletionQueueItem {
-    DeletionQueueItemType type;
+struct CleanupQueueItem {
+    CleanupQueueItemType type;
 
     union {
         goose::render::ImageInfo *image;
@@ -31,39 +31,41 @@ struct DeletionQueueItem {
     };
 };
 
-struct DeletionQueue {
-    std::vector<DeletionQueueItem> items;
+struct CleanupQueue {
+    std::vector<CleanupQueueItem> items;
+
+    void push(CleanupQueueItem item);
+    void clear(bool reverse = false);
 };
 
 inline void
-deletion_queue_add(DeletionQueue &queue, DeletionQueueItem item)
+CleanupQueue::push(CleanupQueueItem item)
 {
-    queue.items.push_back(item);
+    items.push_back(item);
 }
 
-template <typename Iterator>
 inline void
-deletion_queue_clear(DeletionQueue &queue, bool reverse = false)
+CleanupQueue::clear(bool reverse)
 {
-    const auto &cleanup_item = [](DeletionQueueItem &item) {
+    const auto &cleanup = [](CleanupQueueItem &item) {
         switch (item.type)
         {
-        case DELETION_QUEUE_ITEM_TYPE_IMAGE:
+        case CLEANUP_QUEUE_ITEM_TYPE_IMAGE:
             destroy_image(*item.image);
             break;
-        case DELETION_QUEUE_ITEM_TYPE_BUFFER:
+        case CLEANUP_QUEUE_ITEM_TYPE_BUFFER:
             destroy_buffer(*item.buffer);
             break;
-        case DELETION_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL:
             destroy_descriptor_pool(item.descriptor_pool);
             break;
-        case DELETION_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT:
+        case CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT:
             destroy_descriptor_set_layout(item.descriptor_set_layout);
             break;
-        case DELETION_QUEUE_ITEM_TYPE_PIPELINE:
+        case CLEANUP_QUEUE_ITEM_TYPE_PIPELINE:
             destroy_pipeline(item.pipeline);
             break;
-        case DELETION_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT:
+        case CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT:
             destroy_pipeline_layout(item.pipeline_layout);
             break;
         default:
@@ -74,21 +76,21 @@ deletion_queue_clear(DeletionQueue &queue, bool reverse = false)
 
     if (reverse)
     {
-        for (auto item = queue.items.rbegin(); item != queue.items.rend(); ++item)
+        for (auto item = items.rbegin(); item != items.rend(); ++item)
         {
-            cleanup_item(*item);
+            cleanup(*item);
         }
     }
 
     else
     {
-        for (auto item = queue.items.begin(); item != queue.items.end(); ++item)
+        for (auto item = items.begin(); item != items.end(); ++item)
         {
-            cleanup_item(*item);
+            cleanup(*item);
         }
     }
 
-    queue.items.clear();
+    items.clear();
 }
 
 } // namespace goose::render

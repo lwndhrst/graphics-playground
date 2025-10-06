@@ -66,11 +66,7 @@ goose::render::destroy_render_context(RenderContext &ctx)
 
     vkDeviceWaitIdle(Device::get());
 
-    // Call cleanup callbacks in reverse order of being added
-    for (auto f = ctx.cleanup_callbacks.rbegin(); f != ctx.cleanup_callbacks.rend(); ++f)
-    {
-        (*f)();
-    }
+    ctx.cleanup_queue.clear(true);
 
     destroy_immediate_data(ctx.immediate_data);
     destroy_frame_data(ctx.frame_data);
@@ -80,21 +76,6 @@ goose::render::destroy_render_context(RenderContext &ctx)
     // NOTE: The device is cleaned up when goose::quit() is called
 
     ctx = {};
-}
-
-void
-goose::render::add_cleanup_callback(RenderContext &ctx, const std::function<void()> &&callback)
-{
-    ctx.cleanup_callbacks.emplace_back(callback);
-}
-
-void
-goose::render::resize_swapchain(RenderContext &ctx, const WindowInfo &window)
-{
-    vkDeviceWaitIdle(Device::get());
-
-    destroy_swapchain(ctx.swapchain);
-    create_swapchain(ctx.swapchain, window.surface, window.extent);
 }
 
 std::pair<const goose::render::Frame, const goose::render::SwapchainImageInfo &>
@@ -116,6 +97,8 @@ goose::render::begin_frame(RenderContext &ctx)
         frame.image_available_semaphore,
         nullptr,
         &ctx.current_swapchain_image);
+
+    frame.cleanup_queue.clear();
 
     return {frame, ctx.swapchain.images[ctx.current_swapchain_image]};
 }

@@ -55,8 +55,9 @@ init_draw_images(VkExtent2D extent)
             return false;
         }
 
-        goose::render::add_cleanup_callback(render_context, [i]() {
-            goose::render::destroy_image(draw_images[i]);
+        render_context.cleanup_queue.push({
+            .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_IMAGE,
+            .image = &draw_images[i],
         });
     }
 
@@ -76,6 +77,11 @@ init_descriptors()
 
     descriptor_pool = goose::render::create_descriptor_pool(max_descriptor_sets, max_descriptor_count_per_type);
 
+    render_context.cleanup_queue.push({
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_POOL,
+        .descriptor_pool = descriptor_pool,
+    });
+
     goose::render::DescriptorSetLayoutBuilder descriptor_set_layout_builder = {};
     descriptor_set_layout_builder
         .add_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
@@ -84,6 +90,11 @@ init_descriptors()
     {
         return false;
     }
+
+    render_context.cleanup_queue.push({
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_DESCRIPTOR_SET_LAYOUT,
+        .descriptor_set_layout = descriptor_set_layout,
+    });
 
     for (u32 i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
     {
@@ -108,11 +119,6 @@ init_descriptors()
         vkUpdateDescriptorSets(goose::render::Device::get(), 1, &write_descriptor_set, 0, nullptr);
     }
 
-    goose::render::add_cleanup_callback(render_context, []() {
-        goose::render::destroy_descriptor_set_layout(descriptor_set_layout);
-        goose::render::destroy_descriptor_pool(descriptor_pool);
-    });
-
     return true;
 }
 
@@ -130,6 +136,11 @@ init_pipeline()
         return false;
     }
 
+    render_context.cleanup_queue.push({
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_PIPELINE_LAYOUT,
+        .pipeline_layout = pipeline_layout,
+    });
+
     goose::render::PipelineBuilder pipeline_builder(goose::render::PIPELINE_TYPE_COMPUTE);
     pipeline_builder
         .add_shader(SHADER_PATH "/gradient.comp.spv", VK_SHADER_STAGE_COMPUTE_BIT);
@@ -140,9 +151,9 @@ init_pipeline()
         return false;
     }
 
-    goose::render::add_cleanup_callback(render_context, [&]() {
-        goose::render::destroy_pipeline(pipeline);
-        goose::render::destroy_pipeline_layout(pipeline_layout);
+    render_context.cleanup_queue.push({
+        .type = goose::render::CLEANUP_QUEUE_ITEM_TYPE_PIPELINE,
+        .pipeline = pipeline,
     });
 
     return true;
