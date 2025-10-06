@@ -184,8 +184,6 @@ goose::render::ImageBuilder::build(ImageInfo &image)
     VK_ASSERT(result);
 
     image.format = _format;
-
-    // TODO: Does this setup with union work?
     image.extent = _extent;
 
     return true;
