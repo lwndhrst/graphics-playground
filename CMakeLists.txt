@@ -4,9 +4,10 @@ project("graphics-playground")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message(STATUS)
 message(STATUS "Graphics Playground")
 message(STATUS)
-message(STATUS "Enabled:")
+message(STATUS "Enabled options:")
 
 if(ENABLE_ASAN)
     message(STATUS "  ASan")
@@ -31,7 +32,8 @@ find_package(Vulkan REQUIRED)
 
 find_program(GLSL_VALIDATOR glslangValidator HINTS /usr/bin /usr/local/bin $ENV{VULKAN_SDK}/Bin/ $ENV{VULKAN_SDK}/Bin32/)
 
-add_subdirectory(dependencies)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(Dependencies)
 
 
 
@@ -83,10 +85,4 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
-add_subdirectory(lib/goose)
-
-add_subdirectory(app/sandbox)
-
-add_subdirectory(app/samples/hello_triangle)
-add_subdirectory(app/samples/simple_compute)
-add_subdirectory(app/samples/simple_mesh)
+add_subdirectory(projects/sandbox)
