@@ -1,4 +1,10 @@
+##########
+# TARGET #
+##########
+
 set(TARGET_NAME sandbox)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin/${TARGET_NAME}")
 
 file(GLOB_RECURSE SOURCES *.cpp)
 file(GLOB_RECURSE HEADERS *.hpp)
@@ -36,8 +42,7 @@ target_link_libraries(${TARGET_NAME}
 # SHADERS #
 ###########
 
-set(SHADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
-# set(SHADER_PATH "./shaders") # expect relative path for release
+set(SHADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders")
 
 compile_shaders(${TARGET_NAME} ${SHADER_PATH})
 
@@ -49,8 +54,8 @@ compile_shaders(${TARGET_NAME} ${SHADER_PATH})
 
 target_compile_definitions(${TARGET_NAME}
     PRIVATE
-        GLM_FORCE_DEPTH_ZERO_TO_ONE
         SHADER_PATH="${SHADER_PATH}"
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
 
         # For volk
         VK_NO_PROTOTYPES

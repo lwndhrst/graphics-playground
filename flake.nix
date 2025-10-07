@@ -19,6 +19,7 @@
           clang-tools
           gdb
           glsl_analyzer
+          tracy
 
           vulkan-headers
           vulkan-loader
