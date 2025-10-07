@@ -292,7 +292,7 @@ goose::render::PipelineBuilder::build(VkPipeline &pipeline, VkPipelineLayout lay
 
     else
     {
-        ASSERT(false, "Invalid pipeline type");
+        ASSERT(false, "Unreachable");
     }
 
     cleanup_shader_modules(_shader_stages);

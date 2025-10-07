@@ -16,7 +16,7 @@ goose::render::ImageBuilder::ImageBuilder(ImageType type)
         _image_view_type = VK_IMAGE_VIEW_TYPE_3D;
         break;
     default:
-        LOG_ERROR("Unsupported image type");
+        ASSERT(false, "Unreachable");
         break;
     }
 
