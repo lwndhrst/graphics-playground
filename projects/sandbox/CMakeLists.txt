@@ -51,6 +51,9 @@ target_compile_definitions(${TARGET_NAME}
     PRIVATE
         GLM_FORCE_DEPTH_ZERO_TO_ONE
         SHADER_PATH="${SHADER_PATH}"
+
+        # For volk
+        VK_NO_PROTOTYPES
 )
 
 
