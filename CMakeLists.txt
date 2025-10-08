@@ -4,6 +4,14 @@ project("graphics-playground")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
+
+
+###########
+# OPTIONS #
+###########
+
 message(STATUS)
 message(STATUS "Graphics Playground")
 message(STATUS)
@@ -28,8 +36,7 @@ message(STATUS)
 # DEPENDENCIES #
 ################
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include(Dependencies)
+include(FetchDependencies)
 
 
 
