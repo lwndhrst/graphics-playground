@@ -19,6 +19,7 @@
           clang-tools
           gdb
           glsl_analyzer
+          shader-slang
           tracy
 
           vulkan-headers
