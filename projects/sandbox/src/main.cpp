@@ -39,13 +39,13 @@ struct RenderData {
 
 static RenderData g_render_data;
 
-int
+bool
 init_vulkan()
 {
     if (VK_SUCCESS != volkInitialize())
     {
         fmt::println("Failed to initialize volk");
-        return -1;
+        return false;
     }
 
     vkb::InstanceBuilder instance_builder;
@@ -59,7 +59,7 @@ init_vulkan()
     if (!instance_ret.has_value())
     {
         fmt::println("Failed to create instance: {}", instance_ret.error().message());
-        return -1;
+        return false;
     }
 
     g_instance = instance_ret.value();
@@ -69,13 +69,16 @@ init_vulkan()
     if (!SDL_Vulkan_CreateSurface(g_window, g_instance, nullptr, &g_surface))
     {
         fmt::println("Failed to create surface: {}", SDL_GetError());
-        return -1;
+        return false;
     }
 
     vkb::PhysicalDeviceSelector physical_device_selector(g_instance);
     physical_device_selector
         .set_minimum_version(1, 3)
         .set_surface(g_surface)
+        .set_required_features_11({
+            .shaderDrawParameters = VK_TRUE,
+        })
         .set_required_features_13({
             .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE,
@@ -85,7 +88,7 @@ init_vulkan()
     if (!physical_device_ret.has_value())
     {
         fmt::println("Failed to select physical device: {}", physical_device_ret.error().message());
-        return -1;
+        return false;
     }
 
     fmt::println("Selected physical device: {}", physical_device_ret->name);
@@ -96,24 +99,24 @@ init_vulkan()
     if (!device_ret.has_value())
     {
         fmt::println("Failed to create device: {}", device_ret.error().message());
-        return -1;
+        return false;
     }
 
     g_device = device_ret.value();
 
     volkLoadDevice(g_device);
 
-    return 0;
+    return true;
 }
 
-int
+bool
 get_queues()
 {
     auto graphics_queue_ret = g_device.get_queue(vkb::QueueType::graphics);
     if (!graphics_queue_ret.has_value())
     {
         fmt::println("Failed to get graphics queue: {}", graphics_queue_ret.error().message());
-        return -1;
+        return false;
     }
 
     g_render_data.graphics_queue = graphics_queue_ret.value();
@@ -122,12 +125,12 @@ get_queues()
     if (!present_queue_ret.has_value())
     {
         fmt::println("Failed to get present queue: {}", present_queue_ret.error().message());
-        return -1;
+        return false;
     }
 
     g_render_data.present_queue = present_queue_ret.value();
 
-    return 0;
+    return true;
 }
 
 int
@@ -141,14 +144,14 @@ create_swapchain()
     if (!swapchain_ret.has_value())
     {
         fmt::println("Failed to create swapchain: {}", swapchain_ret.error().message());
-        return -1;
+        return false;
     }
 
     vkb::destroy_swapchain(g_swapchain);
 
     g_swapchain = swapchain_ret.value();
 
-    return 0;
+    return true;
 }
 
 int
@@ -158,20 +161,20 @@ get_swapchain_images_and_views()
     if (!swapchain_images_ret.has_value())
     {
         fmt::println("Failed to get swapchain images: {}", swapchain_images_ret.error().message());
-        return -1;
+        return false;
     }
 
     auto swapchain_image_views_ret = g_swapchain.get_image_views();
     if (!swapchain_image_views_ret.has_value())
     {
         fmt::println("Failed to get swapchain image views: {}", swapchain_image_views_ret.error().message());
-        return -1;
+        return false;
     }
 
     g_render_data.swapchain_images = swapchain_images_ret.value();
     g_render_data.swapchain_image_views = swapchain_image_views_ret.value();
 
-    return 0;
+    return true;
 }
 
 std::vector<char>
@@ -196,15 +199,15 @@ read_file(const std::string &filename)
 }
 
 VkShaderModule
-createShaderModule(const std::vector<char> &code)
+create_shader_module(const std::vector<char> &code)
 {
-    VkShaderModuleCreateInfo create_info = {};
-    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    create_info.codeSize = code.size();
-    create_info.pCode = reinterpret_cast<const uint32_t *>(code.data());
+    VkShaderModuleCreateInfo shader_module_info = {};
+    shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_info.codeSize = code.size();
+    shader_module_info.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
     VkShaderModule shader_module;
-    if (VK_SUCCESS != vkCreateShaderModule(g_device, &create_info, nullptr, &shader_module))
+    if (VK_SUCCESS != vkCreateShaderModule(g_device, &shader_module_info, nullptr, &shader_module))
     {
         return VK_NULL_HANDLE;
     }
@@ -212,47 +215,157 @@ createShaderModule(const std::vector<char> &code)
     return shader_module;
 }
 
-int
+bool
 create_pipeline()
 {
-    return 0;
+    VkPipelineLayoutCreateInfo pipeline_layout_info = {};
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.setLayoutCount = 0;
+    pipeline_layout_info.pushConstantRangeCount = 0;
+
+    if (VK_SUCCESS != vkCreatePipelineLayout(g_device, &pipeline_layout_info, nullptr, &g_render_data.pipeline_layout))
+    {
+        fmt::println("Failed to create pipeline layout");
+        return false;
+    }
+
+    VkShaderModule shader_module = create_shader_module(read_file(SHADER_PATH "/triangle.spv"));
+    if (VK_NULL_HANDLE == shader_module)
+    {
+        fmt::println("Failed to create shader module");
+        return false;
+    }
+
+    VkPipelineShaderStageCreateInfo vertex_stage = {};
+    vertex_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertex_stage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertex_stage.module = shader_module;
+    vertex_stage.pName = "vertMain";
+
+    VkPipelineShaderStageCreateInfo fragment_stage = {};
+    fragment_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragment_stage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragment_stage.module = shader_module;
+    fragment_stage.pName = "fragMain";
+
+    std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
+        vertex_stage,
+        fragment_stage,
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertex_input = {};
+    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input.vertexBindingDescriptionCount = 0;
+    vertex_input.vertexAttributeDescriptionCount = 0;
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly = {};
+    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly.primitiveRestartEnable = VK_FALSE;
+
+    VkPipelineViewportStateCreateInfo viewport_state = {};
+    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount = 1;
+    viewport_state.scissorCount = 1;
+
+    VkPipelineRasterizationStateCreateInfo rasterizer = {};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.depthBiasEnable = VK_FALSE;
+
+    VkPipelineMultisampleStateCreateInfo multisampling = {};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment = {};
+    color_blend_attachment.blendEnable = VK_FALSE;
+    color_blend_attachment.colorWriteMask =
+        VK_COLOR_COMPONENT_R_BIT |
+        VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT |
+        VK_COLOR_COMPONENT_A_BIT;
+
+    VkPipelineColorBlendStateCreateInfo color_blending = {};
+    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.logicOpEnable = VK_FALSE;
+    color_blending.logicOp = VK_LOGIC_OP_COPY;
+    color_blending.attachmentCount = 1;
+    color_blending.pAttachments = &color_blend_attachment;
+
+    std::vector<VkDynamicState> dynamic_states = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+    };
+
+    VkPipelineDynamicStateCreateInfo dynamic_state = {};
+    dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state.dynamicStateCount = dynamic_states.size();
+    dynamic_state.pDynamicStates = dynamic_states.data();
+
+    VkPipelineRenderingCreateInfo rendering_info = {};
+    rendering_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachmentFormats = &g_swapchain.image_format;
+
+    VkGraphicsPipelineCreateInfo pipeline_info = {};
+    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.pNext = &rendering_info;
+    pipeline_info.stageCount = shader_stages.size();
+    pipeline_info.pStages = shader_stages.data();
+    pipeline_info.pVertexInputState = &vertex_input;
+    pipeline_info.pInputAssemblyState = &input_assembly;
+    pipeline_info.pViewportState = &viewport_state;
+    pipeline_info.pRasterizationState = &rasterizer;
+    pipeline_info.pMultisampleState = &multisampling;
+    pipeline_info.pColorBlendState = &color_blending;
+    pipeline_info.pDynamicState = &dynamic_state;
+    pipeline_info.layout = g_render_data.pipeline_layout;
+
+    if (VK_SUCCESS != vkCreateGraphicsPipelines(g_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &g_render_data.pipeline))
+    {
+        vkDestroyShaderModule(g_device, shader_module, nullptr);
+
+        fmt::println("Failed to create pipeline");
+        return false;
+    }
+
+    vkDestroyShaderModule(g_device, shader_module, nullptr);
+
+    return true;
 }
 
-int
+bool
 create_command_objects()
 {
-    return 0;
+    return true;
 }
 
-int
+bool
 create_synchronization_objects()
 {
-    return 0;
+    return true;
 }
 
-int
+bool
 resize_swapchain()
 {
     vkDeviceWaitIdle(g_device);
 
     g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
 
-    if (0 != create_swapchain())
-        return -1;
+    if (!create_swapchain())
+        return false;
 
-    if (0 != get_swapchain_images_and_views())
-        return -1;
+    if (!get_swapchain_images_and_views())
+        return false;
 
-    if (0 != create_pipeline())
-        return -1;
-
-    if (0 != create_command_objects())
-        return -1;
-
-    if (0 != create_synchronization_objects())
-        return -1;
-
-    return 0;
+    return true;
 }
 
 void
@@ -283,7 +396,7 @@ run()
 
         if (window_resized)
         {
-            if (0 != resize_swapchain())
+            if (!resize_swapchain())
                 return;
 
             window_resized = false;
@@ -302,19 +415,28 @@ init()
 
     g_window = SDL_CreateWindow("Hello Triangle", 800, 600, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
 
-    if (0 != init_vulkan())
-        return -1;
+    if (!init_vulkan())
+        return false;
 
-    if (0 != get_queues())
-        return -1;
+    if (!get_queues())
+        return false;
 
-    if (0 != create_swapchain())
-        return -1;
+    if (!create_swapchain())
+        return false;
 
-    if (0 != get_swapchain_images_and_views())
-        return -1;
+    if (!get_swapchain_images_and_views())
+        return false;
 
-    return 0;
+    if (!create_pipeline())
+        return false;
+
+    if (!create_command_objects())
+        return false;
+
+    if (!create_synchronization_objects())
+        return false;
+
+    return true;
 }
 
 void
@@ -322,8 +444,12 @@ cleanup()
 {
     vkDeviceWaitIdle(g_device);
 
+    vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
+    vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
+
     g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
     vkb::destroy_swapchain(g_swapchain);
+
     vkb::destroy_device(g_device);
     SDL_Vulkan_DestroySurface(g_instance, g_surface, nullptr);
     vkb::destroy_instance(g_instance);
@@ -335,15 +461,15 @@ cleanup()
 int
 main(int argc, char **argv)
 {
-    if (0 != init())
+    if (!init())
     {
         cleanup();
-        return -1;
+        return EXIT_FAILURE;
     }
 
     run();
 
     cleanup();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
