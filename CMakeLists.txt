@@ -25,7 +25,9 @@ endif()
 
 if(ENABLE_TRACY)
     message(STATUS "  Tracy")
-    set(TRACY_ENABLE ON)
+    set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
+else()
+    set(TRACY_ENABLE OFF CACHE BOOL "" FORCE)
 endif()
 
 message(STATUS)
@@ -52,4 +54,4 @@ include(CopyRuntimeDlls)
 # TARGETS #
 ###########
 
-add_subdirectory(projects/sandbox EXCLUDE_FROM_ALL)
+add_subdirectory(projects/sandbox)
