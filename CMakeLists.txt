@@ -4,7 +4,7 @@ project("graphics-playground")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 
 
@@ -44,7 +44,6 @@ include(FetchDependencies)
 # UTIL #
 ########
 
-include(CompileShaders)
 include(CopyRuntimeDlls)
 
 

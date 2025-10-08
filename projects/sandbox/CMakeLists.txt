@@ -4,7 +4,7 @@
 
 set(TARGET_NAME sandbox)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin/${TARGET_NAME}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${TARGET_NAME})
 
 file(GLOB_RECURSE SOURCES *.cpp)
 file(GLOB_RECURSE HEADERS *.hpp)
@@ -42,9 +42,21 @@ target_link_libraries(${TARGET_NAME}
 # SHADERS #
 ###########
 
-set(SHADER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders")
+find_program(SLANG_COMPILER slangc REQUIRED)
 
-compile_shaders(${TARGET_NAME} ${SHADER_PATH})
+set(SHADER_PATH ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
+
+add_custom_command(
+    OUTPUT ${SHADER_PATH}/triangle.spv
+    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -fvk-use-entrypoint-name -entry vertMain -entry fragMain -o ${SHADER_PATH}/triangle.spv
+)
+
+add_custom_target(
+    ${TARGET_NAME}-shaders
+    DEPENDS ${SHADER_PATH}/triangle.spv
+)
+
+add_dependencies(${TARGET_NAME} ${TARGET_NAME}-shaders)
 
 
 
@@ -54,7 +66,7 @@ compile_shaders(${TARGET_NAME} ${SHADER_PATH})
 
 target_compile_definitions(${TARGET_NAME}
     PRIVATE
-        SHADER_PATH="${SHADER_PATH}"
+        SHADER_PATH=${SHADER_PATH}
         GLM_FORCE_DEPTH_ZERO_TO_ONE
 
         # For volk
