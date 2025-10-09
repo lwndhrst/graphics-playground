@@ -36,8 +36,6 @@ struct RenderData {
     std::vector<VkFence> in_flight_fences;
     std::vector<VkSemaphore> image_available_semaphores;
     std::vector<VkSemaphore> render_finished_semaphores;
-
-    int current_frame = 0;
 };
 
 static RenderData g_render_data;
@@ -141,8 +139,12 @@ get_queues()
 int
 create_swapchain()
 {
+    int width, height;
+    SDL_GetWindowSize(g_window, &width, &height);
+
     vkb::SwapchainBuilder swapchain_builder(g_device);
     swapchain_builder
+        .set_desired_extent(width, height)
         .set_old_swapchain(g_swapchain);
 
     auto swapchain_ret = swapchain_builder.build();
@@ -435,8 +437,148 @@ resize_swapchain()
 }
 
 void
+transition_image(VkCommandBuffer cmd, VkImage img, VkImageLayout from, VkImageLayout to)
+{
+    VkImageAspectFlags aspect_flags =
+        to == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL
+            ? VK_IMAGE_ASPECT_DEPTH_BIT
+            : VK_IMAGE_ASPECT_COLOR_BIT;
+
+    VkImageSubresourceRange subresource_range = {};
+    subresource_range.aspectMask = aspect_flags;
+    subresource_range.baseMipLevel = 0;
+    subresource_range.levelCount = VK_REMAINING_MIP_LEVELS;
+    subresource_range.baseArrayLayer = 0;
+    subresource_range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+    VkImageMemoryBarrier2 memory_barrier = {};
+    memory_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    memory_barrier.srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    memory_barrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+    memory_barrier.dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    memory_barrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+    memory_barrier.oldLayout = from;
+    memory_barrier.newLayout = to;
+    memory_barrier.image = img;
+    memory_barrier.subresourceRange = subresource_range;
+
+    VkDependencyInfo dependency_info = {};
+    dependency_info.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    dependency_info.imageMemoryBarrierCount = 1;
+    dependency_info.pImageMemoryBarriers = &memory_barrier;
+
+    vkCmdPipelineBarrier2(cmd, &dependency_info);
+}
+
+void
 draw()
 {
+    // TODO: Error handling
+
+    static uint32_t current_frame = 0;
+
+    vkWaitForFences(g_device, 1, &g_render_data.in_flight_fences[current_frame], true, 1000000000);
+    vkResetFences(g_device, 1, &g_render_data.in_flight_fences[current_frame]);
+
+    uint32_t current_swapchain_image;
+    vkAcquireNextImageKHR(
+        g_device,
+        g_swapchain,
+        UINT64_MAX,
+        g_render_data.image_available_semaphores[current_frame],
+        VK_NULL_HANDLE,
+        &current_swapchain_image);
+
+    VkCommandBuffer cmd = g_render_data.command_buffers[current_frame];
+    VkImage img = g_render_data.swapchain_images[current_swapchain_image];
+    VkImageView view = g_render_data.swapchain_image_views[current_swapchain_image];
+
+    vkResetCommandBuffer(cmd, 0);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info = {};
+    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(cmd, &command_buffer_begin_info);
+
+    VkRenderingAttachmentInfo color_attachment = {};
+    color_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    color_attachment.imageView = view;
+    color_attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+
+    VkRenderingInfo rendering_info = {};
+    rendering_info.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    rendering_info.renderArea = {{0, 0}, g_swapchain.extent};
+    rendering_info.layerCount = 1;
+    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachments = &color_attachment;
+
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(g_swapchain.extent.width);
+    viewport.height = static_cast<float>(g_swapchain.extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor = {};
+    scissor.offset = {0, 0};
+    scissor.extent = g_swapchain.extent;
+
+    transition_image(cmd, img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    vkCmdBeginRendering(cmd, &rendering_info);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_data.pipeline);
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+    vkCmdEndRendering(cmd);
+
+    transition_image(cmd, img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+    vkEndCommandBuffer(cmd);
+
+    VkCommandBufferSubmitInfo command_buffer_submit_info = {};
+    command_buffer_submit_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO;
+    command_buffer_submit_info.commandBuffer = g_render_data.command_buffers[current_frame];
+
+    VkSemaphoreSubmitInfo wait_semaphore_info = {};
+    wait_semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+    wait_semaphore_info.semaphore = g_render_data.image_available_semaphores[current_frame];
+    wait_semaphore_info.value = 1;
+    wait_semaphore_info.stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
+
+    VkSemaphoreSubmitInfo signal_semaphore_info = {};
+    signal_semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO;
+    signal_semaphore_info.semaphore = g_render_data.render_finished_semaphores[current_swapchain_image];
+    signal_semaphore_info.value = 1;
+    signal_semaphore_info.stageMask = VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT;
+
+    VkSubmitInfo2 submit_info = {};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+    submit_info.waitSemaphoreInfoCount = 1;
+    submit_info.pWaitSemaphoreInfos = &wait_semaphore_info;
+    submit_info.commandBufferInfoCount = 1;
+    submit_info.pCommandBufferInfos = &command_buffer_submit_info;
+    submit_info.signalSemaphoreInfoCount = 1;
+    submit_info.pSignalSemaphoreInfos = &signal_semaphore_info;
+
+    vkQueueSubmit2(g_render_data.graphics_queue, 1, &submit_info, g_render_data.in_flight_fences[current_frame]);
+
+    VkPresentInfoKHR present_info = {};
+    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    present_info.waitSemaphoreCount = 1;
+    present_info.pWaitSemaphores = &g_render_data.render_finished_semaphores[current_swapchain_image];
+    present_info.swapchainCount = 1;
+    present_info.pSwapchains = &g_swapchain.swapchain;
+    present_info.pImageIndices = &current_swapchain_image;
+
+    vkQueuePresentKHR(g_render_data.present_queue, &present_info);
+
+    current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void
@@ -469,12 +611,10 @@ run()
         }
 
         draw();
-
-        g_render_data.current_frame = (g_render_data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 }
 
-int
+bool
 init()
 {
     SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
