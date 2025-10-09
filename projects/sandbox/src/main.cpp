@@ -19,7 +19,10 @@ static vkb::Swapchain g_swapchain;
 
 struct RenderData {
     VkQueue graphics_queue;
+    uint32_t graphics_queue_index;
+
     VkQueue present_queue;
+    uint32_t present_queue_index;
 
     std::vector<VkImage> swapchain_images;
     std::vector<VkImageView> swapchain_image_views;
@@ -120,6 +123,7 @@ get_queues()
     }
 
     g_render_data.graphics_queue = graphics_queue_ret.value();
+    g_render_data.graphics_queue_index = g_device.get_queue_index(vkb::QueueType::graphics).value();
 
     auto present_queue_ret = g_device.get_queue(vkb::QueueType::present);
     if (!present_queue_ret.has_value())
@@ -129,6 +133,7 @@ get_queues()
     }
 
     g_render_data.present_queue = present_queue_ret.value();
+    g_render_data.present_queue_index = g_device.get_queue_index(vkb::QueueType::present).value();
 
     return true;
 }
@@ -343,12 +348,73 @@ create_pipeline()
 bool
 create_command_objects()
 {
+    VkCommandPoolCreateInfo command_pool_info = {};
+    command_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    command_pool_info.queueFamilyIndex = g_render_data.graphics_queue_index;
+
+    if (VK_SUCCESS != vkCreateCommandPool(g_device, &command_pool_info, nullptr, &g_render_data.command_pool))
+    {
+        fmt::println("Failed to create command pool");
+        return false;
+    }
+
+    VkCommandBufferAllocateInfo command_buffer_info = {};
+    command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_info.commandPool = g_render_data.command_pool;
+    command_buffer_info.commandBufferCount = MAX_FRAMES_IN_FLIGHT;
+    command_buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+    g_render_data.command_buffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+    if (VK_SUCCESS != vkAllocateCommandBuffers(g_device, &command_buffer_info, g_render_data.command_buffers.data()))
+    {
+        fmt::println("Failed to create command buffers");
+        return false;
+    }
+
     return true;
 }
 
 bool
 create_synchronization_objects()
 {
+    VkFenceCreateInfo fence_info = {};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    VkSemaphoreCreateInfo semaphore_info = {};
+    semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    g_render_data.in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
+    g_render_data.image_available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        if (VK_SUCCESS != vkCreateFence(g_device, &fence_info, nullptr, &g_render_data.in_flight_fences[i]))
+        {
+            fmt::println("Failed to create in-flight fence");
+            return false;
+        }
+
+        if (VK_SUCCESS != vkCreateSemaphore(g_device, &semaphore_info, nullptr, &g_render_data.image_available_semaphores[i]))
+        {
+            fmt::println("Failed to create image-available semaphore");
+            return false;
+        }
+    }
+
+    g_render_data.render_finished_semaphores.resize(g_swapchain.image_count);
+
+    for (size_t i = 0; i < g_swapchain.image_count; ++i)
+    {
+        if (VK_SUCCESS != vkCreateSemaphore(g_device, &semaphore_info, nullptr, &g_render_data.render_finished_semaphores[i]))
+        {
+            fmt::println("Failed to create render-finished semaphore");
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -443,6 +509,19 @@ void
 cleanup()
 {
     vkDeviceWaitIdle(g_device);
+
+    for (size_t i = 0; i < g_swapchain.image_count; ++i)
+    {
+        vkDestroySemaphore(g_device, g_render_data.render_finished_semaphores[i], nullptr);
+    }
+
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        vkDestroySemaphore(g_device, g_render_data.image_available_semaphores[i], nullptr);
+        vkDestroyFence(g_device, g_render_data.in_flight_fences[i], nullptr);
+    }
+
+    vkDestroyCommandPool(g_device, g_render_data.command_pool, nullptr);
 
     vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
     vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
