@@ -5,7 +5,7 @@ build/
 bin/
 result
 *.spv
-*.spv.asm
+*.spv-asm
 
 # Prerequisites
 *.d
