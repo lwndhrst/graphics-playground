@@ -101,9 +101,23 @@ init_vulkan()
         return false;
     }
 
-    fmt::println("Selected physical device: {}", physical_device_ret->name);
+    vkb::PhysicalDevice physical_device = physical_device_ret.value();
 
-    vkb::DeviceBuilder device_builder(physical_device_ret.value());
+    fmt::println("Selected physical device: {}", physical_device.name);
+
+    VkPhysicalDeviceMeshShaderPropertiesEXT mesh_shader_properties = {};
+    mesh_shader_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
+
+    VkPhysicalDeviceProperties2 physical_device_properties = {};
+    physical_device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    physical_device_properties.pNext = &mesh_shader_properties;
+
+    vkGetPhysicalDeviceProperties2(physical_device, &physical_device_properties);
+
+    fmt::println("Max preferred task workgroup invocations: {}", mesh_shader_properties.maxPreferredTaskWorkGroupInvocations);
+    fmt::println("Max preferred mesh workgroup invocations: {}", mesh_shader_properties.maxPreferredMeshWorkGroupInvocations);
+
+    vkb::DeviceBuilder device_builder(physical_device);
 
     auto device_ret = device_builder.build();
     if (!device_ret.has_value())
