@@ -56,9 +56,16 @@ add_custom_command(
     COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -target spirv ${ENTRY_POINTS} -o ${SHADER_PATH}/triangle.spv
 )
 
+add_custom_command(
+    OUTPUT ${SHADER_PATH}/triangle.spv.asm
+    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -target spirv-asm ${ENTRY_POINTS} -o ${SHADER_PATH}/triangle.spv.asm
+)
+
 add_custom_target(
     ${TARGET_NAME}-shaders
-    DEPENDS ${SHADER_PATH}/triangle.spv
+    DEPENDS
+        ${SHADER_PATH}/triangle.spv
+        ${SHADER_PATH}/triangle.spv.asm
 )
 
 add_dependencies(${TARGET_NAME} ${TARGET_NAME}-shaders)
