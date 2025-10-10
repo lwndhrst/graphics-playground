@@ -63,7 +63,6 @@ add_dependencies(${TARGET_NAME} ${TARGET_NAME}-shaders)
 target_compile_definitions(${TARGET_NAME}
     PRIVATE
         SHADER_PATH="${SHADER_PATH}"
-        GLM_FORCE_DEPTH_ZERO_TO_ONE
 
         # For volk
         VK_NO_PROTOTYPES

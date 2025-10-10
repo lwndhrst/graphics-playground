@@ -46,9 +46,14 @@ find_program(SLANG_COMPILER slangc REQUIRED)
 
 set(SHADER_PATH ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
 
+set(ENTRY_POINTS -fvk-use-entrypoint-name)
+list(APPEND ENTRY_POINTS -entry taskMain)
+list(APPEND ENTRY_POINTS -entry meshMain)
+list(APPEND ENTRY_POINTS -entry fragMain)
+
 add_custom_command(
     OUTPUT ${SHADER_PATH}/triangle.spv
-    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -fvk-use-entrypoint-name -entry vertMain -entry fragMain -o ${SHADER_PATH}/triangle.spv
+    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -target spirv ${ENTRY_POINTS} -o ${SHADER_PATH}/triangle.spv
 )
 
 add_custom_target(

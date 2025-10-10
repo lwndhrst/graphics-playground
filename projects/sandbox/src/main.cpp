@@ -78,13 +78,17 @@ init_vulkan()
         return false;
     }
 
+    VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features = {};
+    mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+    mesh_shader_features.taskShader = VK_TRUE;
+    mesh_shader_features.meshShader = VK_TRUE;
+
     vkb::PhysicalDeviceSelector physical_device_selector(g_instance);
     physical_device_selector
         .set_minimum_version(1, 3)
         .set_surface(g_surface)
-        .set_required_features_11({
-            .shaderDrawParameters = VK_TRUE,
-        })
+        .add_required_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME)
+        .add_required_extension_features(mesh_shader_features)
         .set_required_features_13({
             .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE,
@@ -248,11 +252,17 @@ create_pipeline()
         return false;
     }
 
-    VkPipelineShaderStageCreateInfo vertex_stage = {};
-    vertex_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertex_stage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-    vertex_stage.module = shader_module;
-    vertex_stage.pName = "vertMain";
+    VkPipelineShaderStageCreateInfo task_stage = {};
+    task_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    task_stage.stage = VK_SHADER_STAGE_TASK_BIT_EXT;
+    task_stage.module = shader_module;
+    task_stage.pName = "taskMain";
+
+    VkPipelineShaderStageCreateInfo mesh_stage = {};
+    mesh_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    mesh_stage.stage = VK_SHADER_STAGE_MESH_BIT_EXT;
+    mesh_stage.module = shader_module;
+    mesh_stage.pName = "meshMain";
 
     VkPipelineShaderStageCreateInfo fragment_stage = {};
     fragment_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -261,19 +271,10 @@ create_pipeline()
     fragment_stage.pName = "fragMain";
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
-        vertex_stage,
+        task_stage,
+        mesh_stage,
         fragment_stage,
     };
-
-    VkPipelineVertexInputStateCreateInfo vertex_input = {};
-    vertex_input.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input.vertexBindingDescriptionCount = 0;
-    vertex_input.vertexAttributeDescriptionCount = 0;
-
-    VkPipelineInputAssemblyStateCreateInfo input_assembly = {};
-    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    input_assembly.primitiveRestartEnable = VK_FALSE;
 
     VkPipelineViewportStateCreateInfo viewport_state = {};
     viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -330,8 +331,6 @@ create_pipeline()
     pipeline_info.pNext = &rendering_info;
     pipeline_info.stageCount = shader_stages.size();
     pipeline_info.pStages = shader_stages.data();
-    pipeline_info.pVertexInputState = &vertex_input;
-    pipeline_info.pInputAssemblyState = &input_assembly;
     pipeline_info.pViewportState = &viewport_state;
     pipeline_info.pRasterizationState = &rasterizer;
     pipeline_info.pMultisampleState = &multisampling;
@@ -539,7 +538,11 @@ draw()
     vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, g_render_data.pipeline);
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    uint32_t num_workgroups_x = 1;
+    uint32_t num_workgroups_y = 1;
+    uint32_t num_workgroups_z = 1;
+    vkCmdDrawMeshTasksEXT(cmd, num_workgroups_x, num_workgroups_y, num_workgroups_z);
     vkCmdEndRendering(cmd);
 
     transition_image_layout(cmd, img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
@@ -653,30 +656,37 @@ init()
 void
 cleanup()
 {
-    vkDeviceWaitIdle(g_device);
-
-    for (size_t i = 0; i < g_swapchain.image_count; ++i)
+    if (VK_NULL_HANDLE != g_device.device)
     {
-        vkDestroySemaphore(g_device, g_render_data.render_finished_semaphores[i], nullptr);
+        vkDeviceWaitIdle(g_device);
+
+        for (size_t i = 0; i < g_swapchain.image_count; ++i)
+        {
+            vkDestroySemaphore(g_device, g_render_data.render_finished_semaphores[i], nullptr);
+        }
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+        {
+            vkDestroySemaphore(g_device, g_render_data.image_available_semaphores[i], nullptr);
+            vkDestroyFence(g_device, g_render_data.in_flight_fences[i], nullptr);
+        }
+
+        vkDestroyCommandPool(g_device, g_render_data.command_pool, nullptr);
+
+        vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
+        vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
+
+        g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
+        vkb::destroy_swapchain(g_swapchain);
+
+        vkb::destroy_device(g_device);
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    if (VK_NULL_HANDLE != g_instance.instance)
     {
-        vkDestroySemaphore(g_device, g_render_data.image_available_semaphores[i], nullptr);
-        vkDestroyFence(g_device, g_render_data.in_flight_fences[i], nullptr);
+        SDL_Vulkan_DestroySurface(g_instance, g_surface, nullptr);
+        vkb::destroy_instance(g_instance);
     }
-
-    vkDestroyCommandPool(g_device, g_render_data.command_pool, nullptr);
-
-    vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
-    vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
-
-    g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
-    vkb::destroy_swapchain(g_swapchain);
-
-    vkb::destroy_device(g_device);
-    SDL_Vulkan_DestroySurface(g_instance, g_surface, nullptr);
-    vkb::destroy_instance(g_instance);
 
     SDL_DestroyWindow(g_window);
     SDL_Quit();

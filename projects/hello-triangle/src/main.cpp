@@ -653,30 +653,37 @@ init()
 void
 cleanup()
 {
-    vkDeviceWaitIdle(g_device);
-
-    for (size_t i = 0; i < g_swapchain.image_count; ++i)
+    if (VK_NULL_HANDLE != g_device.device)
     {
-        vkDestroySemaphore(g_device, g_render_data.render_finished_semaphores[i], nullptr);
+        vkDeviceWaitIdle(g_device);
+
+        for (size_t i = 0; i < g_swapchain.image_count; ++i)
+        {
+            vkDestroySemaphore(g_device, g_render_data.render_finished_semaphores[i], nullptr);
+        }
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+        {
+            vkDestroySemaphore(g_device, g_render_data.image_available_semaphores[i], nullptr);
+            vkDestroyFence(g_device, g_render_data.in_flight_fences[i], nullptr);
+        }
+
+        vkDestroyCommandPool(g_device, g_render_data.command_pool, nullptr);
+
+        vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
+        vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
+
+        g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
+        vkb::destroy_swapchain(g_swapchain);
+
+        vkb::destroy_device(g_device);
     }
 
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    if (VK_NULL_HANDLE != g_instance.instance)
     {
-        vkDestroySemaphore(g_device, g_render_data.image_available_semaphores[i], nullptr);
-        vkDestroyFence(g_device, g_render_data.in_flight_fences[i], nullptr);
+        SDL_Vulkan_DestroySurface(g_instance, g_surface, nullptr);
+        vkb::destroy_instance(g_instance);
     }
-
-    vkDestroyCommandPool(g_device, g_render_data.command_pool, nullptr);
-
-    vkDestroyPipeline(g_device, g_render_data.pipeline, nullptr);
-    vkDestroyPipelineLayout(g_device, g_render_data.pipeline_layout, nullptr);
-
-    g_swapchain.destroy_image_views(g_render_data.swapchain_image_views);
-    vkb::destroy_swapchain(g_swapchain);
-
-    vkb::destroy_device(g_device);
-    SDL_Vulkan_DestroySurface(g_instance, g_surface, nullptr);
-    vkb::destroy_instance(g_instance);
 
     SDL_DestroyWindow(g_window);
     SDL_Quit();
