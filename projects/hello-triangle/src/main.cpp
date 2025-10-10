@@ -8,7 +8,7 @@
 
 #include <fstream>
 
-#define APP_NAME "Sandbox"
+#define APP_NAME "Hello Triangle"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
