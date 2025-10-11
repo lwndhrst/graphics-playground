@@ -89,6 +89,9 @@ init_vulkan()
         .set_surface(g_surface)
         .add_required_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME)
         .add_required_extension_features(mesh_shader_features)
+        .set_required_features({
+            .fillModeNonSolid = VK_TRUE,
+        })
         .set_required_features_13({
             .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE,
@@ -259,7 +262,7 @@ create_pipeline()
         return false;
     }
 
-    VkShaderModule shader_module = create_shader_module(read_file(SHADER_PATH "/triangle.spv"));
+    VkShaderModule shader_module = create_shader_module(read_file(SHADER_PATH "/ocean.spv"));
     if (VK_NULL_HANDLE == shader_module)
     {
         fmt::println("Failed to create shader module");
@@ -299,7 +302,8 @@ create_pipeline()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    // rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -553,9 +557,9 @@ draw()
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    uint32_t num_workgroups_x = 1;
-    uint32_t num_workgroups_y = 1;
-    uint32_t num_workgroups_z = 1;
+    uint32_t num_workgroups_x = 2;
+    uint32_t num_workgroups_y = 2;
+    uint32_t num_workgroups_z = 3;
     vkCmdDrawMeshTasksEXT(cmd, num_workgroups_x, num_workgroups_y, num_workgroups_z);
     vkCmdEndRendering(cmd);
 

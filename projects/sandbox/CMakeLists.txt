@@ -47,20 +47,20 @@ find_program(SLANG_COMPILER slangc REQUIRED)
 set(SHADER_PATH ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders)
 
 add_custom_command(
-    OUTPUT ${SHADER_PATH}/triangle.spv
-    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -target spirv -fvk-use-entrypoint-name -o ${SHADER_PATH}/triangle.spv
+    OUTPUT ${SHADER_PATH}/ocean.spv
+    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/ocean.slang -target spirv -fvk-use-entrypoint-name -o ${SHADER_PATH}/ocean.spv
 )
 
 add_custom_command(
-    OUTPUT ${SHADER_PATH}/triangle.spv-asm
-    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/triangle.slang -target spirv-asm -fvk-use-entrypoint-name -o ${SHADER_PATH}/triangle.spv-asm
+    OUTPUT ${SHADER_PATH}/ocean.spv-asm
+    COMMAND ${SLANG_COMPILER} ${SHADER_PATH}/ocean.slang -target spirv-asm -fvk-use-entrypoint-name -o ${SHADER_PATH}/ocean.spv-asm
 )
 
 add_custom_target(
     ${TARGET_NAME}-shaders
     DEPENDS
-        ${SHADER_PATH}/triangle.spv
-        ${SHADER_PATH}/triangle.spv-asm
+        ${SHADER_PATH}/ocean.spv
+        ${SHADER_PATH}/ocean.spv-asm
 )
 
 add_dependencies(${TARGET_NAME} ${TARGET_NAME}-shaders)
