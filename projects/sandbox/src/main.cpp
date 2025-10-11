@@ -270,19 +270,19 @@ create_pipeline()
     task_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     task_stage.stage = VK_SHADER_STAGE_TASK_BIT_EXT;
     task_stage.module = shader_module;
-    task_stage.pName = "taskMain";
+    task_stage.pName = "task_main";
 
     VkPipelineShaderStageCreateInfo mesh_stage = {};
     mesh_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     mesh_stage.stage = VK_SHADER_STAGE_MESH_BIT_EXT;
     mesh_stage.module = shader_module;
-    mesh_stage.pName = "meshMain";
+    mesh_stage.pName = "mesh_main";
 
     VkPipelineShaderStageCreateInfo fragment_stage = {};
     fragment_stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragment_stage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_stage.module = shader_module;
-    fragment_stage.pName = "fragMain";
+    fragment_stage.pName = "frag_main";
 
     std::vector<VkPipelineShaderStageCreateInfo> shader_stages = {
         task_stage,

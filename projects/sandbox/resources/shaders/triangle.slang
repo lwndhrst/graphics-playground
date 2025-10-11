@@ -6,7 +6,7 @@ struct MeshPayload {
 
 [shader("amplification")]
 [numthreads(1, 1, 1)]
-void taskMain()
+void task_main()
 {
     MeshPayload p;
     p.data = 0;
@@ -40,7 +40,7 @@ const static uint NUM_PRIMS = 1;
 [shader("mesh")]
 [numthreads(1, 1, 1)]
 [outputtopology("triangle")]
-void meshMain(
+void mesh_main(
     in MeshPayload meshPayload,
     OutputVertices<Vertex, NUM_VERTS> vertices,
     OutputIndices<uint3, NUM_PRIMS> indices)
@@ -62,7 +62,7 @@ struct Fragment
 };
 
 [shader("fragment")]
-Fragment fragMain(in Vertex vert)
+Fragment frag_main(in Vertex vert)
 {
 	Fragment output;
 	output.color = float4(vert.color, 1.0);
