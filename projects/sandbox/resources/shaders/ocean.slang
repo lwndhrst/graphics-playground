@@ -44,16 +44,16 @@ struct Vertex {
     float3 color : Color;
 };
 
-const static uint NUM_VERTS_X = 2;
-const static uint NUM_VERTS_Y = 2;
-const static uint NUM_VERTS = NUM_VERTS_X * NUM_VERTS_Y;
-const static uint NUM_PRIMS = 2;
+const static uint NUM_VERTS_PER_DIR = 9;
+const static uint NUM_VERTS = NUM_VERTS_PER_DIR * NUM_VERTS_PER_DIR;
+const static uint NUM_PRIMS = (NUM_VERTS_PER_DIR - 1) * (NUM_VERTS_PER_DIR - 1) * 2;
+const static uint NUM_MESH_THREADS = NUM_VERTS > NUM_PRIMS ? NUM_VERTS : NUM_PRIMS;
 
 [shader("mesh")]
-[numthreads(1, 1, 1)]
+[numthreads(NUM_MESH_THREADS, 1, 1)]
 [outputtopology("triangle")]
 void mesh_main(
-    in uint3 gid : SV_GroupID,
+    in uint gid : SV_GroupID,
     in uint gtid : SV_GroupThreadID,
     in payload Payload payload,
     OutputVertices<Vertex, NUM_VERTS> vertices,
@@ -61,42 +61,54 @@ void mesh_main(
 {
     SetMeshOutputCounts(NUM_VERTS, NUM_PRIMS);
 
-    float2 offset = payload.origin;
-    float2 extent = payload.quad_extent;
+    uint vert_idx = gtid;
+    uint prim_idx = gtid;
 
-    if (gid.x == 1) {
-        offset += extent * payload.local_direction;
+    if (vert_idx < NUM_VERTS) {
+        float2 offset = payload.origin;
+        float2 extent = payload.quad_extent;
+
+        if (gid == 1) {
+            offset += extent * payload.local_direction;
+        }
+
+        if (gid > 1) {
+            extent *= 2 << (gid - 2);
+            offset += extent * payload.local_direction;
+        }
+
+        extent *= payload.global_direction;
+
+        float x = gtid % NUM_VERTS_PER_DIR;
+        float y = gtid / NUM_VERTS_PER_DIR;
+
+        float4 position = float4(offset, 0.0, 1.0);
+        position.x += x * extent.x / float(NUM_VERTS_PER_DIR - 1);
+        position.y += y * extent.y / float(NUM_VERTS_PER_DIR - 1);
+
+        vertices[vert_idx].position = position;
+        vertices[vert_idx].color = abs(position.xyz);
     }
 
-    if (gid.x > 1) {
-        extent *= 2 << (gid.x - 2);
-        offset += extent * payload.local_direction;
-    }
+    if (prim_idx < NUM_PRIMS) {
+        uint3 tri;
 
-    extent *= payload.global_direction;
+        if(prim_idx % 2 == 0) {
+            tri = uint3(0, 1, NUM_VERTS_PER_DIR);
+        }
+        else {
+            tri = uint3(NUM_VERTS_PER_DIR + 1, NUM_VERTS_PER_DIR, 1);
+        }
 
-    float2 v0 = offset;
-    float2 v1 = offset + float2(extent.x, 0);
-    float2 v2 = offset + float2(0, extent.y);
-    float2 v3 = offset + extent;
+        tri += uint3(1, 1, 1) * (prim_idx >> 1);
+        tri += uint3(1, 1, 1) * (prim_idx >> 1) / (NUM_VERTS_PER_DIR - 1);
 
-    vertices[0].position = float4(v0, 0.0, 1.0);
-    vertices[1].position = float4(v1, 0.0, 1.0);
-    vertices[2].position = float4(v2, 0.0, 1.0);
-    vertices[3].position = float4(v3, 0.0, 1.0);
-
-    vertices[0].color = float3(abs(v0), 0.0);
-    vertices[1].color = float3(abs(v1), 0.0);
-    vertices[2].color = float3(abs(v2), 0.0);
-    vertices[3].color = float3(abs(v3), 0.0);
-
-    if (sign(payload.global_direction.x) == sign(payload.global_direction.y)) {
-        indices[0] = uint3(0, 1, 2);
-        indices[1] = uint3(1, 3, 2);
-    }
-    else {
-        indices[0] = uint3(0, 2, 1);
-        indices[1] = uint3(1, 2, 3);
+        if (sign(payload.global_direction.x) == sign(payload.global_direction.y)) {
+            indices[prim_idx] = tri.xyz;
+        }
+        else {
+            indices[prim_idx] = tri.xzy;
+        }
     }
 }
 
