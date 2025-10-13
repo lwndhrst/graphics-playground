@@ -647,6 +647,7 @@ init()
     SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
 
     g_window = SDL_CreateWindow(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+    fmt::println("{}", SDL_GetError());
 
     if (!init_vulkan())
         return false;
