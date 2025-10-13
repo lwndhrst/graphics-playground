@@ -55,4 +55,6 @@ include(CopyRuntimeDlls)
 ###########
 
 add_subdirectory(projects/sandbox)
+
 add_subdirectory(projects/hello-triangle)
+add_subdirectory(projects/mesh-shader)
