@@ -28,6 +28,7 @@
           vulkan-validation-layers
 
           # wayland dependencies for SDL
+          libdecor
           libffi
           libGL
           libxkbcommon
