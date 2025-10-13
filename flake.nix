@@ -21,6 +21,7 @@
           glsl_analyzer
           shader-slang
           tracy
+          valgrind
 
           vulkan-headers
           vulkan-loader
