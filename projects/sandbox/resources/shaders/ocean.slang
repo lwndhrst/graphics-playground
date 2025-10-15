@@ -93,14 +93,9 @@ void mesh_main(
     }
 
     if (gtid < NUM_PRIMS) {
-        uint3 tri;
-
-        if(gtid % 2 == 0) {
-            tri = uint3(0, 1, NUM_VERTS_PER_DIR);
-        }
-        else {
-            tri = uint3(NUM_VERTS_PER_DIR + 1, NUM_VERTS_PER_DIR, 1);
-        }
+        uint3 tri = gtid % 2 == 0
+            ? uint3(0, 1, NUM_VERTS_PER_DIR)
+            : uint3(NUM_VERTS_PER_DIR + 1, NUM_VERTS_PER_DIR, 1);
 
         // tri.x = 0                 + (gtid & 1) * (NUM_VERTS_PER_DIR + 1);
         // tri.y = 1                 + (gtid & 1) * (NUM_VERTS_PER_DIR - 1);
