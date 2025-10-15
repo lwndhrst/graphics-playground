@@ -1,41 +1,45 @@
 // Task shader
 
 struct Payload {
-    float2 global_direction;
-    float2 local_direction;
     float2 origin;
+    float2 offset_direction;
+    float2 offset_direction_for_lods;
     float2 base_meshlet_extent;
 };
 
-const static uint NUM_MESHLETS_PER_PATCH_DIR = 4;
-const static uint NUM_PATCHES_PER_DIR = 4; // corresponds to LODs
+const static uint NUM_MESHLETS_PER_PATCH_DIR = 2;
+const static uint NUM_PATCHES_PER_DIR = 4; // Corresponds to LODs
 
 [shader("amplification")]
 [numthreads(1, 1, 1)]
 void task_main(in uint3 gid : SV_GroupID)
 {
-    float2 global_direction;
-    global_direction.x = gid.x == 0 ? 1.0 : -1.0;
-    global_direction.y = gid.y == 0 ? 1.0 : -1.0;
+    float2 direction;
+    direction.x = gid.x == 0 ? 1.0 : -1.0;
+    direction.y = gid.y == 0 ? 1.0 : -1.0;
 
-    float2 local_direction;
+    float2 offset_direction;
+    offset_direction.x = min(direction.x, 0.0);
+    offset_direction.y = min(direction.y, 0.0);
+
+    float2 offset_direction_for_lods;
     switch (gid.z) {
     case 0:
-        local_direction = float2(global_direction.x, 0.0);
+        offset_direction_for_lods = float2(direction.x, 0.0);
         break;
     case 1:
-        local_direction = global_direction;
+        offset_direction_for_lods = direction;
         break;
     case 2:
-        local_direction = float2(0.0, global_direction.y);
+        offset_direction_for_lods = float2(0.0, direction.y);
         break;
     }
 
     Payload payload;
-    payload.global_direction = global_direction;
-    payload.local_direction = local_direction;
     payload.origin = float2(0.0);
-    payload.base_meshlet_extent = float2(1.0 / 32.0);
+    payload.offset_direction = offset_direction;
+    payload.offset_direction_for_lods = offset_direction_for_lods;
+    payload.base_meshlet_extent = float2(1.0 / 16.0);
 
     DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
 }
@@ -69,19 +73,21 @@ void mesh_main(
 
     if (vert_idx < NUM_VERTS) {
         float2 meshlet_extent = payload.base_meshlet_extent;
-        float2 meshlet_offset = payload.origin;
+        float2 patch_offset = payload.origin;
+        float2 patch_extent = meshlet_extent * NUM_MESHLETS_PER_PATCH_DIR;
 
         if (gid.z > 0) {
             meshlet_extent *= 1 << (gid.z - 1);
-            meshlet_offset += meshlet_extent * payload.local_direction * NUM_MESHLETS_PER_PATCH_DIR;
+            patch_extent = meshlet_extent * NUM_MESHLETS_PER_PATCH_DIR;
+            patch_offset += patch_extent * payload.offset_direction_for_lods;
         }
 
-        meshlet_extent *= payload.global_direction;
+        patch_offset += patch_extent * payload.offset_direction;
 
-        float2 quad_extent = meshlet_extent / float2(NUM_VERTS_PER_DIR - 1);
-        float2 quad_offset = meshlet_offset + meshlet_extent * float2(gid.xy);
+        float2 meshlet_offset = patch_offset + meshlet_extent * gid.xy;
+        float2 quad_extent = meshlet_extent / float(NUM_VERTS_PER_DIR - 1);
 
-        float4 position = float4(quad_offset, 0.0, 1.0);
+        float4 position = float4(meshlet_offset, 0.0, 1.0);
         position.x += float(gtid % NUM_VERTS_PER_DIR) * quad_extent.x;
         position.y += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
 
@@ -102,12 +108,7 @@ void mesh_main(
         tri += uint3(prim_idx >> 1);
         tri += uint3((prim_idx >> 1) / (NUM_VERTS_PER_DIR - 1));
 
-        if (sign(payload.global_direction.x) == sign(payload.global_direction.y)) {
-            indices[prim_idx] = tri.xyz;
-        }
-        else {
-            indices[prim_idx] = tri.xzy;
-        }
+        indices[prim_idx] = tri;
     }
 }
 
