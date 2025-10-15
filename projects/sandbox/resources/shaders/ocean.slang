@@ -7,8 +7,8 @@ struct Payload {
     float2 base_meshlet_extent;
 };
 
-const static uint NUM_MESHLETS_PER_PATCH_DIR = 2;
-const static uint NUM_PATCHES_PER_DIR = 4; // Each patch corresponds to one LOD
+const static uint NUM_MESHLETS_PER_PATCH_DIR = 8;
+const static uint NUM_PATCHES_PER_DIR = 8; // Each patch corresponds to one LOD
 
 [shader("amplification")]
 [numthreads(1, 1, 1)]
@@ -39,7 +39,7 @@ void task_main(in uint3 gid : SV_GroupID)
     payload.origin = float2(0.0);
     payload.offset_direction = offset_direction;
     payload.offset_direction_for_lods = offset_direction_for_lods;
-    payload.base_meshlet_extent = float2(1.0 / 16.0);
+    payload.base_meshlet_extent = float2(1.0 / 1024.0);
 
     DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
 }
