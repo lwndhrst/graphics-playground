@@ -558,10 +558,7 @@ draw()
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    uint32_t num_workgroups_x = 2;
-    uint32_t num_workgroups_y = 2;
-    uint32_t num_workgroups_z = 3;
-    vkCmdDrawMeshTasksEXT(cmd, num_workgroups_x, num_workgroups_y, num_workgroups_z);
+    vkCmdDrawMeshTasksEXT(cmd, 12, 1, 1);
     vkCmdEndRendering(cmd);
 
     transition_image_layout(cmd, img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);

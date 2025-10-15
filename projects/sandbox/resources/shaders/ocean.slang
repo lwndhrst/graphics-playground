@@ -2,46 +2,65 @@
 
 struct Payload {
     float2 origin;
+    float2 base_meshlet_extent;
     float2 offset_direction;
     float2 offset_direction_for_lods;
-    float2 base_meshlet_extent;
 };
 
 const static uint NUM_MESHLETS_PER_PATCH_DIR = 8;
 const static uint NUM_PATCHES_PER_DIR = 8; // Each patch corresponds to one LOD
 
+const static uint NUM_TASK_THREADS = 64;
+
 [shader("amplification")]
-[numthreads(1, 1, 1)]
-void task_main(in uint3 gid : SV_GroupID)
+[numthreads(NUM_TASK_THREADS, 1, 1)]
+void task_main(
+    in uint gid : SV_GroupID,
+    in uint gtid : SV_GroupThreadID)
 {
-    float2 direction;
-    direction.x = gid.x == 0 ? 1.0 : -1.0;
-    direction.y = gid.y == 0 ? 1.0 : -1.0;
+    // Only dispatch mesh shaders once per workgroup
+    if (gtid == 0) {
+        float2 direction;
+        switch (gid % 4) {
+        case 0:
+            direction = float2(1.0);
+            break;
+        case 1:
+            direction = float2(1.0, -1.0);
+            break;
+        case 2:
+            direction = float2(-1.0, 1.0);
+            break;
+        case 3:
+            direction = float2(-1.0);
+            break;
+        }
 
-    float2 offset_direction;
-    offset_direction.x = min(direction.x, 0.0);
-    offset_direction.y = min(direction.y, 0.0);
+        float2 offset_direction;
+        offset_direction.x = min(direction.x, 0.0);
+        offset_direction.y = min(direction.y, 0.0);
 
-    float2 offset_direction_for_lods;
-    switch (gid.z) {
-    case 0:
-        offset_direction_for_lods = float2(direction.x, 0.0);
-        break;
-    case 1:
-        offset_direction_for_lods = direction;
-        break;
-    case 2:
-        offset_direction_for_lods = float2(0.0, direction.y);
-        break;
+        float2 offset_direction_for_lods;
+        switch (gid % 3) {
+        case 0:
+            offset_direction_for_lods = float2(direction.x, 0.0);
+            break;
+        case 1:
+            offset_direction_for_lods = direction;
+            break;
+        case 2:
+            offset_direction_for_lods = float2(0.0, direction.y);
+            break;
+        }
+
+        Payload payload;
+        payload.origin = float2(0.0);
+        payload.base_meshlet_extent = float2(1.0 / 1024.0);
+        payload.offset_direction = offset_direction;
+        payload.offset_direction_for_lods = offset_direction_for_lods;
+
+        DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
     }
-
-    Payload payload;
-    payload.origin = float2(0.0);
-    payload.offset_direction = offset_direction;
-    payload.offset_direction_for_lods = offset_direction_for_lods;
-    payload.base_meshlet_extent = float2(1.0 / 1024.0);
-
-    DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
 }
 
 // Mesh shader
@@ -54,7 +73,8 @@ struct Vertex {
 const static uint NUM_VERTS_PER_DIR = 9;
 const static uint NUM_VERTS = NUM_VERTS_PER_DIR * NUM_VERTS_PER_DIR;
 const static uint NUM_PRIMS = (NUM_VERTS_PER_DIR - 1) * (NUM_VERTS_PER_DIR - 1) * 2;
-const static uint NUM_MESH_THREADS = NUM_VERTS > NUM_PRIMS ? NUM_VERTS : NUM_PRIMS;
+
+const static uint NUM_MESH_THREADS = NUM_VERTS > NUM_PRIMS ? NUM_VERTS : NUM_PRIMS; // 128 with this configuration
 
 [shader("mesh")]
 [numthreads(NUM_MESH_THREADS, 1, 1)]
