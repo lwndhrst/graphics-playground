@@ -29,11 +29,7 @@ target_link_libraries(${TARGET_NAME}
         SDL3::SDL3
         vk-bootstrap::vk-bootstrap
         volk::volk
-        GPUOpen::VulkanMemoryAllocator
-        glm
-        imgui
         fmt::fmt
-        Tracy::TracyClient
 )
 
 

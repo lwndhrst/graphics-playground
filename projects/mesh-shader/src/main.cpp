@@ -11,7 +11,7 @@
 #define APP_NAME "Mesh Shader"
 
 #define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+#define WINDOW_HEIGHT 800
 
 #define MAX_FRAMES_IN_FLIGHT 2
 
@@ -647,6 +647,7 @@ init()
     SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
 
     g_window = SDL_CreateWindow(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+    fmt::println("{}", SDL_GetError());
 
     if (!init_vulkan())
         return false;
