@@ -8,7 +8,7 @@ struct Payload {
 };
 
 const static uint NUM_MESHLETS_PER_PATCH_DIR = 2;
-const static uint NUM_PATCHES_PER_DIR = 4; // Corresponds to LODs
+const static uint NUM_PATCHES_PER_DIR = 4; // Each patch corresponds to one LOD
 
 [shader("amplification")]
 [numthreads(1, 1, 1)]
@@ -68,10 +68,7 @@ void mesh_main(
 {
     SetMeshOutputCounts(NUM_VERTS, NUM_PRIMS);
 
-    uint vert_idx = gtid;
-    uint prim_idx = gtid;
-
-    if (vert_idx < NUM_VERTS) {
+    if (gtid < NUM_VERTS) {
         float2 meshlet_extent = payload.base_meshlet_extent;
         float2 patch_offset = payload.origin;
         float2 patch_extent = meshlet_extent * NUM_MESHLETS_PER_PATCH_DIR;
@@ -91,24 +88,28 @@ void mesh_main(
         position.x += float(gtid % NUM_VERTS_PER_DIR) * quad_extent.x;
         position.y += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
 
-        vertices[vert_idx].position = position;
-        vertices[vert_idx].color = float3((gid.xy + 1) / float(NUM_MESHLETS_PER_PATCH_DIR), 0.5);
+        vertices[gtid].position = position;
+        vertices[gtid].color = float3((gid.xy + 1) / float(NUM_MESHLETS_PER_PATCH_DIR), 0.5);
     }
 
-    if (prim_idx < NUM_PRIMS) {
+    if (gtid < NUM_PRIMS) {
         uint3 tri;
 
-        if(prim_idx % 2 == 0) {
+        if(gtid % 2 == 0) {
             tri = uint3(0, 1, NUM_VERTS_PER_DIR);
         }
         else {
             tri = uint3(NUM_VERTS_PER_DIR + 1, NUM_VERTS_PER_DIR, 1);
         }
 
-        tri += uint3(prim_idx >> 1);
-        tri += uint3((prim_idx >> 1) / (NUM_VERTS_PER_DIR - 1));
+        // tri.x = 0                 + (gtid & 1) * (NUM_VERTS_PER_DIR + 1);
+        // tri.y = 1                 + (gtid & 1) * (NUM_VERTS_PER_DIR - 1);
+        // tri.z = NUM_VERTS_PER_DIR - (gtid & 1) * (NUM_VERTS_PER_DIR - 1);
 
-        indices[prim_idx] = tri;
+        tri += uint3(gtid >> 1);
+        tri += uint3((gtid >> 1) / (NUM_VERTS_PER_DIR - 1));
+
+        indices[gtid] = tri;
     }
 }
 
