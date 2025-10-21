@@ -1,3 +1,9 @@
+struct PushConstants {
+    float4x4 mvp;
+};
+
+[vk::push_constant] uniform PushConstants pc;
+
 // Task shader
 
 struct Payload {
@@ -108,7 +114,7 @@ void mesh_main(
         position.x += float(gtid % NUM_VERTS_PER_DIR) * quad_extent.x;
         position.y += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
 
-        vertices[gtid].position = position;
+        vertices[gtid].position = mul(pc.mvp, position);
         vertices[gtid].color = float3((gid.xy + 1) / float(NUM_MESHLETS_PER_PATCH_DIR), 0.5);
     }
 

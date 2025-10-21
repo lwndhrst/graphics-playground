@@ -6,6 +6,13 @@
 
 #include "fmt/core.h"
 
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/scalar_constants.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
 #include <fstream>
 
 #define APP_NAME "Sandbox"
@@ -16,11 +23,16 @@
 #define MAX_FRAMES_IN_FLIGHT 2
 
 static SDL_Window *g_window = nullptr;
+static VkExtent2D g_window_extent = {};
 static VkSurfaceKHR g_surface = VK_NULL_HANDLE;
 
 static vkb::Instance g_instance;
 static vkb::Device g_device;
 static vkb::Swapchain g_swapchain;
+
+struct PushConstants {
+    glm::mat4 mvp;
+};
 
 struct RenderData {
     VkQueue graphics_queue;
@@ -41,6 +53,8 @@ struct RenderData {
     std::vector<VkFence> in_flight_fences;
     std::vector<VkSemaphore> image_available_semaphores;
     std::vector<VkSemaphore> render_finished_semaphores;
+
+    PushConstants push_constants;
 };
 
 static RenderData g_render_data;
@@ -57,7 +71,7 @@ init_vulkan()
     vkb::InstanceBuilder instance_builder;
     instance_builder
         .set_app_name(APP_NAME)
-        .set_minimum_instance_version(1, 3)
+        .set_minimum_instance_version(1, 4)
         .request_validation_layers()
         .use_default_debug_messenger();
 
@@ -85,7 +99,7 @@ init_vulkan()
 
     vkb::PhysicalDeviceSelector physical_device_selector(g_instance);
     physical_device_selector
-        .set_minimum_version(1, 3)
+        .set_minimum_version(1, 4)
         .set_surface(g_surface)
         .add_required_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME)
         .add_required_extension_features(mesh_shader_features)
@@ -165,12 +179,9 @@ get_queues()
 int
 create_swapchain()
 {
-    int width, height;
-    SDL_GetWindowSize(g_window, &width, &height);
-
     vkb::SwapchainBuilder swapchain_builder(g_device);
     swapchain_builder
-        .set_desired_extent(width, height)
+        .set_desired_extent(g_window_extent.width, g_window_extent.height)
         .set_old_swapchain(g_swapchain);
 
     auto swapchain_ret = swapchain_builder.build();
@@ -251,10 +262,17 @@ create_shader_module(const std::vector<char> &code)
 bool
 create_pipeline()
 {
+    VkPushConstantRange push_constants = {};
+    push_constants.offset = 0;
+    push_constants.size = sizeof(PushConstants);
+    push_constants.stageFlags = VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
     VkPipelineLayoutCreateInfo pipeline_layout_info = {};
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.setLayoutCount = 0;
-    pipeline_layout_info.pushConstantRangeCount = 0;
+    pipeline_layout_info.pSetLayouts = nullptr;
+    pipeline_layout_info.pushConstantRangeCount = 1;
+    pipeline_layout_info.pPushConstantRanges = &push_constants;
 
     if (VK_SUCCESS != vkCreatePipelineLayout(g_device, &pipeline_layout_info, nullptr, &g_render_data.pipeline_layout))
     {
@@ -460,6 +478,16 @@ resize_swapchain()
 }
 
 void
+update_camera()
+{
+    glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
+    glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+    glm::mat4 p = glm::perspective(glm::radians(70.0f), g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height), 10000.0f, 0.1f);
+
+    g_render_data.push_constants.mvp = p * v * m;
+}
+
+void
 transition_image_layout(VkCommandBuffer cmd, VkImage img, VkImageLayout from, VkImageLayout to)
 {
     VkImageAspectFlags aspect_flags =
@@ -558,6 +586,16 @@ draw()
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
+    VkPushConstantsInfo pc_info = {};
+    pc_info.sType = VK_STRUCTURE_TYPE_PUSH_CONSTANTS_INFO;
+    pc_info.layout = g_render_data.pipeline_layout;
+    pc_info.stageFlags = VK_SHADER_STAGE_TASK_BIT_EXT | VK_SHADER_STAGE_MESH_BIT_EXT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pc_info.offset = 0;
+    pc_info.size = sizeof(PushConstants);
+    pc_info.pValues = &g_render_data.push_constants;
+
+    vkCmdPushConstants2(cmd, &pc_info);
+
     vkCmdDrawMeshTasksEXT(cmd, 12, 1, 1);
     vkCmdEndRendering(cmd);
 
@@ -622,6 +660,8 @@ run()
                 return;
             case SDL_EVENT_WINDOW_RESIZED:
                 window_resized = true;
+                g_window_extent.width = event.window.data1;
+                g_window_extent.height = event.window.data2;
                 break;
             }
         }
@@ -634,6 +674,8 @@ run()
             window_resized = false;
         }
 
+        update_camera();
+
         draw();
     }
 }
@@ -645,6 +687,8 @@ init()
 
     g_window = SDL_CreateWindow(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     fmt::println("{}", SDL_GetError());
+
+    g_window_extent = {WINDOW_WIDTH, WINDOW_HEIGHT};
 
     if (!init_vulkan())
         return false;
