@@ -32,6 +32,7 @@ static vkb::Swapchain g_swapchain;
 
 struct PushConstants {
     glm::mat4 mvp;
+    uint64_t t;
 };
 
 struct RenderData {
@@ -480,8 +481,10 @@ resize_swapchain()
 void
 update_camera()
 {
-    glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f));
-    glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+    // glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(5.0f));
+    glm::mat4 m = glm::mat4(1.0f);
+    // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
+    glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
     glm::mat4 p = glm::perspective(glm::radians(70.0f), g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height), 10000.0f, 0.1f);
 
     g_render_data.push_constants.mvp = p * v * m;
@@ -674,7 +677,9 @@ run()
             window_resized = false;
         }
 
+        // Update push constants
         update_camera();
+        g_render_data.push_constants.t = SDL_GetTicks();
 
         draw();
     }

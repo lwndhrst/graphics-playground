@@ -1,5 +1,6 @@
 struct PushConstants {
     float4x4 mvp;
+    uint64_t t;
 };
 
 [vk::push_constant] uniform PushConstants pc;
@@ -14,7 +15,7 @@ struct Payload {
 };
 
 const static uint NUM_MESHLETS_PER_PATCH_DIR = 8;
-const static uint NUM_PATCHES_PER_DIR = 8; // Each patch corresponds to one LOD
+const static uint NUM_PATCHES_PER_DIR = 16; // Each patch corresponds to one LOD
 
 const static uint NUM_TASK_THREADS = 64;
 
@@ -110,9 +111,13 @@ void mesh_main(
         float2 meshlet_offset = patch_offset + meshlet_extent * gid.xy;
         float2 quad_extent = meshlet_extent / float(NUM_VERTS_PER_DIR - 1);
 
-        float4 position = float4(meshlet_offset, 0.0, 1.0);
+        // Position in xz-plane rather than xy
+        float4 position = float4(meshlet_offset.x, 0.0, meshlet_offset.y, 1.0);
         position.x += float(gtid % NUM_VERTS_PER_DIR) * quad_extent.x;
-        position.y += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
+        position.z += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
+
+        // Calc height displacement using sine wave for now
+        position.y = 0.1 * sin(pc.t / float(1000) + position.x + position.z);
 
         vertices[gtid].position = mul(pc.mvp, position);
         vertices[gtid].color = float3((gid.xy + 1) / float(NUM_MESHLETS_PER_PATCH_DIR), 0.5);
