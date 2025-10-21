@@ -1,6 +1,6 @@
 struct PushConstants {
     float4x4 mvp;
-    uint64_t t;
+    float t;
 };
 
 [vk::push_constant] uniform PushConstants pc;
@@ -117,7 +117,7 @@ void mesh_main(
         position.z += float(gtid / NUM_VERTS_PER_DIR) * quad_extent.y;
 
         // Calc height displacement using sine wave for now
-        position.y = 0.1 * sin(pc.t / float(1000) + position.x + position.z);
+        position.y = 0.1 * sin(pc.t + position.x + 0.5 * position.z);
 
         vertices[gtid].position = mul(pc.mvp, position);
         vertices[gtid].color = float3((gid.xy + 1) / float(NUM_MESHLETS_PER_PATCH_DIR), 0.5);

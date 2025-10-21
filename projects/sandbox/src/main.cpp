@@ -32,7 +32,7 @@ static vkb::Swapchain g_swapchain;
 
 struct PushConstants {
     glm::mat4 mvp;
-    uint64_t t;
+    float t;
 };
 
 struct RenderData {
@@ -679,7 +679,7 @@ run()
 
         // Update push constants
         update_camera();
-        g_render_data.push_constants.t = SDL_GetTicks();
+        g_render_data.push_constants.t = SDL_GetTicks() / 1000.0f;
 
         draw();
     }
