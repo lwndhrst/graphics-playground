@@ -14,7 +14,7 @@ struct Payload {
     float2 offset_direction_for_lods;
 };
 
-const static uint NUM_MESHLETS_PER_PATCH_DIR = 8;
+const static uint NUM_MESHLETS_PER_PATCH_DIR = 16;
 const static uint NUM_PATCHES_PER_DIR = 16; // Each patch corresponds to one LOD
 
 const static uint NUM_TASK_THREADS = 64;
