@@ -27,6 +27,19 @@ void task_main(
 {
     // Only dispatch mesh shaders once per workgroup
     if (gtid == 0) {
+
+        // 4 quadrants with 3 directions each for a total of 12 workgroups
+        //
+        //   -------
+        //  |\  |  /|
+        //  | \ | / |
+        //  |  \|/  |
+        //  |-------|
+        //  |  /|\  |
+        //  | / | \ |
+        //  |/  |  \|
+        //   -------
+
         float2 direction;
         switch (gid % 4) {
         case 0:
