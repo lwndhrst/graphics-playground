@@ -22,7 +22,7 @@ struct Payload {
 const static uint NUM_MESHLETS_PER_PATCH_X = 8;
 const static uint NUM_MESHLETS_PER_PATCH_Y = 16;
 
-const static uint NUM_PATCHES_PER_DIR = 16; // Each patch corresponds to one LOD
+const static uint NUM_PATCHES_PER_DIR = 8; // Each patch corresponds to one LOD
 
 const static float2 BASE_MESHLET_EXTENT = float2(1.0 / float(NUM_MESHLETS_PER_PATCH_X), 1.0 / float(NUM_MESHLETS_PER_PATCH_Y));
 const static float2 BASE_PATCH_EXTENT = BASE_MESHLET_EXTENT * float2(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y); // (1.0, 1.0)
@@ -105,8 +105,8 @@ struct Vertex {
     float3 color;
 };
 
-const static uint NUM_VERTS_X = 8;
-const static uint NUM_VERTS_Y = 16;
+const static uint NUM_VERTS_X = 16;
+const static uint NUM_VERTS_Y = 8;
 const static uint NUM_VERTS = NUM_VERTS_X * NUM_VERTS_Y; // 128
 
 const static uint NUM_PRIMS = (NUM_VERTS_X - 1) * (NUM_VERTS_Y - 1) * 2; // 210

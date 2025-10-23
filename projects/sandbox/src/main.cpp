@@ -330,8 +330,8 @@ create_pipeline()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    // rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+    // rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     // rasterizer.cullMode = VK_CULL_MODE_NONE;
@@ -499,6 +499,8 @@ update_camera()
     // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
     glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
     // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f));
+
+    v = glm::rotate(v, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
     glm::mat4 p = glm::perspective(fov, aspect_ratio, 10000.0f, 0.1f);
 
