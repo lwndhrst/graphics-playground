@@ -17,7 +17,7 @@
 
 #define APP_NAME "Sandbox"
 
-#define WINDOW_WIDTH 800
+#define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
 
 #define MAX_FRAMES_IN_FLIGHT 2
