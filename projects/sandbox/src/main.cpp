@@ -34,8 +34,8 @@ struct PushConstants {
     glm::mat4 mvp;
 
     // Dynamic mesh generation and culling
-    glm::vec2 origin = {0.0f, 0.0f};         // Projection of camera position on xz-plane
-    glm::vec2 view_direction = {0.0f, 1.0f}; // Projection of viewing direction on xz-plane
+    glm::vec2 origin = {0.0f, 0.0f};          // Projection of camera position on xz-plane
+    glm::vec2 view_direction = {0.0f, -1.0f}; // Projection of viewing direction on xz-plane
     float cutoff_angle = 180.0f;
 
     // Displacement calculation
