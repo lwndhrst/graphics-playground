@@ -32,6 +32,13 @@ static vkb::Swapchain g_swapchain;
 
 struct PushConstants {
     glm::mat4 mvp;
+
+    // Dynamic mesh generation and culling
+    glm::vec2 origin = {0.0f, 0.0f};         // Projection of camera position on xz-plane
+    glm::vec2 view_direction = {0.0f, 1.0f}; // Projection of viewing direction on xz-plane
+    float cutoff_angle = 180.0f;
+
+    // Displacement calculation
     float t;
 };
 
@@ -122,6 +129,8 @@ init_vulkan()
     vkb::PhysicalDevice physical_device = physical_device_ret.value();
 
     fmt::println("Selected physical device: {}", physical_device.name);
+
+    fmt::println("Max push constants size: {}", physical_device_ret->properties.limits.maxPushConstantsSize);
 
     VkPhysicalDeviceMeshShaderPropertiesEXT mesh_shader_properties = {};
     mesh_shader_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
@@ -481,13 +490,22 @@ resize_swapchain()
 void
 update_camera()
 {
+    float fov = glm::radians(70.0f);
+    float aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
+
     // glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(5.0f));
     glm::mat4 m = glm::mat4(1.0f);
+
     // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
     glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-    glm::mat4 p = glm::perspective(glm::radians(70.0f), g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height), 10000.0f, 0.1f);
+    // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f));
+
+    glm::mat4 p = glm::perspective(fov, aspect_ratio, 10000.0f, 0.1f);
 
     g_render_data.push_constants.mvp = p * v * m;
+
+    // Add a little bit of tolerance for fov-based culling
+    g_render_data.push_constants.cutoff_angle = 0.7f * fov * aspect_ratio;
 }
 
 void

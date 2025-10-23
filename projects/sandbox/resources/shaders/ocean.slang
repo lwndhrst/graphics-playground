@@ -1,5 +1,12 @@
 struct PushConstants {
     float4x4 mvp;
+
+    // Dynamic mesh generation and culling
+    float2 origin;         // Projection of camera position on xz-plane
+    float2 view_direction; // Projection of viewing direction on xz-plane
+    float cutoff_angle;
+
+    // Displacement calculation
     float t;
 };
 
@@ -8,7 +15,6 @@ struct PushConstants {
 // Task shader
 
 struct Payload {
-    float2 origin;
     float2 base_meshlet_extent;
     float2 offset_direction;
     float2 offset_direction_for_lods;
@@ -73,13 +79,19 @@ void task_main(
             break;
         }
 
-        Payload payload;
-        payload.origin = float2(0.0);
-        payload.base_meshlet_extent = float2(1.0 / 1024.0);
-        payload.offset_direction = offset_direction;
-        payload.offset_direction_for_lods = offset_direction_for_lods;
+        // Cull based on viewing direction and fov
+        float2 v = -normalize(pc.view_direction);
+        float2 d = normalize(direction + offset_direction_for_lods);
+        bool cull = dot(d, v) < cos(pc.cutoff_angle);
 
-        DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
+        if (!cull) {
+            Payload payload;
+            payload.base_meshlet_extent = float2(1.0 / 1024.0);
+            payload.offset_direction = offset_direction;
+            payload.offset_direction_for_lods = offset_direction_for_lods;
+
+            DispatchMesh(NUM_MESHLETS_PER_PATCH_DIR, NUM_MESHLETS_PER_PATCH_DIR, NUM_PATCHES_PER_DIR, payload);
+        }
     }
 }
 
@@ -110,7 +122,7 @@ void mesh_main(
 
     if (gtid < NUM_VERTS) {
         float2 meshlet_extent = payload.base_meshlet_extent;
-        float2 patch_offset = payload.origin;
+        float2 patch_offset = pc.origin;
         float2 patch_extent = meshlet_extent * NUM_MESHLETS_PER_PATCH_DIR;
 
         if (gid.z > 0) {
