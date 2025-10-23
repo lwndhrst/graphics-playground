@@ -30,6 +30,16 @@ static vkb::Instance g_instance;
 static vkb::Device g_device;
 static vkb::Swapchain g_swapchain;
 
+struct Camera {
+    glm::mat4 view;
+    glm::mat4 proj;
+
+    float fov;
+    float aspect_ratio;
+};
+
+static Camera g_camera = {};
+
 struct PushConstants {
     glm::mat4 mvp;
 
@@ -488,27 +498,42 @@ resize_swapchain()
 }
 
 void
-update_camera()
+init_camera()
 {
-    float fov = glm::radians(70.0f);
-    float aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
+    g_camera.fov = glm::radians(60.0f);
+    g_camera.aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
 
-    // glm::mat4 m = glm::scale(glm::mat4(1.0f), glm::vec3(5.0f));
-    glm::mat4 m = glm::mat4(1.0f);
+    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
+    g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f));
 
-    // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
-    glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-    // glm::mat4 v = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f));
+    g_camera.view = glm::rotate(g_camera.view, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-    v = glm::rotate(v, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    g_camera.proj = glm::perspective(g_camera.fov, g_camera.aspect_ratio, 10000.0f, 0.1f);
+}
 
-    glm::mat4 p = glm::perspective(fov, aspect_ratio, 10000.0f, 0.1f);
+void
+update_camera_proj()
+{
+    g_camera.aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
+    g_camera.proj = glm::perspective(g_camera.fov, g_camera.aspect_ratio, 10000.0f, 0.1f);
+}
 
-    g_render_data.push_constants.mvp = p * v * m;
+void
+update_push_constants(bool camera_changed = true)
+{
+    if (camera_changed)
+    {
+        // Model matrix is identity here
+        g_render_data.push_constants.mvp = g_camera.proj * g_camera.view;
 
-    // Add a little bit of tolerance for fov-based culling
-    float tolerance_angle = glm::pi<float>() / 6.0f;
-    g_render_data.push_constants.cutoff_angle = 0.5f * fov * aspect_ratio + tolerance_angle;
+        // Add a little bit of tolerance for fov-based culling
+        float tolerance_angle = glm::pi<float>() / 6.0f;
+        g_render_data.push_constants.cutoff_angle = 0.5f * g_camera.fov * g_camera.aspect_ratio + tolerance_angle;
+    }
+
+    // For displacement calculation
+    g_render_data.push_constants.t = SDL_GetTicks() / 1000.0f;
 }
 
 void
@@ -672,10 +697,11 @@ run()
 {
     SDL_Event event;
 
-    bool window_resized = false;
-
     for (;;)
     {
+        bool window_resized = false;
+        bool camera_changed = false;
+
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
@@ -695,12 +721,11 @@ run()
             if (!resize_swapchain())
                 return;
 
-            window_resized = false;
+            update_camera_proj();
+            camera_changed = true;
         }
 
-        // Update push constants
-        update_camera();
-        g_render_data.push_constants.t = SDL_GetTicks() / 1000.0f;
+        update_push_constants(camera_changed);
 
         draw();
     }
@@ -736,6 +761,9 @@ init()
 
     if (!create_synchronization_objects())
         return false;
+
+    init_camera();
+    update_push_constants();
 
     return true;
 }
