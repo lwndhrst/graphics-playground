@@ -330,8 +330,8 @@ create_pipeline()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    // rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    // rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     // rasterizer.cullMode = VK_CULL_MODE_NONE;
@@ -507,7 +507,8 @@ update_camera()
     g_render_data.push_constants.mvp = p * v * m;
 
     // Add a little bit of tolerance for fov-based culling
-    g_render_data.push_constants.cutoff_angle = 0.7f * fov * aspect_ratio;
+    float tolerance_angle = glm::pi<float>() / 6.0f;
+    g_render_data.push_constants.cutoff_angle = 0.5f * fov * aspect_ratio + tolerance_angle;
 }
 
 void

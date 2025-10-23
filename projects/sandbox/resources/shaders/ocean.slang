@@ -85,7 +85,8 @@ void task_main(
 
         // Cull based on viewing direction and fov
         float2 v = normalize(pc.view_direction);
-        float2 d = normalize(direction + offset_direction_for_lods);
+        // Scale offset_direction_for_lods by 3 for more even spread of angles
+        float2 d = normalize(direction + 3.0 * offset_direction_for_lods);
         bool cull = dot(d, v) < cos(pc.cutoff_angle);
 
         if (!cull) {
