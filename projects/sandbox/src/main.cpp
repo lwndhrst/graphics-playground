@@ -500,7 +500,7 @@ resize_swapchain()
 void
 init_camera()
 {
-    g_camera.fov = glm::radians(60.0f);
+    g_camera.fov = glm::radians(70.0f);
     g_camera.aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
 
     // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
