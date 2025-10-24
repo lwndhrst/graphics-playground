@@ -508,7 +508,7 @@ init_camera()
     g_camera.sensitivity = 0.3f;
     g_camera.vertical_angle = glm::radians(-15.0f);
 
-    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f));
     g_camera.view = glm::mat4(1.0f);
     g_camera.view = glm::rotate(g_camera.view, g_camera.vertical_angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
