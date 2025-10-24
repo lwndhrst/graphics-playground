@@ -38,10 +38,6 @@ struct Camera {
     float aspect_ratio;
     float sensitivity;
     float vertical_angle;
-
-    glm::vec3 view_direction;
-    glm::vec3 horizontal_rotation_axis;
-    glm::vec3 vertical_rotation_axis;
 };
 
 static Camera g_camera = {};
@@ -509,17 +505,12 @@ init_camera()
 {
     g_camera.fov = glm::radians(70.0f);
     g_camera.aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
-    g_camera.sensitivity = 0.7f;
+    g_camera.sensitivity = 0.3f;
     g_camera.vertical_angle = glm::radians(-15.0f);
-
-    g_camera.view_direction = glm::vec3(0.0f, 0.0f, -1.0f);
-    g_camera.horizontal_rotation_axis = glm::vec3(0.0f, 1.0f, 0.0f);
-    g_camera.vertical_rotation_axis = glm::vec3(1.0f, 0.0f, 0.0f);
 
     // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
     g_camera.view = glm::mat4(1.0f);
-
-    g_camera.view = glm::rotate(g_camera.view, g_camera.vertical_angle, g_camera.vertical_rotation_axis);
+    g_camera.view = glm::rotate(g_camera.view, g_camera.vertical_angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
     g_camera.proj = glm::perspective(g_camera.fov, g_camera.aspect_ratio, 10000.0f, 0.1f);
 }
@@ -537,24 +528,22 @@ update_camera_view(SDL_MouseMotionEvent motion, float dt)
     if (glm::abs(motion.xrel) > 0.0f)
     {
         float angle = glm::radians(motion.xrel) * g_camera.sensitivity * dt;
+        glm::vec3 axis = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        g_camera.view = glm::rotate(g_camera.view, angle, g_camera.horizontal_rotation_axis);
-        g_camera.vertical_rotation_axis = glm::inverse(g_camera.view) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+        g_camera.view = glm::rotate(g_camera.view, angle, axis);
     }
 
     if (glm::abs(motion.yrel) > 0.0f)
     {
         float angle = glm::radians(-motion.yrel) * g_camera.sensitivity * dt;
+        glm::vec3 axis = glm::inverse(g_camera.view) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 
-        if (g_camera.vertical_angle + angle > glm::radians(-40.0f) &&
-            g_camera.vertical_angle + angle < glm::radians(90.0f))
+        if (glm::abs(g_camera.vertical_angle + angle) < glm::radians(90.0f))
         {
-            g_camera.view = glm::rotate(g_camera.view, angle, g_camera.vertical_rotation_axis);
+            g_camera.view = glm::rotate(g_camera.view, angle, axis);
             g_camera.vertical_angle += angle;
         }
     }
-
-    g_camera.view_direction = glm::inverse(g_camera.view) * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 }
 
 void
@@ -563,7 +552,9 @@ update_push_constants(bool camera_changed = true)
     if (camera_changed)
     {
         g_render_data.push_constants.origin = {0.0f, 0.0f};
-        g_render_data.push_constants.view_direction = {g_camera.view_direction.x, g_camera.view_direction.z};
+
+        glm::vec3 view_direction = glm::inverse(g_camera.view) * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
+        g_render_data.push_constants.view_direction = glm::vec2(view_direction.x, view_direction.z);
 
         glm::mat4 m = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
         g_render_data.push_constants.mvp = g_camera.proj * g_camera.view * m;
@@ -686,7 +677,7 @@ draw()
 
     vkCmdPushConstants2(cmd, &pc_info);
 
-    vkCmdDrawMeshTasksEXT(cmd, 12, 1, 1);
+    vkCmdDrawMeshTasksEXT(cmd, 16, 1, 1);
     vkCmdEndRendering(cmd);
 
     transition_image_layout(cmd, img, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
@@ -764,7 +755,8 @@ run()
                 SDL_SetWindowRelativeMouseMode(g_window, false);
                 break;
             case SDL_EVENT_MOUSE_MOTION:
-                update_camera_view(event.motion, dt);
+                // xrel and yrel already factor in delta time
+                update_camera_view(event.motion, 1.0f);
                 camera_changed = true;
                 break;
             }

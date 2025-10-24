@@ -18,6 +18,7 @@ struct PushConstants {
 struct Payload {
     float2 offset_direction;
     float2 offset_direction_for_lods;
+    uint initial_lod;
 };
 
 const static uint NUM_MESHLETS_PER_PATCH_X = 8;
@@ -38,8 +39,9 @@ void task_main(
 {
     // Only dispatch mesh shaders once per workgroup
     if (gtid == 0) {
-
-        // 4 quadrants with 3 directions each for a total of 12 workgroups
+        // The mesh is split into 4 quadrants with 3 directions each for a total of 12 directions.
+        // The center 4 patches are handled separately to avoid duplication.
+        // This setup results in 16 workgroups total.
         //
         //   -------
         //  |\  |  /|
@@ -90,12 +92,15 @@ void task_main(
         float2 d = normalize(direction + 3.0 * offset_direction_for_lods);
         bool cull = dot(d, v) < cos(pc.cutoff_angle);
 
-        if (!cull) {
+        // Always draw center 4 patches
+        if (!cull || gid < 4) {
             Payload payload;
             payload.offset_direction = offset_direction;
             payload.offset_direction_for_lods = offset_direction_for_lods;
+            payload.initial_lod = gid < 4 ? 0 : 1;
 
-            DispatchMesh(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y, NUM_PATCHES_PER_DIR, payload);
+            uint num_patches = gid < 4 ? 1 : NUM_PATCHES_PER_DIR - 1;
+            DispatchMesh(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y, num_patches, payload);
         }
     }
 }
@@ -132,8 +137,10 @@ void mesh_main(
         float2 patch_offset = pc.origin;
         float2 patch_extent = BASE_PATCH_EXTENT;
 
-        if (gid.z > 0) {
-            meshlet_extent *= 1 << (gid.z - 1);
+        uint lod = gid.z + payload.initial_lod;
+
+        if (lod > 0) {
+            meshlet_extent *= 1 << (lod - 1);
             patch_extent = meshlet_extent * float2(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y);
             patch_offset += patch_extent * payload.offset_direction_for_lods;
         }
