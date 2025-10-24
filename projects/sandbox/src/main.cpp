@@ -23,7 +23,7 @@
 #define MAX_FRAMES_IN_FLIGHT 2
 
 static SDL_Window *g_window = nullptr;
-static VkExtent2D g_window_extent = {};
+static VkExtent2D g_window_extent = {WINDOW_WIDTH, WINDOW_HEIGHT};
 static VkSurfaceKHR g_surface = VK_NULL_HANDLE;
 
 static vkb::Instance g_instance;
@@ -36,6 +36,12 @@ struct Camera {
 
     float fov;
     float aspect_ratio;
+    float sensitivity;
+    float vertical_angle;
+
+    glm::vec3 view_direction;
+    glm::vec3 horizontal_rotation_axis;
+    glm::vec3 vertical_rotation_axis;
 };
 
 static Camera g_camera = {};
@@ -44,11 +50,12 @@ struct PushConstants {
     glm::mat4 mvp;
 
     // Dynamic mesh generation and culling
-    glm::vec2 origin = {0.0f, 0.0f};          // Projection of camera position on xz-plane
-    glm::vec2 view_direction = {0.0f, -1.0f}; // Projection of viewing direction on xz-plane
-    float cutoff_angle = 180.0f;
+    glm::vec2 origin;         // Camera position on xz-plane
+    glm::vec2 view_direction; // Camera view direction on xz-plane
+    float cutoff_angle;
 
     // Displacement calculation
+    float amplitude = 0.1f;
     float t;
 };
 
@@ -75,7 +82,7 @@ struct RenderData {
     PushConstants push_constants;
 };
 
-static RenderData g_render_data;
+static RenderData g_render_data = {};
 
 bool
 init_vulkan()
@@ -502,12 +509,17 @@ init_camera()
 {
     g_camera.fov = glm::radians(70.0f);
     g_camera.aspect_ratio = g_swapchain.extent.width / static_cast<float>(g_swapchain.extent.height);
+    g_camera.sensitivity = 0.7f;
+    g_camera.vertical_angle = glm::radians(-15.0f);
 
-    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.1f, -0.125f));
-    g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
-    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, -1.0f));
+    g_camera.view_direction = glm::vec3(0.0f, 0.0f, -1.0f);
+    g_camera.horizontal_rotation_axis = glm::vec3(0.0f, 1.0f, 0.0f);
+    g_camera.vertical_rotation_axis = glm::vec3(1.0f, 0.0f, 0.0f);
 
-    g_camera.view = glm::rotate(g_camera.view, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // g_camera.view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+    g_camera.view = glm::mat4(1.0f);
+
+    g_camera.view = glm::rotate(g_camera.view, g_camera.vertical_angle, g_camera.vertical_rotation_axis);
 
     g_camera.proj = glm::perspective(g_camera.fov, g_camera.aspect_ratio, 10000.0f, 0.1f);
 }
@@ -520,12 +532,41 @@ update_camera_proj()
 }
 
 void
+update_camera_view(SDL_MouseMotionEvent motion, float dt)
+{
+    if (glm::abs(motion.xrel) > 0.0f)
+    {
+        float angle = glm::radians(motion.xrel) * g_camera.sensitivity * dt;
+
+        g_camera.view = glm::rotate(g_camera.view, angle, g_camera.horizontal_rotation_axis);
+        g_camera.vertical_rotation_axis = glm::inverse(g_camera.view) * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+    }
+
+    if (glm::abs(motion.yrel) > 0.0f)
+    {
+        float angle = glm::radians(-motion.yrel) * g_camera.sensitivity * dt;
+
+        if (g_camera.vertical_angle + angle > glm::radians(-40.0f) &&
+            g_camera.vertical_angle + angle < glm::radians(90.0f))
+        {
+            g_camera.view = glm::rotate(g_camera.view, angle, g_camera.vertical_rotation_axis);
+            g_camera.vertical_angle += angle;
+        }
+    }
+
+    g_camera.view_direction = glm::inverse(g_camera.view) * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
+}
+
+void
 update_push_constants(bool camera_changed = true)
 {
     if (camera_changed)
     {
-        // Model matrix is identity here
-        g_render_data.push_constants.mvp = g_camera.proj * g_camera.view;
+        g_render_data.push_constants.origin = {0.0f, 0.0f};
+        g_render_data.push_constants.view_direction = {g_camera.view_direction.x, g_camera.view_direction.z};
+
+        glm::mat4 m = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.5f, 0.0f));
+        g_render_data.push_constants.mvp = g_camera.proj * g_camera.view * m;
 
         // Add a little bit of tolerance for fov-based culling
         float tolerance_angle = glm::pi<float>() / 6.0f;
@@ -697,6 +738,9 @@ run()
 {
     SDL_Event event;
 
+    uint64_t timestamp = SDL_GetTicksNS();
+    float dt = timestamp / 1000000.0f;
+
     for (;;)
     {
         bool window_resized = false;
@@ -709,9 +753,19 @@ run()
             case SDL_EVENT_QUIT:
                 return;
             case SDL_EVENT_WINDOW_RESIZED:
-                window_resized = true;
                 g_window_extent.width = event.window.data1;
                 g_window_extent.height = event.window.data2;
+                window_resized = true;
+                break;
+            case SDL_EVENT_WINDOW_ENTER_FULLSCREEN:
+                SDL_SetWindowRelativeMouseMode(g_window, true);
+                break;
+            case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN:
+                SDL_SetWindowRelativeMouseMode(g_window, false);
+                break;
+            case SDL_EVENT_MOUSE_MOTION:
+                update_camera_view(event.motion, dt);
+                camera_changed = true;
                 break;
             }
         }
@@ -728,6 +782,10 @@ run()
         update_push_constants(camera_changed);
 
         draw();
+
+        uint new_timestamp = SDL_GetTicksNS();
+        dt = (new_timestamp - timestamp) / 1000000.0f;
+        timestamp = new_timestamp;
     }
 }
 
@@ -737,9 +795,11 @@ init()
     SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
 
     g_window = SDL_CreateWindow(APP_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-    fmt::println("{}", SDL_GetError());
-
-    g_window_extent = {WINDOW_WIDTH, WINDOW_HEIGHT};
+    if (g_window == nullptr)
+    {
+        fmt::println("{}", SDL_GetError());
+        return false;
+    }
 
     if (!init_vulkan())
         return false;

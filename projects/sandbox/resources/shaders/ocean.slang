@@ -2,11 +2,12 @@ struct PushConstants {
     float4x4 mvp;
 
     // Dynamic mesh generation and culling
-    float2 origin;         // Projection of camera position on xz-plane
-    float2 view_direction; // Projection of viewing direction on xz-plane
+    float2 origin;         // Camera position on xz-plane
+    float2 view_direction; // Camera viewing direction on xz-plane
     float cutoff_angle;
 
     // Displacement calculation
+    float amplitude;
     float t;
 };
 
@@ -22,7 +23,7 @@ struct Payload {
 const static uint NUM_MESHLETS_PER_PATCH_X = 8;
 const static uint NUM_MESHLETS_PER_PATCH_Y = 16;
 
-const static uint NUM_PATCHES_PER_DIR = 8; // Each patch corresponds to one LOD
+const static uint NUM_PATCHES_PER_DIR = 8;
 
 const static float2 BASE_MESHLET_EXTENT = float2(1.0 / float(NUM_MESHLETS_PER_PATCH_X), 1.0 / float(NUM_MESHLETS_PER_PATCH_Y));
 const static float2 BASE_PATCH_EXTENT = BASE_MESHLET_EXTENT * float2(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y); // (1.0, 1.0)
@@ -148,7 +149,7 @@ void mesh_main(
         position.z += float(gtid / NUM_VERTS_X) * quad_extent.y;
 
         // Calc height displacement using sine wave for now
-        position.y = 0.1 * sin(pc.t + position.x + 0.5 * position.z);
+        position.y = pc.amplitude * sin(pc.t + position.x + 0.5 * position.z);
 
         vertices[gtid].position = mul(pc.mvp, position);
         vertices[gtid].color = float3((gid.xy + 1) / float2(NUM_MESHLETS_PER_PATCH_X, NUM_MESHLETS_PER_PATCH_Y), 0.5);
