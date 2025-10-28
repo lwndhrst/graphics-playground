@@ -46,6 +46,7 @@
           xorg.libXrandr
           xorg.libXScrnSaver
           xorg.libXtst
+          xorg.libxcb
 
           # Tracy
           dbus
