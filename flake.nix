@@ -38,15 +38,15 @@
           wayland-scanner
 
           # SDL x11
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXext
-          xorg.libXfixes
-          xorg.libXi
-          xorg.libXrandr
-          xorg.libXScrnSaver
-          xorg.libXtst
-          xorg.libxcb
+          # xorg.libX11
+          # xorg.libXcursor
+          # xorg.libXext
+          # xorg.libXfixes
+          # xorg.libXi
+          # xorg.libXrandr
+          # xorg.libXScrnSaver
+          # xorg.libXtst
+          # xorg.libxcb
 
           # Tracy
           dbus
@@ -61,14 +61,14 @@
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.wayland}/lib
 
           # SDL x11
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libX11}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXcursor}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXext}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXfixes}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXi}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXrandr}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXScrnSaver}/lib
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXtst}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libX11}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXcursor}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXext}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXfixes}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXi}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXrandr}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXScrnSaver}/lib
+          # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.xorg.libXtst}/lib
         '';
       };
     };
