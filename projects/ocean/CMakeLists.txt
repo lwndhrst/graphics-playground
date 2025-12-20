@@ -2,7 +2,7 @@
 # TARGET #
 ##########
 
-set(TARGET_NAME sandbox)
+set(TARGET_NAME ocean)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${TARGET_NAME})
 

@@ -15,7 +15,7 @@
 
 #include <fstream>
 
-#define APP_NAME "Sandbox"
+#define APP_NAME "Ocean"
 
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT 800
