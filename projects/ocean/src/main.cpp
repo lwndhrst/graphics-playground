@@ -775,7 +775,7 @@ run()
 
         draw();
 
-        uint new_timestamp = SDL_GetTicksNS();
+        uint64_t new_timestamp = SDL_GetTicksNS();
         dt = (new_timestamp - timestamp) / 1000000.0f;
         timestamp = new_timestamp;
     }
